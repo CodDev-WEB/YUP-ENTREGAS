@@ -31,10 +31,10 @@ O servidor é a fonte oficial dos dados. O navegador pode manter uma fila tempor
 - Frota: abastecimentos, consumo estimado km/L quando há leituras comparáveis, preço médio/litro, custo de combustível, manutenção e custo por veículo.
 
 ## Sincronização e tempo real
-- PWA envia eventos para uma API autenticada via HTTPS.
-- Backend valida permissões, consistência de odômetro e transições de estado.
-- Banco relacional PostgreSQL mantém registros oficiais e trilha de auditoria.
-- Painel recebe atualizações por WebSocket/SSE ou mecanismo equivalente.
+- PWA usa o cliente Supabase autenticado via HTTPS; PostgreSQL com RLS é a barreira de autorização para as tabelas expostas.
+- Triggers do banco registram horários oficiais de recebimento/encerramento. Validação completa de transições, consistência de eventos e odômetros via RPC/funções transacionais ainda precisa ser concluída antes da produção.
+- PostgreSQL mantém os registros oficiais e a trilha de auditoria planejada.
+- O adaptador assina mudanças de jornadas, entregas e eventos via Supabase Realtime; falta conectar os formulários e a renderização do painel a essas consultas para sincronização operacional ponta a ponta.
 - Offline: fila local idempotente; cada evento tem UUID e é deduplicado no servidor. Mostrar claramente pendente/sincronizado/falhou.
 - Horário: guardar occurred_at do dispositivo e received_at do servidor em UTC; exibir em America/Santarem. O servidor é referência para recebimento; horário do aparelho não deve ser tratado como infalível.
 - Conflitos e correções não apagam histórico; registrar quem corrigiu, quando e motivo.
