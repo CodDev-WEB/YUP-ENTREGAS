@@ -24,9 +24,7 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 
 ## 4. Configuração e segurança
 - supabase-config.js contém apenas URL e chave pública anon/publishable, que são destinadas ao cliente. O projeto deve ter RLS em todas as tabelas expostas.
-- Nunca exponha service_role, senha do banco, tokens privados ou credenciais de usuários.
 - supabase-client.js oferece conexão, login, leitura do perfil, logout e assinatura Realtime.
-- Nunca exponha service_role, senha do banco, tokens privados ou credenciais de usuários.
 - O SDK é carregado por CDN e requer conexão no primeiro carregamento.
 - Antes da produção, teste as políticas com contas separadas de admin, manager e driver.
 - RLS é a barreira real de autorização; esconder botões na interface não substitui políticas no banco.
