@@ -16,10 +16,10 @@ export default {
 
     // Serve the existing HTML files behind extensionless routes.
     if (url.pathname === "/") {
-      return env.ASSETS.fetch(new Request(new URL("/index.html", url), request));
+      return env.ASSETS.fetch(new Request(new URL("/index.html", url), { method: request.method, headers: request.headers }));
     }
     if (url.pathname === "/entregador") {
-      return env.ASSETS.fetch(new Request(new URL("/entregador.html", url), request));
+      return env.ASSETS.fetch(new Request(new URL("/entregador.html", url), { method: request.method, headers: request.headers }));
     }
 
     return env.ASSETS.fetch(request);
