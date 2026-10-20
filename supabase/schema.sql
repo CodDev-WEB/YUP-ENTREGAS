@@ -94,9 +94,6 @@ $;
 create trigger delivery_events_server_received
 before insert on public.delivery_events
 for each row execute function public.stamp_received_at_server();
-create trigger fuel_entries_server_received
-before insert on public.fuel_entries
-for each row execute function public.stamp_received_at_server();
 
 create or replace function public.touch_updated_at()
 returns trigger language plpgsql set search_path=''
@@ -122,6 +119,10 @@ create table public.fuel_entries (
  station_note text, occurred_at_device timestamptz, received_at_server timestamptz not null default now(),
  created_by uuid not null references public.profiles(id)
 );
+create trigger fuel_entries_server_received
+before insert on public.fuel_entries
+for each row execute function public.stamp_received_at_server();
+
 create table public.maintenance_entries (
  id uuid primary key default gen_random_uuid(), vehicle_id uuid not null references public.vehicles(id),
  service_type text not null, description text, odometer numeric(10,1) check(odometer>=0),
