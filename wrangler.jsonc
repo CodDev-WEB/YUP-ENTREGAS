@@ -6,15 +6,7 @@
   "assets": {
     "directory": ".",
     "not_found_handling": "none",
-    "html_handling": "auto-trailing-slash",
-    "exclude": [
-      ".git",
-      ".wrangler",
-      "node_modules",
-      "docs",
-      "supabase",
-      ".github"
-    ]
+    "html_handling": "none"
   },
   "observability": {
     "enabled": true
