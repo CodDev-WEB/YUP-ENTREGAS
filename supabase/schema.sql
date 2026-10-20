@@ -59,7 +59,7 @@ create index delivery_events_delivery_time on public.delivery_events(delivery_id
 -- O banco define os horários oficiais; valores enviados pelo navegador não são confiáveis.
 create or replace function public.set_journey_server_timestamps()
 returns trigger language plpgsql set search_path=''
-as $
+as $$
 begin
   if tg_op = 'INSERT' then
     new.started_at_server := clock_timestamp();
@@ -78,31 +78,31 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 create trigger journeys_server_timestamps
 before insert or update on public.journeys
 for each row execute function public.set_journey_server_timestamps();
 
 create or replace function public.stamp_received_at_server()
 returns trigger language plpgsql set search_path=''
-as $
+as $$
 begin
   new.received_at_server := clock_timestamp();
   return new;
 end;
-$;
+$$;
 create trigger delivery_events_server_received
 before insert on public.delivery_events
 for each row execute function public.stamp_received_at_server();
 
 create or replace function public.touch_updated_at()
 returns trigger language plpgsql set search_path=''
-as $
+as $$
 begin
   new.updated_at := clock_timestamp();
   return new;
 end;
-$;
+$$;
 create trigger deliveries_touch_updated_at
 before update on public.deliveries
 for each row execute function public.touch_updated_at();
