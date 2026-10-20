@@ -17,7 +17,7 @@ document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setV
 function fillSelect(el,items,value,label,placeholder){el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.append(first);items.forEach(item=>{const o=document.createElement("option");o.value=item[value];o.textContent=label(item);el.append(o)})}
 function ensureSelect(id,placeholder){const old=$(id);if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
-function openJourney(){const mine=currentDriver();return journeys.find(j=>j.status==="open"&&(!mine||j.driver_id===mine.id))||null}
+function openJourney(){const driverId=admin?$("driverId")?.value:currentDriver()?.id;return journeys.find(j=>j.status==="open"&&driverId&&j.driver_id===driverId)||null}
 async function refresh(){
  if(loading)return;loading=true;
  try{
@@ -28,7 +28,7 @@ async function refresh(){
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
   fillSelect(vehicleSelect,vehicles,"id",v=>v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:""),vehicles.length?"Selecione o veículo":"Nenhum veículo ativo cadastrado");
   if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;}else{driverSelect.disabled=true;}}
-  else driverSelect.disabled=false;
+  else {driverSelect.disabled=false;if(!driverSelect.value&&drivers.length)driverSelect.value=drivers[0].id;driverSelect.onchange=()=>{currentJourney=openJourney();render();};}
   fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,"Selecione o bairro");
   $("prototypeWarning").textContent="Jornadas e entregas são gravadas no Supabase e respeitam as permissões da conta. Combustível e manutenção ainda são registros locais deste navegador.";
   $("prototypeWarning").classList.remove("hidden");
