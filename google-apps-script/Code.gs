@@ -74,29 +74,26 @@ function setupYupDatabase() {
   return "Estrutura criada/verificada. Se ADMIN_EMAIL e ADMIN_PASSWORD estavam configurados, a conta inicial foi criada e a senha temporária removida das propriedades.";
 }
 
-function createUser(email, password, displayName, role, driverId) {
-  // Execute manualmente no editor somente após a primeira configuração.
-  // Para criar uma conta, edite os valores abaixo e execute createConfiguredUser().
-  throw new Error("Por segurança, use createConfiguredUser() após preencher os valores nela.");
-}
-
 function createConfiguredUser() {
-  const email = "TROQUE_PELO_EMAIL";
-  const password = "TROQUE_POR_SENHA_FORTE";
-  const displayName = "Nome do usuário";
-  const role = "driver"; // admin, manager ou driver
-  const driverId = "YUP-001"; // obrigatório para driver; vazio para admin/manager
-  if (email.includes("TROQUE_") || password.includes("TROQUE_") || password.length < 12) {
-    throw new Error("Edite email e senha com valores reais (mínimo de 12 caracteres) antes de executar.");
+  // Configure NEW_USER_EMAIL, NEW_USER_PASSWORD, NEW_USER_NAME, NEW_USER_ROLE
+  // e NEW_USER_DRIVER_ID nas Script Properties. A senha é removida após uso.
+  const props = PropertiesService.getScriptProperties();
+  const email = String(props.getProperty("NEW_USER_EMAIL") || "").trim().toLowerCase();
+  const password = props.getProperty("NEW_USER_PASSWORD") || "";
+  const displayName = String(props.getProperty("NEW_USER_NAME") || "").trim();
+  const role = String(props.getProperty("NEW_USER_ROLE") || "driver");
+  const driverId = String(props.getProperty("NEW_USER_DRIVER_ID") || "").trim();
+  if (!email || password.length < 12 || !displayName) {
+    throw new Error("Configure NEW_USER_EMAIL, NEW_USER_NAME e uma NEW_USER_PASSWORD com pelo menos 12 caracteres.");
   }
   if (!["admin", "manager", "driver"].includes(role)) throw new Error("Perfil inválido.");
-  const ss = openDb_();
-  const sh = ss.getSheetByName("Users");
-  const normalized = email.trim().toLowerCase();
-  if (findUser_(sh, normalized)) throw new Error("Já existe uma conta com esse e-mail.");
+  if (role === "driver" && !driverId) throw new Error("Informe NEW_USER_DRIVER_ID para o perfil driver.");
+  const sh = openDb_().getSheetByName("Users");
+  if (findUser_(sh, email)) throw new Error("Já existe uma conta com esse e-mail.");
   const salt = Utilities.getUuid();
-  sh.appendRow([normalized, displayName, role, role === "driver" ? driverId : "", salt, hashPassword_(password, salt), true, new Date().toISOString()]);
-  return "Conta criada. Remova/neutralize os valores de exemplo no editor após a execução.";
+  sh.appendRow([email, displayName, role, role === "driver" ? driverId : "", salt, hashPassword_(password, salt), true, new Date().toISOString()]);
+  props.deleteProperty("NEW_USER_PASSWORD");
+  return "Conta criada. A propriedade NEW_USER_PASSWORD foi removida; remova também as demais propriedades NEW_USER_* se não for criar outra conta agora.";
 }
 
 function login_(email, password) {
@@ -142,6 +139,7 @@ function insertRecord_(session, collection, record) {
   const id = String(record.id || Utilities.getUuid());
   const now = new Date().toISOString();
   const payload = Object.assign({}, record, { id: id });
+  if (session.role === "driver") payload.driverId = session.driverId;
   delete payload.createdBy;
   const sh = getCollection_(collection);
   const lock = LockService.getScriptLock();
@@ -170,6 +168,7 @@ function updateRecord_(session, collection, id, record) {
       throw new Error("Você não tem permissão para alterar este registro.");
     }
     const merged = Object.assign({}, existing, record, { id: String(id) });
+    if (session.role === "driver") merged.driverId = session.driverId;
     delete merged.createdBy;
     const now = new Date().toISOString();
     sh.getRange(row, 3).setValue(now);
