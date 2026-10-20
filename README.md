@@ -5,7 +5,7 @@ Sistema centralizado de gestão de entregas e monitoramento da frota da YUP Stor
 ## Produto
 - **PWA do entregador:** jornada, odômetro, paradas, eventos de entrega, ocorrências, abastecimento e manutenção.
 - **Painel administrativo:** cadastros, visão operacional, relatórios, métricas por entregador/veículo/bairro, combustível e manutenção.
-- **Backend central:** API autenticada, PostgreSQL, trilha de auditoria e sincronização entre dispositivos.
+- **Backend central:** Supabase Auth + PostgreSQL/RLS e Realtime; integração operacional dos formulários ainda pendente.
 - **Atualizações:** eventos enviados ao servidor aparecem no painel automaticamente; offline, o PWA mantém fila pendente e sincroniza ao recuperar conexão.
 
 ## Escopo funcional
