@@ -116,8 +116,7 @@ create policy profiles_read_self_or_management on public.profiles for select to 
 using(id=(select auth.uid()) or public.current_app_role() in ('admin','manager'));
 create policy profiles_update_self_limited on public.profiles for update to authenticated
 using(id=(select auth.uid())) with check(id=(select auth.uid())
- and role=(select p.role from public.profiles p where p.id=(select auth.uid()))
- and active=(select p.active from public.profiles p where p.id=(select auth.uid())));
+ and role=public.current_app_role() and active=true);
 create policy profiles_admin_manage on public.profiles for all to authenticated
 using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
 
