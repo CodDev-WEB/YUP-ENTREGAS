@@ -24,6 +24,12 @@ O repositório contém o protótipo frontend inicial e a fundação técnica de 
 ## Documentação
 Consulte [docs/ARQUITETURA-MVP.md](docs/ARQUITETURA-MVP.md) para arquitetura, papéis, indicadores, modelo de dados, segurança e sequência de implementação.
 
+## Acesso ao sistema publicado
+
+**Link do YUP-ENTREGAS:** https://yup-entregas.jordano-19-silva.workers.dev
+
+> O endereço foi informado como URL de publicação do Cloudflare Workers. A publicação do site não significa que a integração dos formulários com PostgreSQL/Supabase esteja concluída. Até finalizar essa integração e os testes de segurança, utilize apenas dados fictícios.
+
 ## Publicar e acessar pela internet
 Consulte [docs/PUBLICAR-CLOUDFLARE-PAGES.md](docs/PUBLICAR-CLOUDFLARE-PAGES.md) para publicar gratuitamente via Cloudflare Pages conectado ao GitHub. O endereço público ainda precisa ser criado no painel do Cloudflare; após o primeiro deploy, copie a URL gerada para esta seção. A publicação do frontend, por si só, não habilita a integração operacional com o Supabase.
 
