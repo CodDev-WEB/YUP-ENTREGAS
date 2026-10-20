@@ -1,29 +1,111 @@
 const $ = id => document.getElementById(id);
-const STORAGE_KEY = "yup-entregas-prototype-v1:" + (window.YupBackend?.profile?.id || "unauthenticated");
-const neighborhoods = ["Aeroporto Velho","Área Verde","Aldeia","Amparo","Aparecida","Boa Esperança","Caranazal","Centro","Conquista","Diamantino","Esperança","Fátima","Floresta","Interventoria","Jutaí","Liberdade","Livramento","Maicá","Maracanã","Mapiri","Mararu","Matinha","Nova República","Novo Horizonte","Pérola do Maicá","Prainha","Santarenzinho","Santíssimo","Santo André","São Cristóvão","São Francisco","São José Operário","Uruará","Urumari","Outro / informar"];
-let state = loadState();
-let currentJourney = state.currentJourney || null;
-function loadState(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{journeys:[],deliveries:[],fuel:[],maintenance:[]}}catch{return {journeys:[],deliveries:[],fuel:[],maintenance:[]}}}
-function save(){state.currentJourney=currentJourney;localStorage.setItem(STORAGE_KEY,JSON.stringify(state));render()}
-function now(){return new Date().toISOString()}
-function fmtDate(v){return v?new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"—"}
-function money(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function kmValue(){if(!currentJourney||currentJourney.odoEnd==null)return null;return Math.max(0,Number(currentJourney.odoEnd)-Number(currentJourney.odoStart))}
-function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view).classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
+const backend = window.YupBackend;
+const localKey = "yup-entregas-local-expenses-v1:" + (backend?.profile?.id || "unknown");
+const admin = ["admin","manager"].includes(backend?.profile?.role);
+let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false;
+let local = (()=>{try{return JSON.parse(localStorage.getItem(localKey))||{fuel:[],maintenance:[]}}catch{return {fuel:[],maintenance:[]}}})();
+const now = () => new Date().toISOString();
+const fmtDate = v => v ? new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "—";
+const money = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc = v => String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const statusLabel = {open:"Em andamento",finished:"Finalizada",cancelled:"Cancelada",pending:"Pendente",in_transit:"Em deslocamento",at_destination:"No endereço",completed:"Concluída",failed:"Não realizada"};
+const priorityMap = {"Normal":"normal","Alta":"high","Agendada":"scheduled"};
+function notify(text){alert(text)}
+function setBusy(form,busy){form.querySelectorAll("button").forEach(b=>b.disabled=busy)}
+function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
-neighborhoods.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;$("neighborhood").append(o)});
-$("journeyForm").addEventListener("submit",e=>{e.preventDefault();if(currentJourney)return alert("Já existe uma jornada aberta. Finalize-a antes de iniciar outra.");currentJourney={id:crypto.randomUUID(),driverId:$("driverId").value.trim(),vehicle:$("vehicle").value.trim(),odoStart:Number($("odoStart").value),startedAt:now(),deliveries:[],status:"Em andamento"};state.journeys.push(currentJourney);save();alert("Jornada iniciada. Adicione as entregas da rota.")});
-$("finishJourney").addEventListener("click",()=>{if(!currentJourney)return;const v=prompt("Informe o odômetro final (km):");if(v===null)return;const end=Number(v);if(!Number.isFinite(end)||end<Number(currentJourney.odoStart))return alert("Odômetro inválido: deve ser igual ou superior ao inicial.");if(currentJourney.deliveries.some(id=>{const d=state.deliveries.find(x=>x.id===id);return d&&d.status!=="Concluída"&&d.status!=="Não realizada"}))return alert("Finalize ou marque como não realizada cada entrega antes de encerrar a jornada.");currentJourney.odoEnd=end;currentJourney.finishedAt=now();currentJourney.status="Finalizada";currentJourney=null;save()});
-$("deliveryForm").addEventListener("submit",e=>{e.preventDefault();if(!currentJourney)return alert("Inicie uma jornada antes de adicionar entregas.");const d={id:crypto.randomUUID(),journeyId:currentJourney.id,orderNo:$("orderNo").value.trim(),neighborhood:$("neighborhood").value,address:$("address").value.trim(),reference:$("reference").value.trim(),priority:$("priority").value,mapLink:$("mapLink").value.trim(),status:"Pendente",createdAt:now(),events:[]};state.deliveries.push(d);currentJourney.deliveries.push(d.id);e.target.reset();save()});
-$("pasteLocation").addEventListener("click",()=>{if(!navigator.geolocation)return alert("Geolocalização não disponível neste navegador.");navigator.geolocation.getCurrentPosition(pos=>{const {latitude,longitude}=pos.coords;$("mapLink").value="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(latitude+","+longitude);if(!$("address").value)$("address").value=latitude.toFixed(6)+", "+longitude.toFixed(6);},err=>alert("Não foi possível obter a localização. Verifique a permissão do navegador. ("+err.message+")"),{enableHighAccuracy:true,timeout:10000})});
-function deliveryAction(id,action){const d=state.deliveries.find(x=>x.id===id);if(!d)return;if(action==="navigate"){const destination=d.mapLink||[d.address,d.neighborhood,"Santarém, PA, Brasil"].filter(Boolean).join(", ");window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination)+"&travelmode=driving","_blank","noopener");return}if(action==="start"){if(!currentJourney||d.journeyId!==currentJourney.id)return alert("Esta entrega não pertence à jornada aberta.");if(d.status!=="Pendente")return alert("A entrega não está pendente.");d.status="Em deslocamento";d.departedAt=now();d.events.push({type:"Saída para entrega",at:d.departedAt});}else if(action==="arrive"){if(d.status!=="Em deslocamento")return alert("Registre a saída antes da chegada.");d.status="No endereço";d.arrivedAt=now();d.events.push({type:"Chegada ao endereço",at:d.arrivedAt});}else if(action==="complete"){if(!["No endereço","Em deslocamento"].includes(d.status))return alert("Inicie a entrega antes de concluir.");if(!confirm("Confirmar conclusão desta entrega?"))return;d.status="Concluída";d.completedAt=now();d.events.push({type:"Entrega concluída",at:d.completedAt});}else if(action==="failed"){if(!confirm("Marcar esta entrega como não realizada?"))return;d.status="Não realizada";d.completedAt=now();d.events.push({type:"Entrega não realizada",at:d.completedAt});}else if(action==="up"||action==="down"){const ids=currentJourney?.deliveries||[];const i=ids.indexOf(id),j=action==="up"?i-1:i+1;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];}save()}
-$("openRoute").addEventListener("click",()=>{const ds=(currentJourney?.deliveries||[]).map(id=>state.deliveries.find(d=>d.id===id)).filter(d=>d&&d.status!=="Concluída"&&d.status!=="Não realizada");if(!ds.length)return alert("Adicione entregas pendentes à jornada.");const points=ds.map(d=>d.mapLink||[d.address,d.neighborhood,"Santarém, PA"].filter(Boolean).join(", "));if(points.length>10)return alert("Para evitar limite de paradas do mapa, abra as entregas em grupos de até 10.");const origin="Santarém, PA, Brasil";const url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(points.pop())+(points.length?"&waypoints="+encodeURIComponent(points.join("|")):"")+"&travelmode=driving";window.open(url,"_blank","noopener")});
-$("fuelDate").value=new Date().toISOString().slice(0,16);$("maintDate").value=new Date().toISOString().slice(0,10);
-$("fuelForm").addEventListener("submit",e=>{e.preventDefault();state.fuel.push({id:crypto.randomUUID(),vehicle:$("fuelVehicle").value.trim(),date:$("fuelDate").value,odo:Number($("fuelOdo").value),liters:Number($("fuelLiters").value),cost:Number($("fuelCost").value),note:$("fuelNote").value.trim()});e.target.reset();$("fuelDate").value=new Date().toISOString().slice(0,16);save()});
-$("maintenanceForm").addEventListener("submit",e=>{e.preventDefault();state.maintenance.push({id:crypto.randomUUID(),vehicle:$("maintVehicle").value.trim(),date:$("maintDate").value,type:$("maintType").value,odo:$("maintOdo").value?Number($("maintOdo").value):null,cost:Number($("maintCost").value),description:$("maintDescription").value.trim()});e.target.reset();$("maintDate").value=new Date().toISOString().slice(0,10);save()});
-function renderDeliveries(){const list=$("deliveryList"),ids=currentJourney?.deliveries||[];const ds=ids.map(id=>state.deliveries.find(d=>d.id===id)).filter(Boolean);$("metricStops").textContent=ds.length;$("metricDone").textContent=ds.filter(d=>d.status==="Concluída").length;$("metricKm").textContent=currentJourney?(currentJourney.odoEnd!=null?String(kmValue())+" km":"Em andamento"):"—";$("journeyBadge").textContent=currentJourney?"Jornada em andamento":"Jornada não iniciada";$("startJourney").classList.toggle("hidden",!!currentJourney);$("finishJourney").classList.toggle("hidden",!currentJourney);["driverId","vehicle","odoStart"].forEach(id=>$(id).disabled=!!currentJourney);if(!ds.length){list.className="delivery-list empty";list.textContent="Nenhuma entrega adicionada ainda.";return}list.className="delivery-list";list.innerHTML=ds.map((d,i)=>'<div class="delivery-card"><div class="stop-number">'+(i+1)+'</div><div><h3>Ordem '+esc(d.orderNo)+' · '+esc(d.neighborhood)+'</h3><p>'+esc(d.address)+(d.reference?" · "+esc(d.reference):"")+'</p><p>Prioridade: '+esc(d.priority)+' · Criada: '+fmtDate(d.createdAt)+'</p><p>Saída: '+fmtDate(d.departedAt)+' · Chegada: '+fmtDate(d.arrivedAt)+' · Finalização: '+fmtDate(d.completedAt)+'</p>'+(d.events.length?'<details><summary>Linha do tempo ('+d.events.length+')</summary>'+d.events.map(ev=>'<p>'+esc(ev.type)+': '+fmtDate(ev.at)+'</p>').join("")+'</details>':"")+'<div class="actions"><button class="mini" data-act="up" data-id="'+d.id+'">↑ Subir</button><button class="mini" data-act="down" data-id="'+d.id+'">↓ Descer</button><button class="mini" data-act="navigate" data-id="'+d.id+'">Navegar</button>'+(d.status==="Pendente"?'<button class="mini" data-act="start" data-id="'+d.id+'">Registrar saída</button>':"")+(d.status==="Em deslocamento"?'<button class="mini" data-act="arrive" data-id="'+d.id+'">Registrar chegada</button><button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(d.status==="No endereço"?'<button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(["Pendente","Em deslocamento","No endereço"].includes(d.status)?'<button class="mini" data-act="failed" data-id="'+d.id+'">Não realizada</button>':"")+'</div></div><span class="tag '+(d.status==="Concluída"?"done":"")+'">'+esc(d.status)+'</span></div>').join("");list.querySelectorAll("button[data-act]").forEach(b=>b.addEventListener("click",()=>deliveryAction(b.dataset.id,b.dataset.act)))}
-function render(){renderDeliveries();$("fleetJourneys").textContent=state.journeys.length;$("fleetDeliveries").textContent=state.deliveries.length;const kms=state.journeys.filter(j=>j.odoEnd!=null).reduce((sum,j)=>sum+j.odoEnd-j.odoStart,0);$("fleetKm").textContent=kms.toLocaleString("pt-BR",{maximumFractionDigits:1});$("journeyHistory").innerHTML=state.journeys.length?'<table><thead><tr><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+state.journeys.slice().reverse().map(j=>'<tr><td>'+esc(j.driverId)+'</td><td>'+esc(j.vehicle)+'</td><td>'+fmtDate(j.startedAt)+'</td><td>'+fmtDate(j.finishedAt)+'</td><td>'+(j.odoEnd==null?"—":(j.odoEnd-j.odoStart).toLocaleString("pt-BR"))+'</td><td>'+esc(j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada.</p>';$("fuelTotalLiters").textContent=state.fuel.reduce((s,x)=>s+x.liters,0).toLocaleString("pt-BR",{maximumFractionDigits:2})+" L";const costs=state.fuel.reduce((s,x)=>s+x.cost,0);$("fuelTotalCost").textContent=money(costs);const liters=state.fuel.reduce((s,x)=>s+x.liters,0);$("fuelAverage").textContent=liters?money(costs/liters)+"/L":"—";$("fuelHistory").innerHTML=table(state.fuel,[["date","Data"],["vehicle","Veículo"],["odo","Odômetro"],["liters","Litros"],["cost","Valor"]],x=>({...x,date:fmtDate(x.date),cost:money(x.cost)}));$("maintenanceHistory").innerHTML=table(state.maintenance,[["date","Data"],["vehicle","Veículo"],["type","Serviço"],["odo","Odômetro"],["cost","Valor"],["description","Descrição"]],x=>({...x,cost:money(x.cost)}))}
+function fillSelect(el,items,value,label,placeholder){el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.append(first);items.forEach(item=>{const o=document.createElement("option");o.value=item[value];o.textContent=label(item);el.append(o)})}
+function ensureSelect(id,placeholder){const old=$(id);if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
+function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
+function openJourney(){const mine=currentDriver();return journeys.find(j=>j.status==="open"&&(!mine||j.driver_id===mine.id))||null}
+async function refresh(){
+ if(loading)return;loading=true;
+ try{
+  [drivers,vehicles,neighborhoods]=await Promise.all([backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()]);
+  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();
+  const driverSelect=ensureSelect("driverId","Selecione o entregador");
+  const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
+  fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
+  fillSelect(vehicleSelect,vehicles,"id",v=>v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:""),vehicles.length?"Selecione o veículo":"Nenhum veículo ativo cadastrado");
+  if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;}else{driverSelect.disabled=true;}}
+  else driverSelect.disabled=false;
+  fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,"Selecione o bairro");
+  $("prototypeWarning").textContent="Jornadas e entregas são gravadas no Supabase e respeitam as permissões da conta. Combustível e manutenção ainda são registros locais deste navegador.";
+  $("prototypeWarning").classList.remove("hidden");
+  render();
+ }catch(error){console.error(error);$("prototypeWarning").textContent="Falha ao carregar dados operacionais do Supabase: "+(error.message||"erro desconhecido")+". Verifique cadastros e políticas RLS."; $("prototypeWarning").classList.remove("hidden");}
+ finally{loading=false}
+}
+$("journeyForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(currentJourney)return notify("Já existe uma jornada aberta para este entregador.");
+ const driverId=$("driverId").value,vehicleId=$("vehicle").value,odometerStart=Number($("odoStart").value);
+ if(!driverId||!vehicleId)return notify("Selecione um entregador e um veículo cadastrados.");
+ setBusy(e.target,true);
+ try{await backend.startJourney({driverId,vehicleId,odometerStart});e.target.reset();await refresh();notify("Jornada iniciada e salva no banco de dados.");}
+ catch(error){console.error(error);notify("Não foi possível iniciar a jornada: "+error.message);}
+ finally{setBusy(e.target,false)}
+});
+$("finishJourney").addEventListener("click",async()=>{
+ if(!currentJourney)return;const raw=prompt("Informe o odômetro final (km):");if(raw===null)return;
+ const end=Number(raw);if(!Number.isFinite(end)||end<Number(currentJourney.odometer_start))return notify("Odômetro inválido: deve ser igual ou superior ao inicial.");
+ const pending=deliveries.filter(d=>d.journey_id===currentJourney.id&&!["completed","failed"].includes(d.status));
+ if(pending.length)return notify("Finalize ou marque como não realizada cada entrega antes de encerrar a jornada.");
+ try{await backend.finishJourney({journeyId:currentJourney.id,odometerEnd:end});await refresh();notify("Jornada finalizada e salva no banco de dados.");}
+ catch(error){console.error(error);notify("Não foi possível finalizar a jornada: "+error.message)}
+});
+$("deliveryForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!currentJourney)return notify("Inicie uma jornada antes de adicionar entregas.");
+ const orderNo=$("orderNo").value.trim(),address=$("address").value.trim();
+ if(!orderNo||!address)return notify("Informe número da ordem e endereço.");
+ const related=deliveries.filter(d=>d.journey_id===currentJourney.id);
+ setBusy(e.target,true);
+ try{
+  await backend.createDelivery({journeyId:currentJourney.id,orderNo,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
+  e.target.reset();await refresh();notify("Entrega salva no Supabase.");
+ }catch(error){console.error(error);notify("Não foi possível cadastrar a entrega: "+error.message)}
+ finally{setBusy(e.target,false)}
+});
+$("pasteLocation").addEventListener("click",()=>{
+ if(!navigator.geolocation)return notify("Geolocalização não disponível neste navegador.");
+ navigator.geolocation.getCurrentPosition(pos=>{const {latitude,longitude}=pos.coords;$("mapLink").value="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(latitude+","+longitude);if(!$("address").value)$("address").value=latitude.toFixed(6)+", "+longitude.toFixed(6)},err=>notify("Não foi possível obter a localização. Verifique a permissão do navegador. ("+err.message+")"),{enableHighAccuracy:true,timeout:10000});
+});
+async function deliveryAction(id,action){
+ const d=deliveries.find(x=>x.id===id);if(!d)return;
+ if(action==="navigate"){const destination=d.map_link||[d.address,d.neighborhoods?.name,"Santarém, PA, Brasil"].filter(Boolean).join(", ");window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination)+"&travelmode=driving","_blank","noopener");return}
+ if(action==="up"||action==="down"){
+  const siblings=deliveries.filter(x=>x.journey_id===d.journey_id).sort((a,b)=>a.sequence_no-b.sequence_no);const i=siblings.findIndex(x=>x.id===id),j=action==="up"?i-1:i+1;if(j<0||j>=siblings.length)return;
+  // Reordering requires a dedicated transactional RPC to avoid duplicate sequence values.
+  return notify("A reordenação segura da rota será ativada na próxima etapa.");
+ }
+ const statuses={start:"in_transit",arrive:"at_destination",complete:"completed",failed:"failed"};const status=statuses[action];if(!status)return;
+ if(action==="complete"&&!confirm("Confirmar conclusão desta entrega?"))return;
+ if(action==="failed"&&!confirm("Marcar esta entrega como não realizada?"))return;
+ try{await backend.updateDeliveryStatus({deliveryId:id,status});await refresh();notify("Status atualizado no banco de dados.");}
+ catch(error){console.error(error);notify("Não foi possível atualizar a entrega: "+error.message)}
+}
+function renderDeliveries(){
+ const list=$("deliveryList");const ds=currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[];
+ $("metricStops").textContent=ds.length;$("metricDone").textContent=ds.filter(d=>d.status==="completed").length;
+ $("metricKm").textContent=currentJourney?"Em andamento":"—";$("journeyBadge").textContent=currentJourney?"Jornada em andamento":"Jornada não iniciada";
+ $("startJourney").classList.toggle("hidden",!!currentJourney);$("finishJourney").classList.toggle("hidden",!currentJourney);
+ ["driverId","vehicle","odoStart"].forEach(id=>$(id).disabled=!!currentJourney||(!admin&&id==="driverId"));
+ if(!ds.length){list.className="delivery-list empty";list.textContent="Nenhuma entrega cadastrada nesta jornada.";return}
+ list.className="delivery-list";
+ list.innerHTML=ds.map((d,i)=>'<div class="delivery-card"><div class="stop-number">'+(i+1)+'</div><div><h3>Ordem '+esc(d.order_no)+' · '+esc(d.neighborhoods?.name||"Bairro não informado")+'</h3><p>'+esc(d.address)+(d.reference?" · "+esc(d.reference):"")+'</p><p>Prioridade: '+esc(d.priority)+' · Criada: '+fmtDate(d.created_at)+'</p><p>Status: '+esc(statusLabel[d.status]||d.status)+'</p>'+(d.delivery_events?.length?'<details><summary>Linha do tempo ('+d.delivery_events.length+')</summary>'+d.delivery_events.map(ev=>'<p>'+esc(statusLabel[ev.event_type]||ev.event_type)+': '+fmtDate(ev.received_at_server)+(ev.note?" · "+esc(ev.note):"")+'</p>').join("")+'</details>':"")+'<div class="actions"><button class="mini" data-act="up" data-id="'+d.id+'">↑ Subir</button><button class="mini" data-act="down" data-id="'+d.id+'">↓ Descer</button><button class="mini" data-act="navigate" data-id="'+d.id+'">Navegar</button>'+(d.status==="pending"?'<button class="mini" data-act="start" data-id="'+d.id+'">Registrar saída</button>':"")+(d.status==="in_transit"?'<button class="mini" data-act="arrive" data-id="'+d.id+'">Registrar chegada</button><button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(d.status==="at_destination"?'<button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+([ "pending","in_transit","at_destination"].includes(d.status)?'<button class="mini" data-act="failed" data-id="'+d.id+'">Não realizada</button>':"")+'</div></div><span class="tag '+(d.status==="completed"?"done":"")+'">'+esc(statusLabel[d.status]||d.status)+'</span></div>').join("");
+ list.querySelectorAll("button[data-act]").forEach(b=>b.addEventListener("click",()=>deliveryAction(b.dataset.id,b.dataset.act)));
+}
+function render(){
+ renderDeliveries();
+ $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
+ $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
+ $("journeyHistory").innerHTML=journeys.length?'<table><thead><tr><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+journeys.map(j=>'<tr><td>'+esc(j.drivers?.registration_no||j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(j.odometer_end==null?"—":(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada no banco.</p>';
+ $("fuelTotalLiters").textContent=local.fuel.reduce((s,x)=>s+x.liters,0).toLocaleString("pt-BR",{maximumFractionDigits:2})+" L";const costs=local.fuel.reduce((s,x)=>s+x.cost,0),liters=local.fuel.reduce((s,x)=>s+x.liters,0);$("fuelTotalCost").textContent=money(costs);$("fuelAverage").textContent=liters?money(costs/liters)+"/L":"—";
+ $("fuelHistory").innerHTML=table(local.fuel,[["date","Data"],["vehicle","Veículo"],["odo","Odômetro"],["liters","Litros"],["cost","Valor"]],x=>({...x,date:fmtDate(x.date),cost:money(x.cost)}));
+ $("maintenanceHistory").innerHTML=table(local.maintenance,[["date","Data"],["vehicle","Veículo"],["type","Serviço"],["odo","Odômetro"],["cost","Valor"],["description","Descrição"]],x=>({...x,cost:money(x.cost)}));
+}
 function table(items,cols,transform=x=>x){if(!items.length)return '<p class="hint">Nenhum registro ainda.</p>';return '<table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join("")+'</tr></thead><tbody>'+items.slice().reverse().map(raw=>{const x=transform(raw);return '<tr>'+cols.map(c=>'<td>'+esc(x[c[0]]??"—")+'</td>').join("")+'</tr>'}).join("")+'</tbody></table>'}
-if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
-render();
+$("fuelDate").value=new Date().toISOString().slice(0,16);$("maintDate").value=new Date().toISOString().slice(0,10);
+$("fuelForm").addEventListener("submit",e=>{e.preventDefault();local.fuel.push({id:crypto.randomUUID(),vehicle:$("fuelVehicle").value.trim(),date:$("fuelDate").value,odo:Number($("fuelOdo").value),liters:Number($("fuelLiters").value),cost:Number($("fuelCost").value),note:$("fuelNote").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("fuelDate").value=new Date().toISOString().slice(0,16);render()});
+$("maintenanceForm").addEventListener("submit",e=>{e.preventDefault();local.maintenance.push({id:crypto.randomUUID(),vehicle:$("maintVehicle").value.trim(),date:$("maintDate").value,type:$("maintType").value,odo:$("maintOdo").value?Number($("maintOdo").value):null,cost:Number($("maintCost").value),description:$("maintDescription").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("maintDate").value=new Date().toISOString().slice(0,10);render()});
+backend.subscribeToOperations(()=>refresh());
+refresh();
