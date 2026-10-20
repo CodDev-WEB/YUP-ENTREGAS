@@ -4,5 +4,5 @@
 // NUNCA coloque service_role, senha do banco ou chaves privadas aqui.
 window.YUP_SUPABASE_CONFIG = {
   url: "https://SEU-PROJETO.supabase.co",
-  anonKey: "SUA_CHAVE_PUBLICA_ANON_OU_PUBLISHABLE"
+  anonKey: "Sgswadshjadzobwhurjxc"
 };
