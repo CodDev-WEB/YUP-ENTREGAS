@@ -137,7 +137,7 @@ create policy journeys_driver_insert_own on public.journeys for insert to authen
 with check(public.owns_driver(driver_id) and public.is_active_user());
 create policy journeys_driver_update_own_or_admin on public.journeys for update to authenticated
 using(public.owns_driver(driver_id) or public.current_app_role()='admin')
-with check((public.owns_driver(driver_id) or public.current_app_role()='admin') and odometer_end>=odometer_start);
+with check((public.owns_driver(driver_id) or public.current_app_role()='admin') and (odometer_end is null or odometer_end>=odometer_start));
 
 create policy deliveries_read_owner_or_management on public.deliveries for select to authenticated using(public.can_access_journey(journey_id));
 create policy deliveries_insert_owner_or_management on public.deliveries for insert to authenticated with check(public.can_access_journey(journey_id));
