@@ -1,0 +1,177 @@
+-- YUP-ENTREGAS — Supabase/PostgreSQL MVP
+create extension if not exists pgcrypto;
+create type public.app_role as enum ('admin','manager','driver');
+create type public.journey_status as enum ('open','finished','cancelled');
+create type public.delivery_status as enum ('pending','in_transit','at_destination','completed','failed');
+create type public.delivery_event_type as enum ('departure','arrival','completed','failed','incident','note');
+
+create table public.profiles (
+ id uuid primary key references auth.users(id) on delete cascade,
+ display_name text not null default '', role public.app_role not null default 'driver',
+ active boolean not null default true, created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now()
+);
+create table public.drivers (
+ id uuid primary key default gen_random_uuid(), profile_id uuid unique references public.profiles(id) on delete set null,
+ registration_no text not null unique, full_name text not null, phone text, active boolean not null default true,
+ created_at timestamptz not null default now(), created_by uuid references public.profiles(id)
+);
+create table public.vehicles (
+ id uuid primary key default gen_random_uuid(), code text not null unique, plate text unique,
+ vehicle_type text not null default 'motorcycle', make_model text, active boolean not null default true,
+ created_at timestamptz not null default now(), created_by uuid references public.profiles(id)
+);
+create table public.neighborhoods (
+ id uuid primary key default gen_random_uuid(), name text not null,
+ city text not null default 'Santarém', state char(2) not null default 'PA', active boolean not null default true,
+ created_at timestamptz not null default now(), unique(name,city,state)
+);
+create table public.journeys (
+ id uuid primary key default gen_random_uuid(), driver_id uuid not null references public.drivers(id),
+ vehicle_id uuid not null references public.vehicles(id), status public.journey_status not null default 'open',
+ odometer_start numeric(10,1) not null check(odometer_start>=0),
+ odometer_end numeric(10,1) check(odometer_end>=odometer_start),
+ started_at_device timestamptz, started_at_server timestamptz not null default now(),
+ finished_at_device timestamptz, finished_at_server timestamptz, notes text,
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ check((status='open' and odometer_end is null and finished_at_server is null)
+    or (status<>'open' and odometer_end is not null and finished_at_server is not null))
+);
+create unique index journeys_one_open_per_driver on public.journeys(driver_id) where status='open';
+create table public.deliveries (
+ id uuid primary key default gen_random_uuid(), journey_id uuid not null references public.journeys(id) on delete cascade,
+ order_no text not null, neighborhood_id uuid references public.neighborhoods(id), address text not null,
+ reference text, map_link text, latitude double precision check(latitude between -90 and 90),
+ longitude double precision check(longitude between -180 and 180),
+ priority text not null default 'normal' check(priority in ('normal','high','scheduled')),
+ status public.delivery_status not null default 'pending', result_note text,
+ sequence_no integer not null default 1 check(sequence_no>0),
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table public.delivery_events (
+ id uuid primary key default gen_random_uuid(), delivery_id uuid not null references public.deliveries(id) on delete cascade,
+ event_type public.delivery_event_type not null, occurred_at_device timestamptz,
+ received_at_server timestamptz not null default now(), actor_profile_id uuid not null references public.profiles(id),
+ idempotency_key uuid not null unique, note text, metadata jsonb not null default '{}'::jsonb
+);
+create index delivery_events_delivery_time on public.delivery_events(delivery_id,received_at_server);
+create index deliveries_journey_status on public.deliveries(journey_id,status);
+create table public.fuel_entries (
+ id uuid primary key default gen_random_uuid(), vehicle_id uuid not null references public.vehicles(id),
+ journey_id uuid references public.journeys(id), odometer numeric(10,1) not null check(odometer>=0),
+ liters numeric(10,3) not null check(liters>0), total_cost numeric(12,2) not null check(total_cost>=0),
+ station_note text, occurred_at_device timestamptz, received_at_server timestamptz not null default now(),
+ created_by uuid not null references public.profiles(id)
+);
+create table public.maintenance_entries (
+ id uuid primary key default gen_random_uuid(), vehicle_id uuid not null references public.vehicles(id),
+ service_type text not null, description text, odometer numeric(10,1) check(odometer>=0),
+ total_cost numeric(12,2) not null default 0 check(total_cost>=0), provider text,
+ serviced_on date not null default current_date, next_due_odometer numeric(10,1), next_due_on date,
+ created_at timestamptz not null default now(), created_by uuid not null references public.profiles(id)
+);
+create table public.audit_log (
+ id bigint generated always as identity primary key, actor_profile_id uuid references public.profiles(id),
+ action text not null, entity_table text not null, entity_id text, occurred_at timestamptz not null default now(),
+ details jsonb not null default '{}'::jsonb
+);
+
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path=''
+as $$
+begin
+ insert into public.profiles(id,display_name,role)
+ values(new.id,coalesce(new.raw_user_meta_data->>'display_name',''),'driver');
+ return new;
+end; $$;
+create trigger on_auth_user_created after insert on auth.users
+for each row execute procedure public.handle_new_user();
+
+create or replace function public.current_app_role()
+returns public.app_role language sql stable security definer set search_path=''
+as $$ select p.role from public.profiles p where p.id=(select auth.uid()) and p.active=true $$;
+create or replace function public.is_active_user()
+returns boolean language sql stable security definer set search_path=''
+as $$ select exists(select 1 from public.profiles p where p.id=(select auth.uid()) and p.active=true) $$;
+create or replace function public.owns_driver(target_driver_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $$ select exists(select 1 from public.drivers d where d.id=target_driver_id and d.profile_id=(select auth.uid())) $$;
+create or replace function public.can_access_journey(target_journey_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $$ select exists(select 1 from public.journeys j join public.drivers d on d.id=j.driver_id
+ where j.id=target_journey_id and (d.profile_id=(select auth.uid()) or public.current_app_role() in ('admin','manager'))) $$;
+
+alter table public.profiles enable row level security;
+alter table public.drivers enable row level security;
+alter table public.vehicles enable row level security;
+alter table public.neighborhoods enable row level security;
+alter table public.journeys enable row level security;
+alter table public.deliveries enable row level security;
+alter table public.delivery_events enable row level security;
+alter table public.fuel_entries enable row level security;
+alter table public.maintenance_entries enable row level security;
+alter table public.audit_log enable row level security;
+
+create policy profiles_read_self_or_management on public.profiles for select to authenticated
+using(id=(select auth.uid()) or public.current_app_role() in ('admin','manager'));
+create policy profiles_update_self_limited on public.profiles for update to authenticated
+using(id=(select auth.uid())) with check(id=(select auth.uid())
+ and role=(select p.role from public.profiles p where p.id=(select auth.uid()))
+ and active=(select p.active from public.profiles p where p.id=(select auth.uid())));
+create policy profiles_admin_manage on public.profiles for all to authenticated
+using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+
+create policy drivers_read_own_or_management on public.drivers for select to authenticated
+using(profile_id=(select auth.uid()) or public.current_app_role() in ('admin','manager'));
+create policy drivers_admin_manage on public.drivers for all to authenticated
+using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+create policy vehicles_read_active_users on public.vehicles for select to authenticated using(public.is_active_user());
+create policy vehicles_admin_manage on public.vehicles for all to authenticated
+using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+create policy neighborhoods_read_active_users on public.neighborhoods for select to authenticated using(public.is_active_user());
+create policy neighborhoods_admin_manage on public.neighborhoods for all to authenticated
+using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+
+create policy journeys_read_owner_or_management on public.journeys for select to authenticated
+using(public.owns_driver(driver_id) or public.current_app_role() in ('admin','manager'));
+create policy journeys_driver_insert_own on public.journeys for insert to authenticated
+with check(public.owns_driver(driver_id) and public.is_active_user());
+create policy journeys_driver_update_own_or_admin on public.journeys for update to authenticated
+using(public.owns_driver(driver_id) or public.current_app_role()='admin')
+with check((public.owns_driver(driver_id) or public.current_app_role()='admin') and odometer_end>=odometer_start);
+
+create policy deliveries_read_owner_or_management on public.deliveries for select to authenticated using(public.can_access_journey(journey_id));
+create policy deliveries_insert_owner_or_management on public.deliveries for insert to authenticated with check(public.can_access_journey(journey_id));
+create policy deliveries_update_owner_or_management on public.deliveries for update to authenticated using(public.can_access_journey(journey_id)) with check(public.can_access_journey(journey_id));
+create policy events_read_owner_or_management on public.delivery_events for select to authenticated
+using(exists(select 1 from public.deliveries d where d.id=delivery_id and public.can_access_journey(d.journey_id)));
+create policy events_insert_as_self_on_accessible_delivery on public.delivery_events for insert to authenticated
+with check(actor_profile_id=(select auth.uid()) and exists(select 1 from public.deliveries d where d.id=delivery_id and public.can_access_journey(d.journey_id)));
+-- Eventos são append-only: sem policies de UPDATE/DELETE para o cliente.
+
+create policy fuel_read_owner_or_management on public.fuel_entries for select to authenticated
+using(public.current_app_role() in ('admin','manager') or exists(select 1 from public.journeys j join public.drivers d on d.id=j.driver_id where j.id=fuel_entries.journey_id and d.profile_id=(select auth.uid())));
+create policy fuel_insert_self_or_admin on public.fuel_entries for insert to authenticated with check(created_by=(select auth.uid()) and public.is_active_user());
+create policy fuel_admin_manage on public.fuel_entries for all to authenticated using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+create policy maintenance_read_management on public.maintenance_entries for select to authenticated using(public.current_app_role() in ('admin','manager'));
+create policy maintenance_admin_manage on public.maintenance_entries for all to authenticated using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
+create policy audit_read_admin on public.audit_log for select to authenticated using(public.current_app_role()='admin');
+create policy audit_insert_self on public.audit_log for insert to authenticated with check(actor_profile_id=(select auth.uid()));
+
+do $$ begin alter publication supabase_realtime add table public.journeys;
+exception when duplicate_object then null; when undefined_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.deliveries;
+exception when duplicate_object then null; when undefined_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.delivery_events;
+exception when duplicate_object then null; when undefined_object then null; end $$;
+
+insert into public.neighborhoods(name) values
+('Aeroporto Velho'),('Área Verde'),('Aldeia'),('Amparo'),('Aparecida'),('Boa Esperança'),('Caranazal'),('Centro'),
+('Conquista'),('Diamantino'),('Esperança'),('Fátima'),('Floresta'),('Interventoria'),('Jutaí'),('Liberdade'),
+('Livramento'),('Maicá'),('Maracanã'),('Mapiri'),('Mararu'),('Matinha'),('Nova República'),('Novo Horizonte'),
+('Pérola do Maicá'),('Prainha'),('Santarenzinho'),('Santíssimo'),('Santo André'),('São Cristóvão'),('São Francisco'),
+('São José Operário'),('Uruará'),('Urumari'),('Outro / informar')
+on conflict(name,city,state) do nothing;
+
+-- Bootstrap do primeiro admin: crie usuário em Authentication > Users e execute:
+-- update public.profiles set role='admin' where id='UUID-DO-ADMIN';
