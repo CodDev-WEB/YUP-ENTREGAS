@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#176b43">
+<meta name="description" content="Gestão de entregas e frota YUP Store">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+<title>YUP-ENTREGAS | Gestão de Frota</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">Y</div><div><strong>YUP-ENTREGAS</strong><small>Gestão de entregas e frota</small></div></div>
+  <span class="status-pill"><i></i> Protótipo operacional</span>
+</header>
+<main class="layout">
+  <aside class="sidebar">
+    <p class="eyebrow">OPERAÇÃO</p>
+    <button class="nav active" data-view="entregador">▣ <span>Entregador</span></button>
+    <button class="nav" data-view="painel">▦ <span>Painel da frota</span></button>
+    <button class="nav" data-view="combustivel">◉ <span>Combustível</span></button>
+    <button class="nav" data-view="manutencao">⚙ <span>Manutenção</span></button>
+    <div class="side-note"><strong>YUP Store</strong><p>Santarém — Pará</p><small>Dados deste protótipo ficam neste navegador.</small></div>
+  </aside>
+  <section class="content">
+    <div id="view-entregador" class="view">
+      <div class="page-heading"><div><p class="eyebrow">CENTRAL DO ENTREGADOR</p><h1>Jornada e entregas</h1><p>Registre cada etapa para manter a linha do tempo da operação.</p></div><span id="journeyBadge" class="badge">Jornada não iniciada</span></div>
+      <div class="metrics">
+        <article class="metric"><span>Paradas cadastradas</span><strong id="metricStops">0</strong></article>
+        <article class="metric"><span>Entregas concluídas</span><strong id="metricDone">0</strong></article>
+        <article class="metric"><span>KM da jornada</span><strong id="metricKm">—</strong></article>
+      </div>
+      <article class="panel">
+        <div class="panel-title"><div><h2>1. Identificação da jornada</h2><p>Preencha antes de sair para a primeira entrega.</p></div></div>
+        <form id="journeyForm" class="form-grid">
+          <label>Nº de cadastro do entregador<input id="driverId" required placeholder="Ex.: YUP-001"></label>
+          <label>Veículo / identificação<input id="vehicle" required placeholder="Ex.: Moto 01 / placa"></label>
+          <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required placeholder="Ex.: 24580"></label>
+          <div class="form-action"><button class="button primary" id="startJourney" type="submit">Iniciar jornada</button><button class="button danger hidden" id="finishJourney" type="button">Finalizar jornada</button></div>
+        </form>
+        <p class="hint">Horários são registrados pelo navegador neste protótipo. Na versão de produção, o servidor será a fonte oficial de horário.</p>
+      </article>
+      <article class="panel">
+        <div class="panel-title"><div><h2>2. Adicionar entrega</h2><p>Cadastre a ordem e o endereço de cada cliente.</p></div></div>
+        <form id="deliveryForm" class="form-grid">
+          <label>Nº da ordem<input id="orderNo" required placeholder="Ex.: 1042"></label>
+          <label>Bairro<select id="neighborhood" required><option value="">Selecione o bairro</option></select></label>
+          <label class="wide">Endereço completo<input id="address" required placeholder="Rua/avenida, número, complemento"></label>
+          <label>Referência (opcional)<input id="reference" placeholder="Ponto de referência"></label>
+          <label>Prioridade<select id="priority"><option>Normal</option><option>Alta</option><option>Agendada</option></select></label>
+          <label class="wide">Localização compartilhada / link do WhatsApp (opcional)<input id="mapLink" type="url" placeholder="Cole o link do mapa ou localização"></label>
+          <div class="form-action wide"><button class="button primary" type="submit">＋ Adicionar entrega à rota</button><button class="button secondary" id="pasteLocation" type="button">Usar localização atual do aparelho</button></div>
+        </form>
+        <p class="hint">A localização do aparelho exige permissão do usuário e HTTPS. Para WhatsApp, use Compartilhar localização ou copie o link e cole acima.</p>
+      </article>
+      <article class="panel">
+        <div class="panel-title"><div><h2>3. Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button></div>
+        <div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div>
+      </article>
+    </div>
+    <div id="view-painel" class="view hidden">
+      <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Resumo dos registros salvos neste dispositivo.</p></div></div>
+      <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
+      <article class="panel"><h2>Histórico de jornadas</h2><div id="journeyHistory" class="table-wrap"></div></article>
+      <p class="warning">Aviso: os dados são locais e não são compartilhados com outros usuários ou dispositivos.</p>
+    </div>
+    <div id="view-combustivel" class="view hidden">
+      <div class="page-heading"><div><p class="eyebrow">CUSTOS DA FROTA</p><h1>Controle de combustível</h1><p>Registre abastecimentos e acompanhe custo por quilômetro quando houver odômetros válidos.</p></div></div>
+      <article class="panel"><form id="fuelForm" class="form-grid">
+        <label>Veículo<input id="fuelVehicle" required placeholder="Moto 01 / placa"></label><label>Data e hora<input id="fuelDate" type="datetime-local" required></label>
+        <label>Odômetro (km)<input id="fuelOdo" type="number" min="0" step="0.1" required></label><label>Litros abastecidos<input id="fuelLiters" type="number" min="0.01" step="0.01" required></label>
+        <label>Valor total (R$)<input id="fuelCost" type="number" min="0" step="0.01" required></label><label>Posto / observação<input id="fuelNote" placeholder="Opcional"></label>
+        <div class="form-action wide"><button class="button primary" type="submit">Salvar abastecimento</button></div>
+      </form></article>
+      <div class="metrics"><article class="metric"><span>Total abastecido</span><strong id="fuelTotalLiters">0 L</strong></article><article class="metric"><span>Gasto registrado</span><strong id="fuelTotalCost">R$ 0,00</strong></article><article class="metric"><span>Preço médio/L</span><strong id="fuelAverage">—</strong></article></div>
+      <article class="panel"><h2>Histórico de abastecimentos</h2><div id="fuelHistory" class="table-wrap"></div></article>
+    </div>
+    <div id="view-manutencao" class="view hidden">
+      <div class="page-heading"><div><p class="eyebrow">DISPONIBILIDADE DOS VEÍCULOS</p><h1>Manutenção e despesas</h1><p>Controle pneus, alinhamento, balanceamento, cabos, óleo e outros serviços.</p></div></div>
+      <article class="panel"><form id="maintenanceForm" class="form-grid">
+        <label>Veículo<input id="maintVehicle" required placeholder="Moto 01 / placa"></label><label>Data<input id="maintDate" type="date" required></label>
+        <label>Tipo de serviço<select id="maintType"><option>Pneu</option><option>Alinhamento</option><option>Balanceamento</option><option>Óleo e filtros</option><option>Cabos</option><option>Freios</option><option>Revisão geral</option><option>Outro</option></select></label>
+        <label>Odômetro (km)<input id="maintOdo" type="number" min="0" step="0.1" placeholder="Opcional"></label>
+        <label>Valor (R$)<input id="maintCost" type="number" min="0" step="0.01" required></label><label>Descrição / oficina<input id="maintDescription" placeholder="Peças, oficina ou detalhes"></label>
+        <div class="form-action wide"><button class="button primary" type="submit">Registrar manutenção</button></div>
+      </form></article>
+      <article class="panel"><h2>Histórico de manutenção</h2><div id="maintenanceHistory" class="table-wrap"></div></article>
+    </div>
+    <footer>YUP-ENTREGAS · MVP inicial · Não utilize dados reais de clientes antes da implantação segura.</footer>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
