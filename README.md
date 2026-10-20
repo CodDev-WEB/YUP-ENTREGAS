@@ -19,7 +19,7 @@ Sistema centralizado de gestão de entregas e monitoramento da frota da YUP Stor
 ## Estado atual
 O repositório contém o protótipo frontend e a fundação de integração com Supabase: esquema PostgreSQL, políticas RLS, configuração pública de cliente, autenticação e assinatura Realtime. Ainda é necessário configurar o projeto Supabase real e migrar os formulários operacionais.
 
-**Ainda não está pronto para operação real:** os formulários de jornada, entrega, combustível e manutenção continuam salvando no `localStorage`; ainda não gravam no PostgreSQL nem sincronizam entre dispositivos. Configure o Supabase, aplique o esquema, crie as contas e migre os formulários antes de registrar dados reais.
+**Estado desta etapa:** jornadas e entregas foram migradas para leitura e gravação no Supabase, usando a sessão autenticada e as políticas RLS. Combustível e manutenção continuam em armazenamento local e não sincronizam. Antes de operar, aplique `supabase/migrations/20261020_operations_hardening.sql`, cadastre os perfis de entregadores vinculados a `drivers.profile_id` e os veículos, teste as contas separadamente e confirme os registros no banco. O portal por código ainda não autentica entregadores; eles precisam usar a sessão Supabase no painel até essa etapa ser implementada.
 
 ## Documentação
 Consulte [docs/ARQUITETURA-MVP.md](docs/ARQUITETURA-MVP.md) para arquitetura, papéis, indicadores, modelo de dados, segurança e sequência de implementação.
@@ -41,8 +41,8 @@ Abra `index.html` em um navegador ou publique os arquivos em hospedagem estátic
 2. Criar as contas do administrador e dos dois entregadores e validar as políticas RLS.
 3. Migrar os formulários de `localStorage` para PostgreSQL.
 4. Conectar o painel ao Realtime e testar sincronização entre os dispositivos.
-5. Implementar fila offline idempotente e relatórios consolidados.
-6. Concluir testes de segurança, backups, implantação e monitoramento.
+7. Implementar fila offline idempotente e relatórios consolidados.
+8. Concluir testes de segurança, backups, implantação e monitoramento.
 
 ## Privacidade
 Não use dados reais de clientes neste protótipo. O armazenamento local não é adequado como banco oficial de produção.
