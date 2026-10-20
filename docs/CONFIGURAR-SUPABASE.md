@@ -7,7 +7,7 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 1. Crie um projeto em https://supabase.com e escolha a região mais próxima disponível.
 2. O plano gratuito tem limites e pode pausar projetos inativos; confirme os limites atuais antes de usar em operação.
 3. Em Project Settings > API, copie Project URL e chave pública anon/publishable. Não copie service_role.
-4. Copie supabase-config.js.example para supabase-config.js e preencha os valores. O arquivo real será ignorado pelo Git.
+4. Edite supabase-config.js no repositório com a Project URL e a chave pública anon/publishable. Esses valores são destinados ao navegador e podem estar no código público; a segurança depende de Auth e RLS. Nunca inclua service_role.
 
 ## 2. Aplicar o banco
 1. Abra SQL Editor no Supabase.
@@ -23,7 +23,8 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 4. Novos perfis começam como driver. Nunca permita que o usuário escolha ou altere o próprio papel.
 
 ## 4. Configuração e segurança
-- supabase-config.js.example é o modelo; o arquivo preenchido não deve ser versionado.
+- supabase-config.js contém apenas URL e chave pública anon/publishable, que são destinadas ao cliente. O projeto deve ter RLS em todas as tabelas expostas.
+- Nunca exponha service_role, senha do banco, tokens privados ou credenciais de usuários.
 - supabase-client.js oferece conexão, login, leitura do perfil, logout e assinatura Realtime.
 - Nunca exponha service_role, senha do banco, tokens privados ou credenciais de usuários.
 - O SDK é carregado por CDN e requer conexão no primeiro carregamento.
@@ -31,7 +32,7 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 - RLS é a barreira real de autorização; esconder botões na interface não substitui políticas no banco.
 
 ## 5. Publicação gratuita
-O código fica no GitHub. Para servir a interface, escolha hospedagem estática gratuita compatível com o uso pretendido e configure HTTPS. Não presuma que GitHub Pages é apropriado para um serviço comercial/SaaS. Não publique dados operacionais no repositório.
+O código fica no GitHub. A configuração pública do Supabase também precisa estar presente no deploy. Para servir a interface, escolha hospedagem estática gratuita compatível com o uso pretendido e configure HTTPS. Não presuma que GitHub Pages é apropriado para um serviço comercial/SaaS. Não publique dados operacionais no repositório.
 
 ## Próxima etapa
 Migrar os formulários de jornada, entrega, combustível e manutenção de localStorage para PostgreSQL; associar as jornadas ao usuário autenticado; implementar fila offline idempotente; testar sincronização entre dois navegadores e completar o painel ao vivo. Até isso ser concluído, o aplicativo não está pronto para dados reais.
