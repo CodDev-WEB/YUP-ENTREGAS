@@ -1,5 +1,9 @@
 # Publicar o YUP-ENTREGAS gratuitamente
 
+**URL informada como publicada:** https://yup-entregas.jordano-19-silva.workers.dev
+
+O endereço acima usa o domínio `workers.dev` (Cloudflare Workers). O guia abaixo descreve uma alternativa de publicação por Cloudflare Pages; ela não é necessária se o Worker atual já estiver funcionando e for o método de implantação escolhido.
+
 Este projeto é um site estático (HTML, CSS e JavaScript), então pode ser publicado no **Cloudflare Pages** com integração ao GitHub. A cada envio de alterações para a branch `main`, o Cloudflare poderá publicar a versão atual automaticamente.
 
 > **Importante:** o endereço público só será criado depois que alguém com acesso à conta conectar o repositório ao Cloudflare e concluir o primeiro deploy. Não invente nem divulgue um endereço antes de ele aparecer no painel.
