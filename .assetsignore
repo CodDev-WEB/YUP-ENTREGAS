@@ -1,0 +1,9 @@
+.git/
+.wrangler/
+node_modules/
+docs/
+supabase/
+.github/
+wrangler.jsonc
+.gitignore
+.assetsignore
