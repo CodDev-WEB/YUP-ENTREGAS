@@ -7,9 +7,11 @@
     "directory": ".",
     "not_found_handling": "none",
     "html_handling": "none",
-    "run_worker_first": true
+    "run_worker_first": true,
+    "binding": "ASSETS"
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "main": "_worker.js"
 }
