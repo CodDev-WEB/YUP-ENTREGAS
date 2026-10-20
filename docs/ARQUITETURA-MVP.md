@@ -79,5 +79,7 @@ O MVP pode abrir o Google Maps com paradas informadas. Otimização real exige c
 6. Integração de geocodificação e rotas.
 7. Testes, segurança, implantação e monitoramento.
 
-## Limites da versão atual
-O frontend atual salva no localStorage do navegador e não tem backend, autenticação real, sincronização entre aparelhos ou otimização de rotas. Não é adequado para operação real até completar essas etapas.
+## Estado da implementação e limites
+O repositório agora inclui esquema Supabase/PostgreSQL com RLS, autenticação por e-mail/senha no adaptador do navegador, perfis admin/manager/driver e assinaturas Realtime para jornadas, entregas e eventos. A tela de acesso aplica restrições de navegação por perfil.
+
+Os formulários operacionais ainda usam localStorage e não enviam dados para o banco; a sincronização em tempo real está preparada no adaptador, mas ainda não foi ligada às telas. A fila offline idempotente, validação de transições no servidor e testes de ponta a ponta permanecem pendentes. Não usar dados reais até completar e validar essas etapas.
