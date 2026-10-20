@@ -1,5 +1,5 @@
 const $ = id => document.getElementById(id);
-const STORAGE_KEY = "yup-entregas-prototype-v1";
+const STORAGE_KEY = "yup-entregas-prototype-v1:" + (window.YupBackend?.profile?.id || "unauthenticated");
 const neighborhoods = ["Aeroporto Velho","Área Verde","Aldeia","Amparo","Aparecida","Boa Esperança","Caranazal","Centro","Conquista","Diamantino","Esperança","Fátima","Floresta","Interventoria","Jutaí","Liberdade","Livramento","Maicá","Maracanã","Mapiri","Mararu","Matinha","Nova República","Novo Horizonte","Pérola do Maicá","Prainha","Santarenzinho","Santíssimo","Santo André","São Cristóvão","São Francisco","São José Operário","Uruará","Urumari","Outro / informar"];
 let state = loadState();
 let currentJourney = state.currentJourney || null;
