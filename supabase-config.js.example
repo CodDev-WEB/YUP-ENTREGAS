@@ -1,0 +1,6 @@
+// Copie para supabase-config.js e preencha com Project URL e chave pública (anon/publishable).
+// NUNCA coloque service_role, senha do banco ou chave privada no navegador.
+window.YUP_SUPABASE_CONFIG = {
+  url: "https://SEU-PROJETO.supabase.co",
+  anonKey: "SUA_CHAVE_PUBLICA_ANON_OU_PUBLISHABLE"
+};
