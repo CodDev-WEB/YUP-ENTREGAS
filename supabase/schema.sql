@@ -150,7 +150,7 @@ with check(actor_profile_id=(select auth.uid()) and exists(select 1 from public.
 
 create policy fuel_read_owner_or_management on public.fuel_entries for select to authenticated
 using(public.current_app_role() in ('admin','manager') or exists(select 1 from public.journeys j join public.drivers d on d.id=j.driver_id where j.id=fuel_entries.journey_id and d.profile_id=(select auth.uid())));
-create policy fuel_insert_self_or_admin on public.fuel_entries for insert to authenticated with check(created_by=(select auth.uid()) and public.is_active_user());
+create policy fuel_insert_self_or_admin on public.fuel_entries for insert to authenticated with check(created_by=(select auth.uid()) and public.is_active_user() and (public.current_app_role()='admin' or exists(select 1 from public.journeys j join public.drivers d on d.id=j.driver_id where j.id=fuel_entries.journey_id and j.vehicle_id=fuel_entries.vehicle_id and d.profile_id=(select auth.uid()))));
 create policy fuel_admin_manage on public.fuel_entries for all to authenticated using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
 create policy maintenance_read_management on public.maintenance_entries for select to authenticated using(public.current_app_role() in ('admin','manager'));
 create policy maintenance_admin_manage on public.maintenance_entries for all to authenticated using(public.current_app_role()='admin') with check(public.current_app_role()='admin');
