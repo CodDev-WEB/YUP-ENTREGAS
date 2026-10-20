@@ -7,3 +7,4 @@ supabase/
 wrangler.jsonc
 .gitignore
 .assetsignore
+_worker.js
