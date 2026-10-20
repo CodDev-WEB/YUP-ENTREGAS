@@ -24,6 +24,9 @@ O repositório contém o protótipo frontend inicial e a fundação técnica de 
 ## Documentação
 Consulte [docs/ARQUITETURA-MVP.md](docs/ARQUITETURA-MVP.md) para arquitetura, papéis, indicadores, modelo de dados, segurança e sequência de implementação.
 
+## Publicar e acessar pela internet
+Consulte [docs/PUBLICAR-CLOUDFLARE-PAGES.md](docs/PUBLICAR-CLOUDFLARE-PAGES.md) para publicar gratuitamente via Cloudflare Pages conectado ao GitHub. O endereço público ainda precisa ser criado no painel do Cloudflare; após o primeiro deploy, copie a URL gerada para esta seção. A publicação do frontend, por si só, não habilita a integração operacional com o Supabase.
+
 ## Executar protótipo
 Abra `index.html` em um navegador ou publique os arquivos em hospedagem estática. Para testar PWA/service worker, use HTTPS ou localhost.
 
