@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yup-entregas",
+  "compatibility_date": "2026-10-20",
+  "workers_dev": true,
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "none",
+    "html_handling": "auto-trailing-slash",
+    "exclude": [
+      ".git",
+      ".wrangler",
+      "node_modules",
+      "docs",
+      "supabase",
+      ".github"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}
