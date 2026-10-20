@@ -28,7 +28,7 @@
     $("authGate").classList.add("hidden");
     $("appLayout").classList.remove("hidden");
     $("logoutButton").classList.remove("hidden");
-    $("authIdentity").innerHTML = "<i></i> " + String(profile.display_name || profile.role) + " · " + String(profile.role);
+    $("authIdentity").textContent = (profile.display_name || profile.role) + " · " + profile.role;
     applyRole(profile);
     message("Acesso autenticado. Atenção: os formulários operacionais ainda são protótipo local, sem sincronização central; não registre dados reais.", "warning");
     if (!appLoaded) {
