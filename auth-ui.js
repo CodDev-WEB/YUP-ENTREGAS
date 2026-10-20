@@ -30,7 +30,7 @@
     $("logoutButton").classList.remove("hidden");
     $("authIdentity").textContent = (profile.display_name || profile.role) + " · " + profile.role;
     applyRole(profile);
-    message("Acesso autenticado. Atenção: os formulários operacionais ainda são protótipo local, sem sincronização central; não registre dados reais.", "warning");
+    message("Acesso autenticado. Jornadas e entregas usam Supabase; combustível e manutenção ainda são locais. Confira a migração de segurança e os cadastros antes do uso operacional.", "warning");
     if (!appLoaded) {
       appLoaded = true;
       const script = document.createElement("script");
