@@ -4,7 +4,7 @@
 Sistema centralizado de gestão de entregas e frota da YUP Store, inicialmente para Santarém–PA. O produto terá duas áreas autenticadas: PWA do entregador e painel administrativo web.
 
 ## Armazenamento definido para o MVP
-O MVP foi direcionado para Google Planilhas como armazenamento central e Google Apps Script como API, sem Supabase, por ser uma operação inicial de dois entregadores e priorizar serviços gratuitos. A API ainda precisa ser implantada e conectada ao frontend; não considerar sincronização ativa até testes confirmarem gravação e leitura entre dispositivos.
+O backend escolhido é Supabase: PostgreSQL como banco central, Supabase Auth para autenticação, RLS para autorização por perfil e Realtime para atualizações operacionais. O esquema inicial está em `supabase/schema.sql`. O projeto Supabase real ainda precisa ser configurado e os formulários do frontend migrados de `localStorage`; não considerar sincronização ativa até validar leitura e gravação entre dispositivos.
 
 ## Regra central
 O servidor é a fonte oficial dos dados. O navegador pode manter uma fila temporária de eventos offline, mas não é o banco oficial. Todo evento sincronizado deve ter identificador único, usuário/veículo/jornada relacionados, horário do dispositivo, horário de recebimento do servidor e estado de sincronização.
