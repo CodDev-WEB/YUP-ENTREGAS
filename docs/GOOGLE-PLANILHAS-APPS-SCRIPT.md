@@ -33,10 +33,10 @@ Execute manualmente `setupYupDatabase` no editor e autorize as permissões solic
 
 ## 3. Criar contas dos dois entregadores
 
-1. No arquivo `Code.gs`, edite a função `createConfiguredUser` com e-mail, senha forte, nome e perfil `driver`.
-2. Defina `driverId` diferente para cada entregador (por exemplo, `YUP-001` e `YUP-002`).
-3. Execute a função manualmente para cada conta, alterando os valores entre execuções.
-4. Depois, neutralize os valores no código e salve. Não publique senhas em repositórios públicos.
+1. Nas Script Properties, configure `NEW_USER_EMAIL`, `NEW_USER_PASSWORD` (mínimo 12 caracteres), `NEW_USER_NAME`, `NEW_USER_ROLE=driver` e `NEW_USER_DRIVER_ID`.
+2. Use identificadores diferentes para os entregadores (por exemplo, `YUP-001` e `YUP-002`).
+3. Execute `createConfiguredUser` manualmente. O script remove a propriedade da senha após a criação.
+4. Repita para a segunda conta, trocando as propriedades. Não grave senhas no código ou no repositório.
 
 O perfil `admin` administra o sistema; `manager` visualiza operações; `driver` é para o entregador. A associação entre entregador e registros será completada na integração do frontend.
 
