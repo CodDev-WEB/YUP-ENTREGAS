@@ -529,3 +529,11 @@ body:not(.driver-mode) .sidebar .nav span{font-size:10px;line-height:1.1;overflo
 body:not(.driver-mode) .sidebar .nav.active{background:#e6f4ec;border-color:#d7ecdf;color:#07543c}
 body:not(.driver-mode) .content{padding:17px 13px calc(100px + env(safe-area-inset-bottom))}
 }
+
+/* Wordmark and compact header inspired by the YUP reference */
+.brand-mark.brand-wordmark{width:auto;height:auto;min-width:0;padding:0;background:transparent;box-shadow:none;border-radius:0;color:#087d50;font-size:29px;font-weight:950;letter-spacing:-.075em;line-height:1}
+.brand-divider{width:1px;height:24px;background:#e0e9e3;margin:0 1px 0 2px}
+.brand-context{min-width:0}
+.brand-context strong{font-size:10px;letter-spacing:.04em;color:#75827a;font-weight:850}
+.brand-context small{font-size:10px;color:#89958e}
+@media(max-width:520px){.brand-mark.brand-wordmark{font-size:27px}.brand-divider{height:21px}.brand-context strong{font-size:9px}.brand-context small{display:none}}
