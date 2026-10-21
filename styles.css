@@ -1860,3 +1860,16 @@ button[aria-busy="true"]{opacity:.72;cursor:progress;pointer-events:none}
  .route-plan-actions .button{width:100%}
  .route-stop-editor{padding:12px}
 }
+
+
+/* Painel de frota: filtros responsivos e exportações do histórico */
+.fleet-filters{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px;margin:16px 0}
+.fleet-filters label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:#44534b}
+.fleet-filters input,.fleet-filters select{width:100%;min-width:0;min-height:42px;padding:9px 10px;border:1px solid #d5dfd9;border-radius:10px;background:#fff;color:#20332a;font:inherit}
+.fleet-export-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.fleet-export-actions .button{min-height:40px}
+#journeyHistory table{min-width:1120px}
+#journeyHistory td{max-width:320px;white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+#fleetConsumptionNote{display:block;margin-top:8px;font-weight:400;line-height:1.4}
+@media(max-width:900px){.fleet-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.fleet-filters{grid-template-columns:1fr}.fleet-export-actions{display:grid;grid-template-columns:1fr}.fleet-export-actions .button{width:100%}}
