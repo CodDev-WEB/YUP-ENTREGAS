@@ -456,6 +456,7 @@ function renderDriverExperience(){
  content.innerHTML=driverScreenMarkup();
  root.classList.toggle("driver-home-mode",driverScreen==="start");
  root.classList.toggle("has-fixed-driver-dock",true);
+ ["start","route","new","detail","occurrence","summary"].forEach(screen=>root.classList.toggle("driver-screen-"+screen,driverScreen===screen));
  const stops=driverStops(),nextStop=driverNext(),selected=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||nextStop;
  const actionButton=(label,icon,attrs,extra="")=>'<button type="button" class="driver-dock-action '+extra+'" '+attrs+'><span class="driver-dock-icon">'+icon+'</span><span>'+label+'</span></button>';
  if(driverScreen==="start"||!currentJourney){
