@@ -1605,3 +1605,136 @@ body.driver-mode #driverExperience .driver-quiet { padding:12px!important; }
  body.driver-mode #driverExperience .driver-stats strong { font-size:22px!important; }
  body.driver-mode #driverExperience .driver-stats span { font-size:9px!important; }
 }
+
+/* YUP Entregas — Tela 2: jornada ativa, alinhada ao sistema visual da Tela 1 e à composição do Figma */
+body.driver-mode #driverExperience .driver-screen-content:has(.driver-status-row) {
+ width:100%!important; max-width:760px!important; min-width:0!important;
+ margin:0 auto!important; padding:22px 20px calc(28px + env(safe-area-inset-bottom))!important;
+ overflow-x:hidden!important; overflow-y:auto!important;
+}
+body.driver-mode #driverExperience .driver-status-row {
+ display:grid!important; grid-template-columns:minmax(0,1fr) auto!important; align-items:start!important;
+ gap:12px!important; width:100%!important; min-width:0!important;
+}
+body.driver-mode #driverExperience .driver-status-row > * { min-width:0!important; }
+body.driver-mode #driverExperience .driver-status-row .driver-kicker {
+ margin:0 0 8px!important; color:#287f92!important; font-size:10px!important;
+ font-weight:850!important; letter-spacing:.12em!important; line-height:1.45!important;
+}
+body.driver-mode #driverExperience .driver-status-row h1 {
+ margin:0!important; color:#202a31!important; font-size:clamp(27px,7vw,34px)!important;
+ line-height:1.06!important; letter-spacing:-.045em!important; overflow-wrap:normal!important;
+}
+body.driver-mode #driverExperience .driver-status-row .driver-state {
+ display:inline-flex!important; align-items:center!important; justify-content:center!important;
+ max-width:100%!important; margin:20px 0 0!important; padding:8px 11px!important;
+ border-radius:999px!important; background:#eaf7f9!important; color:#286879!important;
+ font-size:11px!important; font-weight:750!important; line-height:1.25!important; white-space:nowrap!important;
+}
+body.driver-mode #driverExperience .driver-vehicle-line {
+ display:flex!important; align-items:flex-start!important; width:100%!important; min-width:0!important;
+ margin:14px 0 20px!important; color:#667078!important; font-size:12px!important; line-height:1.5!important;
+ overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-stats {
+ position:relative!important; display:grid!important; grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:12px!important; width:100%!important; min-width:0!important; margin:0 0 25px!important;
+ padding:18px 18px 42px!important; border:0!important; border-radius:19px!important;
+ background:#225640!important; color:#fff!important; overflow:hidden!important;
+}
+body.driver-mode #driverExperience .driver-stats > div:not(.driver-progress) {
+ display:flex!important; flex-direction:column!important; align-items:flex-start!important; gap:4px!important; min-width:0!important;
+}
+body.driver-mode #driverExperience .driver-stats strong {
+ color:#fff!important; font-size:clamp(22px,6vw,29px)!important; font-weight:850!important;
+ line-height:1.05!important; letter-spacing:-.035em!important; white-space:normal!important;
+}
+body.driver-mode #driverExperience .driver-stats span {
+ color:#c5ddd1!important; font-size:10px!important; line-height:1.35!important; overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-progress {
+ position:absolute!important; left:18px!important; right:18px!important; bottom:27px!important;
+ height:4px!important; margin:0!important; border-radius:99px!important; background:#477762!important; overflow:hidden!important;
+}
+body.driver-mode #driverExperience .driver-progress i {
+ display:block!important; height:100%!important; max-width:100%!important; border-radius:inherit!important; background:#fcde52!important;
+}
+body.driver-mode #driverExperience .driver-stats > small {
+ position:absolute!important; left:18px!important; right:18px!important; bottom:9px!important;
+ color:#c5ddd1!important; font-size:10px!important; line-height:1.3!important; white-space:normal!important;
+}
+body.driver-mode #driverExperience .driver-section-heading {
+ display:flex!important; align-items:baseline!important; justify-content:space-between!important; flex-wrap:wrap!important;
+ gap:5px 12px!important; width:100%!important; margin:0 0 12px!important;
+}
+body.driver-mode #driverExperience .driver-section-heading h2 {
+ margin:0!important; color:#202a31!important; font-size:17px!important; font-weight:800!important; line-height:1.3!important;
+}
+body.driver-mode #driverExperience .driver-section-heading > span {
+ color:#78837d!important; font-size:11px!important; line-height:1.4!important;
+}
+body.driver-mode #driverExperience .driver-stop-list { display:grid!important; gap:10px!important; width:100%!important; min-width:0!important; }
+body.driver-mode #driverExperience .driver-stop {
+ display:grid!important; grid-template-columns:38px minmax(0,1fr) 14px!important; align-items:center!important;
+ gap:11px!important; width:100%!important; min-width:0!important; max-width:100%!important;
+ min-height:83px!important; margin:0!important; padding:14px!important; border:1px solid #edf0ed!important;
+ border-radius:16px!important; background:#fff!important; color:#202a31!important; text-align:left!important;
+ box-shadow:0 2px 8px rgba(32,42,49,.035)!important;
+}
+body.driver-mode #driverExperience .driver-stop.is-next {
+ border:1.5px solid #55bbd1!important; background:#fbfeff!important;
+ box-shadow:0 3px 12px rgba(85,187,209,.10)!important;
+}
+body.driver-mode #driverExperience .driver-stop-number {
+ display:grid!important; place-items:center!important; width:36px!important; height:36px!important; min-width:36px!important;
+ border-radius:11px!important; background:#e8f4ed!important; color:#087b4e!important;
+ font-size:13px!important; font-weight:850!important;
+}
+body.driver-mode #driverExperience .driver-stop.is-next .driver-stop-number { background:#087b4e!important; color:#fff!important; }
+body.driver-mode #driverExperience .driver-stop-copy {
+ display:flex!important; flex-direction:column!important; align-items:flex-start!important; gap:4px!important;
+ min-width:0!important; width:100%!important; overflow:hidden!important;
+}
+body.driver-mode #driverExperience .driver-stop-copy strong {
+ display:block!important; width:100%!important; color:#202a31!important; font-size:14px!important;
+ font-weight:800!important; line-height:1.35!important; overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-stop-copy small {
+ display:block!important; width:100%!important; color:#667078!important; font-size:12px!important;
+ font-weight:450!important; line-height:1.4!important; overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-stop-copy em {
+ display:inline-flex!important; max-width:100%!important; margin-top:2px!important; padding:4px 8px!important;
+ border-radius:99px!important; background:#f2f5f2!important; color:#667078!important;
+ font-size:10px!important; font-style:normal!important; line-height:1.25!important; overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-stop-copy em.success { background:#e7f4ed!important; color:#087b4e!important; }
+body.driver-mode #driverExperience .driver-stop-copy em.warning { background:#fff0e8!important; color:#a34b35!important; }
+body.driver-mode #driverExperience .driver-stop-arrow { justify-self:end!important; color:#8a9690!important; font-size:22px!important; }
+body.driver-mode #driverExperience .driver-empty {
+ width:100%!important; margin:0!important; padding:22px 16px!important; border:1px dashed #dfe7e1!important;
+ border-radius:16px!important; background:#fff!important; color:#7b8780!important;
+ font-size:13px!important; line-height:1.55!important; text-align:center!important;
+}
+body.driver-mode #driverExperience .driver-outline {
+ display:flex!important; align-items:center!important; justify-content:center!important; gap:8px!important;
+ width:100%!important; min-height:52px!important; margin:12px 0 0!important; padding:12px 14px!important;
+ border:1.5px solid #55bbd1!important; border-radius:13px!important; background:#fff!important;
+ color:#286879!important; font-size:14px!important; font-weight:800!important; text-align:center!important;
+ white-space:normal!important;
+}
+body.driver-mode #driverExperience .driver-quiet {
+ display:flex!important; align-items:center!important; justify-content:center!important; width:100%!important;
+ min-height:46px!important; margin:4px 0 0!important; padding:12px!important; border:0!important;
+ background:transparent!important; color:#77827b!important; font-size:13px!important; font-weight:750!important;
+}
+@media(max-width:380px) {
+ body.driver-mode #driverExperience .driver-screen-content:has(.driver-status-row) { padding-left:14px!important; padding-right:14px!important; }
+ body.driver-mode #driverExperience .driver-status-row { grid-template-columns:minmax(0,1fr)!important; gap:8px!important; }
+ body.driver-mode #driverExperience .driver-status-row .driver-state { margin:0!important; justify-self:start!important; }
+ body.driver-mode #driverExperience .driver-stats { gap:7px!important; padding:15px 12px 42px!important; }
+ body.driver-mode #driverExperience .driver-stats strong { font-size:22px!important; }
+ body.driver-mode #driverExperience .driver-stats span { font-size:9px!important; }
+ body.driver-mode #driverExperience .driver-stop { grid-template-columns:34px minmax(0,1fr) 10px!important; gap:8px!important; padding:11px!important; }
+ body.driver-mode #driverExperience .driver-stop-number { width:32px!important; height:32px!important; min-width:32px!important; }
+}
