@@ -6,7 +6,7 @@ const ASSETS = [
   "./entregador.html",
   "./driver-access.js",
   "./styles.css",
-  "./styles.css?v=49",
+  "./styles.css?v=50",
   "./app.js",
   "./manifest.webmanifest",
   "./pwa-icon.svg",
