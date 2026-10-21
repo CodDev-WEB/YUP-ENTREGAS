@@ -1787,3 +1787,6 @@ body.driver-mode #driverExperience .driver-status-row .driver-state{margin:20px 
 .driver-top .driver-logout{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid #dce6df;border-radius:10px;background:#fff;color:#225640;font:700 12px/1 inherit;cursor:pointer;white-space:nowrap}
 .driver-top .driver-logout:active{background:#f4f8f5}
 .driver-top .driver-logout:disabled{opacity:.65;cursor:wait}
+
+/* Campos de texto do entregador: padrão de digitação em maiúsculas */
+body.driver-mode #driverExperience .driver-form input:not([type="number"]):not([type="url"]):not([type="radio"]):not([type="checkbox"]),body.driver-mode #driverExperience .driver-form textarea{ text-transform:uppercase; }
