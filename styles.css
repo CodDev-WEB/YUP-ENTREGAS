@@ -1800,3 +1800,20 @@ body.driver-mode #driverExperience.driver-screen-detail #driverScreenContent .dr
 body.driver-mode #driverExperience.driver-screen-occurrence #driverScreenContent .driver-quiet[data-driver-screen="detail"],
 body.driver-mode #driverExperience.driver-screen-occurrence #driverScreenContent #driverOccurrenceForm > .driver-primary[type="submit"],
 body.driver-mode #driverExperience.driver-screen-summary #driverScreenContent #driverFinishForm > .driver-primary[type="submit"]{display:none!important}
+
+
+/* Barra fixa do entregador: ações distribuídas e centralizadas no eixo da página */
+body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primary)) {
+ justify-content:center!important;
+ align-items:stretch!important;
+ overflow-x:hidden!important;
+}
+body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primary)) > .driver-dock-action {
+ flex:1 1 0!important;
+ min-width:0!important;
+ max-width:112px!important;
+ margin-inline:0!important;
+}
+body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primary)) > .driver-dock-action > span:last-child {
+ text-align:center!important;
+}
