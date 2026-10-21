@@ -62,7 +62,7 @@
   }
   async function listVehicles() {
     const client = await requireReady();
-    const {data,error} = await client.from("vehicles").select("id,code,plate,make_model,active").eq("active",true).order("code");
+    const {data,error} = await client.from("vehicles").select("id,code,plate,make_model,active").order("code");
     if (error) throw error;
     return data || [];
   }
