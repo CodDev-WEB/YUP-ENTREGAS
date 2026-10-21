@@ -1820,3 +1820,43 @@ body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primar
 
 /* Feedback imediato para ações em processamento */
 button[aria-busy="true"]{opacity:.72;cursor:progress;pointer-events:none}
+
+/* Rotas prontas — painel de preparação e atribuição */
+.route-editor-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:24px 0 14px}
+.route-editor-title h3{margin:0 0 4px;font-size:16px}
+.route-editor-title p{margin:0;color:var(--muted);font-size:12px}
+.route-plan-stops-editor{display:grid;gap:12px}
+.route-stop-editor{padding:16px;border:1px solid var(--line);border-radius:14px;background:#fbfcfb;display:grid;gap:13px}
+.route-stop-editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.route-stop-editor-head strong{font-size:13px}
+.route-stop-remove{border:0;background:transparent;color:#9a4b42;font-size:12px;font-weight:700;padding:6px 8px;cursor:pointer}
+.route-plan-actions{display:flex;justify-content:flex-end;margin-top:18px}
+#routePlanMessage{margin-top:12px}
+.route-plans-list{display:grid;gap:12px}
+.route-plan-card{border:1px solid var(--line);border-radius:15px;padding:17px;background:var(--surface)}
+.route-plan-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.route-plan-eyebrow{display:block;color:#738078;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.route-plan-card h3{font-size:16px;margin:0 0 5px}
+.route-plan-card p{margin:0;color:var(--muted);font-size:12px}
+.route-plan-status{display:inline-flex;align-items:center;white-space:nowrap;border-radius:999px;padding:6px 9px;background:#fff5d5;color:#795d05;font-size:11px;font-weight:750}
+.route-plan-status.is-active{background:#eaf6fa;color:#286879}
+.route-plan-status.is-done{background:#e8f5ec;color:#225640}
+.route-plan-card ol{display:grid;gap:10px;list-style:none;padding:0;margin:17px 0}
+.route-plan-card li{display:flex;align-items:flex-start;gap:10px}
+.route-plan-card li>span{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:8px;background:#f0f4f1;color:#225640;font-size:11px;font-weight:800}
+.route-plan-card li div{min-width:0;display:grid;gap:3px}
+.route-plan-card li strong{font-size:13px;overflow-wrap:anywhere}
+.route-plan-card li small{color:var(--muted);font-size:11px}
+.route-plan-date{border-top:1px solid var(--line);padding-top:12px!important;font-size:11px!important}
+.driver-ready-route-fields[hidden]{display:none!important}
+.driver-ready-route-fields{padding:13px;border:1px solid #dce8e0;border-radius:13px;background:#f8fbf9}
+.driver-route-preview{margin-top:10px;font-size:12px;color:#53645a}
+.driver-route-preview ol{display:grid;gap:6px;margin:8px 0 0;padding-left:22px}
+.driver-route-preview li{padding-left:3px}
+@media(max-width:600px){
+ .route-editor-title{align-items:flex-start;flex-direction:column}
+ .route-editor-title .button{width:100%}
+ .route-plan-card-head{flex-direction:column}
+ .route-plan-actions .button{width:100%}
+ .route-stop-editor{padding:12px}
+}
