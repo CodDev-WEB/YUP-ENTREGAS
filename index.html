@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#087d50">
 <meta name="description" content="Painel administrativo YUP-ENTREGAS">
 <link rel="manifest" href="manifest.webmanifest">
@@ -64,7 +67,8 @@
     <div id="view-painel" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Resumo dos registros salvos neste dispositivo.</p></div></div>
       <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
-      <article class="panel"><div class="panel-title"><div><h2>Histórico de jornadas</h2><p>Cada jornada recebe um número de ordem automático, sem digitação manual.</p></div><button class="button secondary" id="exportJourneyReport" type="button">Exportar relatório CSV</button></div><div id="journeyHistory" class="table-wrap"></div></article>\n      <article class="panel"><div class="panel-title"><div><h2>Linha do tempo da jornada</h2><p>Horários, pontos GPS e deslocamentos registrados pelo PWA.</p></div><label>Jornada<select id="timelineJourney"><option value="">Selecione uma jornada</option></select></label><button class="button secondary" id="loadTimeline" type="button">Atualizar linha do tempo</button></div><div id="journeyTimeline" class="table-wrap"><p class="hint">Selecione uma jornada para consultar os pontos registrados.</p></div></article>
+      <article class="panel"><div class="panel-title"><div><h2>Histórico de jornadas</h2><p>Cada jornada recebe um número de ordem automático, sem digitação manual.</p></div><button class="button secondary" id="exportJourneyReport" type="button">Exportar relatório CSV</button></div><div id="journeyHistory" class="table-wrap"></div></article>
+      <article class="panel"><div class="panel-title"><div><h2>Linha do tempo da jornada</h2><p>Horários, pontos GPS e deslocamentos registrados pelo PWA.</p></div><label>Jornada<select id="timelineJourney"><option value="">Selecione uma jornada</option></select></label><button class="button secondary" id="loadTimeline" type="button">Atualizar linha do tempo</button></div><div id="journeyTimeline" class="table-wrap"><p class="hint">Selecione uma jornada para consultar os pontos registrados.</p></div></article>
       <p class="warning">Aviso: os dados são locais e não são compartilhados com outros usuários ou dispositivos.</p>
     </div>
     <div id="view-combustivel" class="view hidden">
