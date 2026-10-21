@@ -3,7 +3,9 @@
   "short_name": "YUP Entregas",
   "description": "Gestão de entregas e frota da YUP Store",
   "start_url": "/",
-  "display": "standalone",\n  "orientation": "portrait-primary",\n  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
   "background_color": "#f3f6f4",
   "theme_color": "#087d50",
   "lang": "pt-BR"
