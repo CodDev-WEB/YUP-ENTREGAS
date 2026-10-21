@@ -253,3 +253,52 @@ footer{padding:14px 2px 26px;color:#8a958d;font-size:11px;line-height:1.6}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+
+/* Experiência de aplicativo para o entregador autenticado */
+body.driver-mode{background:#f3f6f4}
+body.driver-mode .topbar{height:68px;padding-inline:18px}
+body.driver-mode .layout{grid-template-columns:1fr;min-height:calc(100vh - 68px)}
+body.driver-mode .sidebar{display:flex;position:fixed;top:auto;bottom:0;left:0;right:0;z-index:50;
+  min-height:0;height:76px;flex-direction:row;align-items:stretch;justify-content:space-around;gap:4px;
+  padding:8px 10px max(8px,env(safe-area-inset-bottom));border-right:0;border-top:1px solid #e2e9e4;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(18px);box-shadow:0 -8px 28px rgba(20,48,31,.07)}
+body.driver-mode .sidebar>.eyebrow,body.driver-mode .side-note{display:none}
+body.driver-mode .sidebar .nav{display:flex;flex:1 1 0;width:auto;min-width:0;min-height:54px;
+  flex-direction:column;justify-content:center;gap:3px;padding:6px 3px;border-radius:13px;
+  color:#748178;font-size:10px;font-weight:700;text-align:center;white-space:normal}
+body.driver-mode .sidebar .nav.active{background:#e8f5ed;color:#176b43}
+body.driver-mode .sidebar .nav span{max-width:100%;font-size:10px;line-height:1.1;overflow:visible;text-overflow:clip}
+body.driver-mode .content{width:100%;max-width:760px;margin:0 auto;padding:20px 18px calc(100px + env(safe-area-inset-bottom))}
+body.driver-mode .warning{border-radius:14px}
+body.driver-mode #view-entregador .page-heading{padding:22px;margin:-4px -2px 18px;border-radius:22px;
+  background:linear-gradient(135deg,#176b43,#0e5133);color:#fff;box-shadow:0 12px 28px rgba(23,107,67,.17)}
+body.driver-mode #view-entregador .page-heading .eyebrow{color:#cce8d7}
+body.driver-mode #view-entregador .page-heading h1{font-size:clamp(25px,6vw,32px);letter-spacing:-.045em}
+body.driver-mode #view-entregador .page-heading p:not(.eyebrow){color:#e1f0e7}
+body.driver-mode #journeyBadge{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
+body.driver-mode .metrics{gap:10px}
+body.driver-mode .metric{border:1px solid #e6ece8;border-radius:16px;box-shadow:0 4px 14px rgba(21,45,30,.035)}
+body.driver-mode .metric strong{font-size:clamp(22px,6vw,29px)}
+body.driver-mode .panel{border:1px solid #e4ebe6;border-radius:18px;box-shadow:0 5px 18px rgba(21,45,30,.035)}
+body.driver-mode .panel-title h2{font-size:16px;letter-spacing:-.02em}
+body.driver-mode .form-grid{gap:15px}
+body.driver-mode .form-grid label{font-size:12px;font-weight:750;color:#425348}
+body.driver-mode .form-grid input,body.driver-mode .form-grid select,body.driver-mode .form-grid textarea{
+  min-height:50px;border-radius:13px;border-color:#dce5df;background:#fbfdfb;padding:12px 13px;font-size:15px}
+body.driver-mode .form-action .button{min-height:48px;border-radius:13px}
+body.driver-mode .delivery-card{border-radius:15px;border-color:#e2eae4;margin-bottom:10px;padding:14px}
+body.driver-mode .button{touch-action:manipulation}
+body.driver-mode button,body.driver-mode a{ -webkit-tap-highlight-color:transparent}
+@media(max-width:520px){
+ body.driver-mode .topbar{height:62px;padding:0 13px}
+ body.driver-mode .layout{min-height:calc(100vh - 62px)}
+ body.driver-mode .content{padding:14px 12px calc(98px + env(safe-area-inset-bottom))}
+ body.driver-mode #view-entregador .page-heading{padding:20px 17px;border-radius:19px}
+ body.driver-mode .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.driver-mode .metric:last-child{grid-column:1/-1}
+ body.driver-mode .panel{padding:17px 14px}
+ body.driver-mode .form-action{flex-direction:column}
+ body.driver-mode .form-action .button{width:100%}
+ body.driver-mode .sidebar{height:calc(72px + env(safe-area-inset-bottom));padding-bottom:max(8px,env(safe-area-inset-bottom))}
+}
