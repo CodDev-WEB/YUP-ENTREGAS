@@ -98,6 +98,31 @@ function mapLinkDestination(raw){
  if(isGoogleMaps)return {kind:"direct",url:url.href};
  return {kind:"text",value};
 }
+function deliveryDestination(delivery){
+ const parsed=mapLinkDestination(delivery.map_link);
+ if(parsed.kind==="coordinates")return parsed.value;
+ // Links curtos não podem ser usados como waypoints. Nesse caso, usamos o endereço cadastrado.
+ return [delivery.address,delivery.neighborhoods?.name,"Santarém, PA, Brasil"].filter(Boolean).join(", ");
+}
+function openGoogleRoute(items,startIndex=0){
+ const stops=items.slice(startIndex);
+ if(!stops.length)return notify("Cadastre pelo menos uma entrega para abrir a rota.");
+ // Google Maps URLs suportam até 9 waypoints em navegadores desktop e até 3 em navegadores móveis.
+ // Mantemos até 3 paradas intermediárias para maior compatibilidade com celulares.
+ const maxWaypoints=3;
+ const batchSize=maxWaypoints+1; // destino final + até 3 waypoints anteriores
+ const batch=stops.slice(0,batchSize+1);
+ const destinations=batch.map(deliveryDestination);
+ const origin="Santarém, PA, Brasil";
+ const destination=destinations[destinations.length-1];
+ const waypoints=destinations.slice(0,-1);
+ const params=new URLSearchParams({api:"1",origin,destination,travelmode:"driving"});
+ if(waypoints.length)params.set("waypoints",waypoints.join("|"));
+ window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
+ if(stops.length>batch.length){
+  notify("O Google Maps limita a quantidade de paradas por rota em celulares. Abri o primeiro trecho com "+batch.length+" entregas. Após concluí-lo, abra novamente a rota para continuar pelas próximas paradas.");
+ }
+}
 async function deliveryAction(id,action){
  const d=deliveries.find(x=>x.id===id);if(!d)return;
  if(action==="navigate"){
@@ -129,6 +154,11 @@ function renderDeliveries(){
  list.innerHTML=ds.map((d,i)=>'<div class="delivery-card"><div class="stop-number">'+(i+1)+'</div><div><h3>Ordem '+esc(d.order_no)+' · '+esc(d.neighborhoods?.name||"Bairro não informado")+'</h3><p>'+esc(d.address)+(d.reference?" · "+esc(d.reference):"")+'</p><p>Prioridade: '+esc(d.priority)+' · Criada: '+fmtDate(d.created_at)+'</p><p>Status: '+esc(statusLabel[d.status]||d.status)+'</p>'+(d.delivery_events?.length?'<details><summary>Linha do tempo ('+d.delivery_events.length+')</summary>'+d.delivery_events.map(ev=>'<p>'+esc(statusLabel[ev.event_type]||ev.event_type)+': '+fmtDate(ev.received_at_server)+(ev.note?" · "+esc(ev.note):"")+'</p>').join("")+'</details>':"")+'<div class="actions"><button class="mini" data-act="up" data-id="'+d.id+'">↑ Subir</button><button class="mini" data-act="down" data-id="'+d.id+'">↓ Descer</button><button class="mini" data-act="navigate" data-id="'+d.id+'">Navegar</button>'+(d.status==="pending"?'<button class="mini" data-act="start" data-id="'+d.id+'">Registrar saída</button>':"")+(d.status==="in_transit"?'<button class="mini" data-act="arrive" data-id="'+d.id+'">Registrar chegada</button><button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(d.status==="at_destination"?'<button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+([ "pending","in_transit","at_destination"].includes(d.status)?'<button class="mini" data-act="failed" data-id="'+d.id+'">Não realizada</button>':"")+'</div></div><span class="tag '+(d.status==="completed"?"done":"")+'">'+esc(statusLabel[d.status]||d.status)+'</span></div>').join("");
  list.querySelectorAll("button[data-act]").forEach(b=>b.addEventListener("click",()=>deliveryAction(b.dataset.id,b.dataset.act)));
 }
+$("openRoute").addEventListener("click",()=>{
+ const ds=currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[];
+ if(!ds.length)return notify("Não há entregas cadastradas na jornada atual.");
+ openGoogleRoute(ds);
+});
 function render(){
  renderDeliveries();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
