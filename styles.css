@@ -1016,3 +1016,61 @@ body.driver-mode .driver-form .driver-primary:active { transform:scale(.99); }
   body.driver-mode .driver-profile .driver-profile-meta { font-size:11px; }
   body.driver-mode .driver-form .driver-info { padding-left:38px; font-size:13px; }
 }
+
+
+/* Identidade oficial YUP Pet Store */
+:root {
+  --yup-yellow: #fcde52;
+  --yup-white: #fefefd;
+  --yup-blue: #55bbd1;
+  --yup-ink: #202a31;
+  --yup-muted: #667078;
+  --yup-border: #e5e8e8;
+  --yup-surface: #ffffff;
+}
+body.driver-mode { background:var(--yup-white); color:var(--yup-ink); }
+body.driver-mode .driver-app { background:var(--yup-white); }
+body.driver-mode .driver-top {
+  background:rgba(254,254,253,.97);
+  border-bottom:1px solid rgba(32,42,49,.06);
+}
+body.driver-mode .driver-top .brand-wordmark {
+  color:var(--yup-blue);
+  font-weight:900;
+  letter-spacing:-.075em;
+  text-shadow:1px 1px 0 var(--yup-yellow);
+}
+body.driver-mode .driver-top .brand-context strong { color:var(--yup-ink); }
+body.driver-mode .driver-top .brand-divider { background:var(--yup-blue); }
+body.driver-mode .driver-avatar,
+body.driver-mode .driver-profile .driver-initials {
+  background:var(--yup-yellow);
+  color:var(--yup-ink);
+}
+body.driver-mode .driver-screen-content .driver-kicker { color:#287f92; }
+body.driver-mode .driver-screen-content h1,
+body.driver-mode .driver-screen-content .driver-section-title,
+body.driver-mode .driver-profile strong,
+body.driver-mode .driver-form > label { color:var(--yup-ink); }
+body.driver-mode .driver-profile { border-color:var(--yup-border); background:var(--yup-surface); }
+body.driver-mode .driver-profile .driver-check { border-color:#287f92; color:#287f92; }
+body.driver-mode .driver-profile .driver-profile-meta { border-top-color:var(--yup-border); }
+body.driver-mode .driver-profile-meta span { background:#e9f7fa; color:#226f80; }
+body.driver-mode .driver-form input:not([type=radio]),
+body.driver-mode .driver-form select,
+body.driver-mode .driver-form textarea { border-color:#d9e1e3; color:var(--yup-ink); }
+body.driver-mode .driver-form .driver-info {
+  background:#eaf8fb;
+  color:#245a66;
+}
+body.driver-mode .driver-form .driver-primary {
+  background:var(--yup-yellow);
+  color:#202a31;
+  border:1px solid #e5c83e;
+  box-shadow:0 3px 0 rgba(32,42,49,.06);
+}
+body.driver-mode .driver-form .driver-primary:active { background:#f5d640; }
+body.driver-mode .driver-bottom { background:rgba(254,254,253,.97); }
+body.driver-mode .driver-bottom-add { background:var(--yup-yellow); color:var(--yup-ink); }
+body.driver-mode .driver-outline { border-color:var(--yup-blue); color:#245a66; }
+body.driver-mode .driver-state { background:#eaf8fb; color:#245a66; }
