@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#176b43">
+<meta name="theme-color" content="#087d50">
 <meta name="description" content="Painel administrativo YUP-ENTREGAS">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
@@ -11,7 +11,7 @@
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><div class="brand-mark">Y</div><div><strong>YUP-ENTREGAS</strong><small>Gestão de entregas e frota</small></div></div>
+  <div class="brand"><div class="brand-mark brand-wordmark" aria-label="YUP">yup.</div><div class="brand-divider" aria-hidden="true"></div><div class="brand-context"><strong>ENTREGAS</strong><small>Gestão de entregas e frota</small></div></div>
   <div class="header-actions"><a class="button secondary" href="/entregador">Área do entregador</a><span id="authIdentity" class="status-pill"><i></i> Acesso não conectado</span><button id="logoutButton" class="button secondary hidden" type="button">Sair</button></div>
 </header>
 <section id="authGate" class="auth-gate"><article class="auth-card"><div class="brand-mark auth-logo">Y</div><p class="eyebrow">ACESSO SEGURO</p><h1>Entrar no YUP-ENTREGAS</h1><p class="auth-description">Use a conta individual fornecida pela administração.</p><form id="loginForm" class="auth-form"><label>E-mail<input id="loginEmail" type="email" autocomplete="username" required placeholder="voce@empresa.com"></label><label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Sua senha"></label><button id="loginButton" class="button primary" type="submit">Entrar</button></form><p id="authMessage" class="auth-message" role="status">Verificando configuração de acesso…</p><p class="hint">Não há cadastro público. O administrador cria e libera as contas.</p></article></section>
