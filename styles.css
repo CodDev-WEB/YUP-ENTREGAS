@@ -319,3 +319,142 @@ body.driver-mode button,body.driver-mode a{ -webkit-tap-highlight-color:transpar
 .delivery-card-main{min-width:0;overflow-wrap:anywhere}
 @media(min-width:700px){.next-stop-actions{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}
 @media(max-width:520px){.next-stop-card{padding:17px;border-radius:18px}.next-stop-card h3{font-size:21px}.next-stop-actions .button{width:100%;min-height:52px}.delivery-card{align-items:flex-start}.delivery-card .tag{max-width:100%;white-space:normal}}
+
+
+/* Driver app UX v2: rolagem natural, navegação inferior e cartões mais claros */
+body.driver-mode {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #f3f7f4;
+}
+body.driver-mode .layout {
+  min-height: calc(100dvh - 62px);
+  overflow: visible;
+}
+body.driver-mode .content {
+  overflow: visible;
+  padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+body.driver-mode #view-entregador {
+  display: block;
+  min-width: 0;
+}
+body.driver-mode #view-entregador .page-heading {
+  position: relative;
+  overflow: hidden;
+  min-height: 148px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+}
+body.driver-mode #view-entregador .page-heading::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  right: -55px;
+  top: -70px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px rgba(255,255,255,.045), 0 0 0 44px rgba(255,255,255,.035);
+  pointer-events: none;
+}
+body.driver-mode #view-entregador .page-heading > * {
+  position: relative;
+  z-index: 1;
+}
+body.driver-mode #view-entregador .metrics {
+  align-items: stretch;
+}
+body.driver-mode #view-entregador .metric {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+body.driver-mode #view-entregador .metric:active {
+  transform: scale(.985);
+}
+body.driver-mode #view-entregador .panel {
+  scroll-margin-top: 84px;
+}
+body.driver-mode #view-entregador .panel-title {
+  align-items: flex-start;
+}
+body.driver-mode #view-entregador .form-grid input,
+body.driver-mode #view-entregador .form-grid select {
+  scroll-margin-bottom: 24px;
+}
+body.driver-mode #view-entregador .delivery-list {
+  gap: 12px;
+}
+body.driver-mode #view-entregador .delivery-card {
+  box-shadow: 0 3px 12px rgba(24,52,35,.035);
+}
+body.driver-mode #view-entregador .hint {
+  font-size: 12px;
+}
+body.driver-mode .sidebar {
+  scrollbar-width: none;
+}
+body.driver-mode .sidebar::-webkit-scrollbar {
+  display: none;
+}
+@media (max-width: 720px) {
+  body.driver-mode .layout {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - 62px);
+  }
+  body.driver-mode .sidebar {
+    position: fixed;
+    inset: auto 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+    z-index: 50;
+    display: flex;
+    justify-content: space-around;
+    gap: 5px;
+    height: 70px;
+    min-height: 70px;
+    padding: 7px 8px;
+    border: 1px solid rgba(218,230,221,.96);
+    border-radius: 20px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 10px 35px rgba(20,49,31,.15);
+    backdrop-filter: blur(18px);
+    overflow-x: auto;
+  }
+  body.driver-mode .sidebar .nav {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 54px;
+    border-radius: 14px;
+    font-size: 10px;
+  }
+  body.driver-mode .sidebar .nav.active {
+    background: #e8f5ed;
+    border-color: #d7ecdf;
+  }
+  body.driver-mode .content {
+    padding: 14px 12px calc(100px + env(safe-area-inset-bottom));
+  }
+  body.driver-mode #view-entregador .page-heading {
+    min-height: 140px;
+    margin-bottom: 14px;
+  }
+  body.driver-mode #view-entregador .metrics {
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  body.driver-mode #view-entregador .metric {
+    min-height: 92px;
+    padding: 14px 12px;
+  }
+  body.driver-mode #view-entregador .panel {
+    margin-bottom: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.driver-mode *, body.driver-mode *::before, body.driver-mode *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
