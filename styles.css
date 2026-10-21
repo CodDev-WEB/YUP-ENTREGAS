@@ -1738,3 +1738,7 @@ body.driver-mode #driverExperience .driver-quiet {
  body.driver-mode #driverExperience .driver-stop { grid-template-columns:34px minmax(0,1fr) 10px!important; gap:8px!important; padding:11px!important; }
  body.driver-mode #driverExperience .driver-stop-number { width:32px!important; height:32px!important; min-width:32px!important; }
 }
+
+/* Cabeçalho simplificado: somente logo e identificação */
+body.driver-mode #driverExperience .driver-top .driver-avatar { display:none!important; }
+body.driver-mode #driverExperience .driver-top .brand { margin-right:auto!important; }
