@@ -299,7 +299,39 @@ function renderDeliveries(){
  }
  list.className="delivery-list";
  const nextCard=next?'<section class="next-stop-card" aria-label="Próxima entrega"><div class="next-stop-kicker">PRÓXIMA PARADA</div><div class="next-stop-heading"><span class="next-stop-number">'+esc(next.order_no||("Parada "+(ds.indexOf(next)+1)))+'</span><span class="tag '+(next.status==="completed"?"done":"")+'">'+esc(statusLabel[next.status]||next.status)+'</span></div><h3>'+esc(next.neighborhoods?.name||"Bairro não informado")+'</h3><p class="next-stop-address">'+esc(next.address)+(next.reference?" · "+esc(next.reference):"")+'</p><div class="next-stop-actions"><button class="button primary next-navigate" type="button" data-act="navigate" data-id="'+next.id+'">↗ Navegar até aqui</button>'+(next.status==="pending"?'<button class="button secondary" type="button" data-act="start" data-id="'+next.id+'">Iniciar entrega</button>':"")+(next.status==="in_transit"?'<button class="button secondary" type="button" data-act="arrive" data-id="'+next.id+'">Cheguei ao endereço</button>':"")+(["in_transit","at_destination"].includes(next.status)?'<button class="button primary" type="button" data-act="complete" data-id="'+next.id+'">✓ Concluir entrega</button>':"")+'<p class="next-stop-progress">'+ds.filter(d=>d.status==="completed").length+' de '+ds.length+' entregas concluídas</p></div></section>':'<section class="next-stop-card route-finished"><div class="next-stop-kicker">ROTA CONCLUÍDA</div><h3>Você chegou ao fim da rota!</h3><p>Todas as entregas foram concluídas ou marcadas como não realizadas.</p></section>';
- list.innerHTML=nextCard+ds.map((d,i)=>'<div class="delivery-card '+(next&&d.id===next.id?'is-next-stop':'')+'"><div class="stop-number">'+(i+1)+'</div><div class="delivery-card-main"><h3>Ordem '+esc(d.order_no)+' · '+esc(d.neighborhoods?.name||"Bairro não informado")+'</h3><p>'+esc(d.address)+(d.reference?" · "+esc(d.reference):"")+'</p><p>Prioridade: '+esc(d.priority)+' · Criada: '+fmtDate(d.created_at)+'</p><p>Status: '+esc(statusLabel[d.status]||d.status)+'</p>'+(d.delivery_events?.length?'<details><summary>Linha do tempo ('+d.delivery_events.length+')</summary>'+d.delivery_events.map(ev=>'<p>'+esc(statusLabel[ev.event_type]||ev.event_type)+': '+fmtDate(ev.received_at_server)+(ev.note?" · "+esc(ev.note):"")+'</p>').join("")+'</details>':"")+'<div class="actions"><button class="mini" data-act="up" data-id="'+d.id+'" aria-label="Subir entrega">↑ Subir</button><button class="mini" data-act="down" data-id="'+d.id+'" aria-label="Descer entrega">↓ Descer</button><button class="mini" data-act="navigate" data-id="'+d.id+'">Navegar</button>'+(d.status==="pending"?'<button class="mini" data-act="start" data-id="'+d.id+'">Registrar saída</button>':"")+(d.status==="in_transit"?'<button class="mini" data-act="arrive" data-id="'+d.id+'">Registrar chegada</button><button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(d.status==="at_destination"?'<button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(["pending","in_transit","at_destination"].includes(d.status)?'<button class="mini" data-act="failed" data-id="'+d.id+'">Não realizada</button>':"")+'</div></div><span class="tag '+(d.status==="completed"?"done":"")+'">'+esc(statusLabel[d.status]||d.status)+'</span></div>').join("");
+ list.innerHTML=nextCard+pending.map((d,i)=>'<div class="delivery-card '+(next&&d.id===next.id?'is-next-stop':'')+'"><div class="stop-number">'+(i+1)+'</div><div class="delivery-card-main"><h3>Ordem '+esc(d.order_no)+' · '+esc(d.neighborhoods?.name||"Bairro não informado")+'</h3><p>'+esc(d.address)+(d.reference?" · "+esc(d.reference):"")+'</p><p>Prioridade: '+esc(d.priority)+' · Criada: '+fmtDate(d.created_at)+'</p><p>Status: '+esc(statusLabel[d.status]||d.status)+'</p>'+(d.delivery_events?.length?'<details><summary>Linha do tempo ('+d.delivery_events.length+')</summary>'+d.delivery_events.map(ev=>'<p>'+esc(statusLabel[ev.event_type]||ev.event_type)+': '+fmtDate(ev.received_at_server)+(ev.note?" · "+esc(ev.note):"")+'</p>').join("")+'</details>':"")+'<div class="actions"><button class="mini" data-act="up" data-id="'+d.id+'" aria-label="Subir entrega">↑ Subir</button><button class="mini" data-act="down" data-id="'+d.id+'" aria-label="Descer entrega">↓ Descer</button><button class="mini" data-act="navigate" data-id="'+d.id+'">Navegar</button>'+(d.status==="pending"?'<button class="mini" data-act="start" data-id="'+d.id+'">Registrar saída</button>':"")+(d.status==="in_transit"?'<button class="mini" data-act="arrive" data-id="'+d.id+'">Registrar chegada</button><button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(d.status==="at_destination"?'<button class="mini" data-act="complete" data-id="'+d.id+'">Concluir</button>':"")+(["pending","in_transit","at_destination"].includes(d.status)?'<button class="mini" data-act="failed" data-id="'+d.id+'">Não realizada</button>':"")+'</div></div><span class="tag '+(d.status==="completed"?"done":"")+'">'+esc(statusLabel[d.status]||d.status)+'</span></div>').join("");
+ if(completed.length){
+  const history=document.createElement("details");
+  history.className="route-history";
+  const summary=document.createElement("summary");
+  summary.textContent="Histórico da rota · "+completed.length+" entregas finalizadas";
+  history.append(summary);
+  const historyList=document.createElement("div");
+  historyList.className="delivery-list";
+  completed.forEach((d,i)=>{
+   const item=document.createElement("article");
+   item.className="delivery-card";
+   const number=document.createElement("div");
+   number.className="stop-number";
+   number.textContent=String(ds.findIndex(x=>x.id===d.id)+1);
+   const body=document.createElement("div");
+   body.className="delivery-card-main";
+   const title=document.createElement("h3");
+   title.textContent="Ordem "+(d.order_no||"—")+" · "+(d.neighborhoods?.name||"Bairro não informado");
+   const address=document.createElement("p");
+   address.textContent=d.address+(d.reference?" · "+d.reference:"");
+   const state=document.createElement("p");
+   state.textContent="Status: "+(statusLabel[d.status]||d.status)+" · "+fmtDate(d.updated_at||d.created_at);
+   body.append(title,address,state);
+   const tag=document.createElement("span");
+   tag.className="tag "+(d.status==="completed"?"done":"");
+   tag.textContent=statusLabel[d.status]||d.status;
+   item.append(number,body,tag);
+   historyList.append(item);
+  });
+  history.append(historyList);
+  list.append(history);
+ }
  list.querySelectorAll("button[data-act]").forEach(b=>b.addEventListener("click",()=>deliveryAction(b.dataset.id,b.dataset.act)));
 }
 $("openRoute").addEventListener("click",()=>{
