@@ -283,6 +283,7 @@ function renderDeliveries(){
  const list=$("deliveryList");
  const ds=currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[];
  const pending=ds.filter(d=>!["completed","failed"].includes(d.status));
+ const completed=ds.filter(d=>["completed","failed"].includes(d.status));
  const next=pending[0]||null;
  $("metricStops").textContent=ds.length;
  $("metricDone").textContent=ds.filter(d=>d.status==="completed").length;
