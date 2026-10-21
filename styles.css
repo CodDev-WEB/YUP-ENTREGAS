@@ -1772,3 +1772,6 @@ body.driver-mode #driverExperience .driver-stop { justify-self:stretch!important
   padding-left:16px!important; padding-right:16px!important;
  }
 }
+
+/* Cabeçalho YUP: alinhamento padrão à esquerda */
+.driver-top{justify-content:flex-start}.driver-top .brand{flex:1;min-width:0;justify-content:flex-start;margin:0 auto 0 0;text-align:left}.driver-top .brand-context,.driver-top .brand-context strong{text-align:left;justify-content:flex-start}
