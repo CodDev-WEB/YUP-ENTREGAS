@@ -453,7 +453,25 @@ function renderDriverExperience(){
  const content=$("driverScreenContent"),bottom=$("driverBottom");
  content.innerHTML=driverScreenMarkup();
  root.classList.toggle("driver-home-mode",driverScreen==="start");
- bottom.innerHTML=driverScreen==="start"||driverScreen==="new"||driverScreen==="summary"||driverScreen==="occurrence"?'': '<button type="button" class="driver-bottom-add" data-driver-screen="new">＋　Adicionar entrega</button>';
+ root.classList.toggle("has-fixed-driver-dock",true);
+ const stops=driverStops(),nextStop=driverNext(),selected=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||nextStop;
+ const actionButton=(label,icon,attrs,extra="")=>'<button type="button" class="driver-dock-action '+extra+'" '+attrs+'><span class="driver-dock-icon">'+icon+'</span><span>'+label+'</span></button>';
+ if(driverScreen==="start"||!currentJourney){
+  bottom.innerHTML='<button class="driver-dock-primary" type="submit" form="driverStartForm"><span>▶</span><span>Iniciar jornada</span></button>';
+ }else if(driverScreen==="new"){
+  bottom.innerHTML=actionButton("Voltar","‹",'data-driver-screen="route"')+actionButton("Adicionar à sequência","＋",'data-driver-submit="driverNewForm"',"is-primary");
+ }else if(driverScreen==="occurrence"){
+  bottom.innerHTML=actionButton("Voltar","‹",'data-driver-screen="detail"')+actionButton("Registrar ocorrência","⚑",'data-driver-submit="driverOccurrenceForm"',"is-danger");
+ }else if(driverScreen==="summary"){
+  bottom.innerHTML=actionButton("Voltar à rota","‹",'data-driver-screen="route"')+actionButton("Confirmar encerramento","✓",'data-driver-submit="driverFinishForm"',"is-primary");
+ }else if(driverScreen==="detail"){
+  const finishAction=selected&&selected.status==="pending"?"startDelivery":selected&&selected.status==="in_transit"?"arriveDelivery":selected&&selected.status==="at_destination"?"completeDelivery":"";
+  const finishLabel=finishAction==="startDelivery"?"Registrar saída":finishAction==="arriveDelivery"?"Registrar chegada":"Concluir entrega";
+  bottom.innerHTML=actionButton("Adicionar entrega","＋",'data-driver-screen="new"')+actionButton("Sequência","↗",'data-driver-action="maps"')+(finishAction?actionButton(finishLabel,"✓",'data-driver-action="'+finishAction+'" data-id="'+selected.id+'"',"is-primary"):"")+((selected&&!["completed","failed"].includes(selected.status))?actionButton("Ocorrência","⚑",'data-driver-action="occurrence" data-id="'+selected.id+'"',"is-danger"):"")+actionButton("Encerrar jornada","■",'data-driver-screen="summary"');
+ }else{
+  bottom.innerHTML=actionButton("Adicionar entrega","＋",'data-driver-screen="new"')+actionButton("Adicionar sequência","↗",'data-driver-action="maps"',"is-primary")+(nextStop?actionButton("Concluir entrega","✓",'data-driver-action="detail" data-id="'+nextStop.id+'"'):"")+(nextStop?actionButton("Registrar ocorrência","⚑",'data-driver-action="occurrence" data-id="'+nextStop.id+'"',"is-danger"):"")+actionButton("Confirmar encerramento","■",'data-driver-screen="summary"');
+ }
+ bottom.querySelectorAll("[data-driver-submit]").forEach(b=>b.addEventListener("click",()=>{const form=$(b.dataset.driverSubmit);if(form){if(typeof form.requestSubmit==="function")form.requestSubmit();else form.dispatchEvent(new Event("submit",{bubbles:true,cancelable:true}))}}));
  root.querySelectorAll("[data-driver-screen]").forEach(b=>b.addEventListener("click",()=>{driverScreen=b.dataset.driverScreen;renderDriverExperience()}));
  root.querySelectorAll("[data-driver-action]").forEach(b=>b.addEventListener("click",async()=>{
   const action=b.dataset.driverAction,id=b.dataset.id;
