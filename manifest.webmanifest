@@ -1,12 +1,32 @@
 {
-  "name": "YUP Entregas — Entregador",
-  "short_name": "YUP Entregas",
+  "name": "YUP Entregas",
+  "short_name": "YUP",
   "description": "Gestão de entregas e frota da YUP Store",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
   "scope": "/",
   "background_color": "#f3f6f4",
   "theme_color": "#087d50",
-  "lang": "pt-BR"
+  "lang": "pt-BR",
+  "id": "/",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Abrir entregas",
+      "short_name": "Entregas",
+      "url": "/"
+    }
+  ]
 }
