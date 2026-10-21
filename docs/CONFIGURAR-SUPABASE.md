@@ -1,7 +1,7 @@
 # Configuração do Supabase — YUP-ENTREGAS
 
 ## Objetivo
-Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e políticas RLS para separar administração, gestão e entregadores. Realtime cobre jornadas, entregas e eventos. O frontend atual continua como protótipo local até que os formulários sejam migrados; não use os dados do navegador como registros oficiais.
+Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e políticas RLS para separar administração, gestão e entregadores. Realtime cobre jornadas, entregas e eventos. O frontend atual autentica pelo Supabase; jornadas e entregas são lidas e gravadas no banco por meio do cliente web e de políticas RLS. Combustível e manutenção ainda usam armazenamento local e não são registros centralizados. Não use dados reais até aplicar as migrações e testar cada perfil.
 
 ## 1. Criar projeto gratuito
 1. Crie um projeto em https://supabase.com e escolha a região mais próxima disponível.
@@ -31,7 +31,7 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 - RLS é a barreira real de autorização; esconder botões na interface não substitui políticas no banco.
 
 ## 5. Publicação gratuita
-O código fica no GitHub. A configuração pública do Supabase também precisa estar presente no deploy. Para servir a interface, escolha hospedagem estática gratuita compatível com o uso pretendido e configure HTTPS. Não presuma que GitHub Pages é apropriado para um serviço comercial/SaaS. Não publique dados operacionais no repositório.
+O repositório está configurado para publicar o Worker e os assets estáticos no Cloudflare por GitHub Actions. Em **Settings → Secrets and variables → Actions**, configure `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID`. O workflow valida os arquivos e a configuração Wrangler antes do deploy. A configuração pública do Supabase é incluída no frontend e pode ser pública; nunca publique uma chave `service_role`. Não publique dados operacionais no repositório.
 
 ## Limitações atuais
 - O portal por código em `/entregador` ainda não autentica; utilize o login individual no painel principal.
