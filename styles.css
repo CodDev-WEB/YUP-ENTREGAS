@@ -1506,3 +1506,45 @@ body.driver-mode #driverExperience .driver-start-form input[name="odometer_start
 body.driver-mode #driverExperience .driver-start-form input[type="number"] {
  font-size:16px!important; line-height:1.35!important; transform:none!important;
 }
+
+/* Hotfix de recuperação: preservar CTA e área de conteúdo em Safari e PWA */
+body.driver-mode #driverExperience {
+ position:fixed!important; inset:0!important; display:flex!important; flex-direction:column!important;
+ width:100%!important; max-width:none!important; height:100dvh!important; min-height:0!important;
+ padding:calc(58px + env(safe-area-inset-top)) 0 calc(76px + env(safe-area-inset-bottom))!important;
+ overflow:hidden!important; transform:none!important;
+}
+body.driver-mode #driverExperience #driverScreenContent {
+ display:block!important; flex:1 1 auto!important; width:100%!important; min-width:0!important; min-height:0!important;
+ max-width:760px!important; height:auto!important; margin:0 auto!important; overflow-x:hidden!important; overflow-y:auto!important;
+}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent {
+ max-width:none!important; width:100%!important; padding:0!important;
+}
+body.driver-mode #driverExperience .driver-home { width:100%!important; min-height:100%!important; }
+body.driver-mode #driverExperience #driverBottom {
+ display:flex!important; visibility:visible!important; opacity:1!important;
+ position:fixed!important; z-index:10000!important; left:0!important; right:0!important; bottom:0!important;
+ width:100%!important; max-width:none!important; min-width:0!important; height:auto!important;
+ margin:0!important; transform:none!important; box-sizing:border-box!important;
+ padding:10px max(12px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
+ background:#fefefd!important; border-top:1px solid #e5eae6!important; box-shadow:0 -6px 18px #202a3110!important;
+}
+body.driver-mode #driverExperience #driverBottom > .driver-dock-primary {
+ display:flex!important; visibility:visible!important; opacity:1!important;
+ position:static!important; inset:auto!important; transform:none!important;
+ flex:1 1 100%!important; width:100%!important; min-width:0!important; max-width:none!important;
+ min-height:56px!important; margin:0!important; padding:0 16px!important;
+ align-items:center!important; justify-content:center!important; border:0!important; border-radius:14px!important;
+ background:#fcde52!important; color:#202a31!important; font-size:16px!important; font-weight:850!important;
+ box-shadow:0 3px 0 #d9bd39!important; white-space:normal!important; text-align:center!important;
+}
+body.driver-mode #driverExperience #driverBottom:has(> .driver-dock-primary) { overflow:hidden!important; }
+body.driver-mode #driverExperience #driverBottom > .driver-dock-action {
+ flex:0 0 72px!important; min-width:72px!important; max-width:112px!important; margin:0!important;
+}
+body.driver-mode #driverExperience #driverBottom:not(:has(> .driver-dock-primary)) { overflow-x:auto!important; }
+body.driver-mode #driverExperience #driverBottom::-webkit-scrollbar { display:none!important; }
+body.driver-mode #driverExperience .driver-start-form input[type=number],
+body.driver-mode #driverExperience .driver-start-form select { font-size:16px!important; }
+body.driver-mode footer { display:none!important; }
