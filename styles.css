@@ -758,3 +758,78 @@ body.driver-mode .driver-form textarea { box-sizing:border-box; }
  body.driver-mode .driver-stop { grid-template-columns:30px minmax(0,1fr) 10px; gap:8px; padding:10px; }
  body.driver-mode .driver-stop-number { width:30px; height:30px; }
 }
+
+
+/* Entregador PWA — ergonomia móvel e comportamento de app */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body.driver-mode {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: pan-y;
+}
+body.driver-mode input,
+body.driver-mode textarea,
+body.driver-mode select,
+body.driver-mode [contenteditable="true"] {
+  font-size: 16px !important; /* evita o zoom automático do Safari ao focar campos */
+  line-height: 1.35;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
+  scroll-margin-block: 100px;
+}
+body.driver-mode button,
+body.driver-mode a,
+body.driver-mode select,
+body.driver-mode input[type="checkbox"],
+body.driver-mode input[type="radio"] {
+  touch-action: manipulation;
+}
+body.driver-mode button,
+body.driver-mode .driver-primary,
+body.driver-mode .driver-outline,
+body.driver-mode .driver-bottom-add {
+  min-height: 48px;
+}
+body.driver-mode .driver-top {
+  position: sticky;
+  top: 0;
+  padding-top: env(safe-area-inset-top);
+  height: calc(58px + env(safe-area-inset-top));
+}
+body.driver-mode .driver-screen-content {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+body.driver-mode .driver-bottom {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,.98);
+}
+body.driver-mode .driver-app,
+body.driver-mode #appLayout,
+body.driver-mode .content {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+@media (max-width: 480px) {
+  body.driver-mode .driver-app { max-width: none; }
+  body.driver-mode .driver-screen-content { padding-left: 16px; padding-right: 16px; }
+  body.driver-mode .driver-screen-content h1 { font-size: clamp(26px, 7vw, 32px); }
+  body.driver-mode .driver-subtitle { font-size: 15px; }
+  body.driver-mode .driver-form { gap: 12px; }
+  body.driver-mode .driver-form input:not([type=radio]),
+  body.driver-mode .driver-form select,
+  body.driver-mode .driver-form textarea {
+    min-height: 50px;
+    padding: 13px 14px;
+    border-radius: 14px;
+  }
+  body.driver-mode .driver-primary,
+  body.driver-mode .driver-outline,
+  body.driver-mode .driver-bottom-add { min-height: 52px; }
+}
+@media (display-mode: standalone) {
+  html, body { min-height: 100%; }
+  body.driver-mode .driver-app { padding-bottom: env(safe-area-inset-bottom); }
+}
