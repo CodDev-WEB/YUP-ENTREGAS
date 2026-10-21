@@ -1790,3 +1790,13 @@ body.driver-mode #driverExperience .driver-status-row .driver-state{margin:20px 
 
 /* Campos de texto do entregador: padrão de digitação em maiúsculas */
 body.driver-mode #driverExperience .driver-form input:not([type="number"]):not([type="url"]):not([type="radio"]):not([type="checkbox"]),body.driver-mode #driverExperience .driver-form textarea{ text-transform:uppercase; }
+
+/* Ações principais aparecem uma única vez: na barra fixa inferior do entregador */
+body.driver-mode #driverExperience.driver-screen-route #driverScreenContent .driver-outline[data-driver-action="maps"],
+body.driver-mode #driverExperience.driver-screen-route #driverScreenContent .driver-quiet[data-driver-screen="summary"],
+body.driver-mode #driverExperience.driver-screen-new #driverScreenContent #driverNewForm > .driver-primary[type="submit"],
+body.driver-mode #driverExperience.driver-screen-detail #driverScreenContent .driver-primary[data-driver-action],
+body.driver-mode #driverExperience.driver-screen-detail #driverScreenContent .driver-warning-action,
+body.driver-mode #driverExperience.driver-screen-occurrence #driverScreenContent .driver-quiet[data-driver-screen="detail"],
+body.driver-mode #driverExperience.driver-screen-occurrence #driverScreenContent #driverOccurrenceForm > .driver-primary[type="submit"],
+body.driver-mode #driverExperience.driver-screen-summary #driverScreenContent #driverFinishForm > .driver-primary[type="submit"]{display:none!important}
