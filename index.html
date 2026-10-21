@@ -36,17 +36,17 @@
       <article class="panel">
         <div class="panel-title"><div><h2>1. Identificação da jornada</h2><p>Preencha antes de sair para a primeira entrega.</p></div></div>
         <form id="journeyForm" class="form-grid">
-          <label>Nº de cadastro do entregador<input id="driverId" required placeholder="Ex.: YUP-001"></label>
-          <label>Veículo / identificação<input id="vehicle" required placeholder="Ex.: Moto 01 / placa"></label>
+          <label>Entregador<input id="driverId" required placeholder="Preenchido pelo cadastro do usuário"></label>
+          <label>Veículo cadastrado<select id="vehicle" required><option value="">Selecione o veículo</option></select></label>
           <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required placeholder="Ex.: 24580"></label>
           <div class="form-action"><button class="button primary" id="startJourney" type="submit">Iniciar jornada</button><button class="button danger hidden" id="finishJourney" type="button">Finalizar jornada</button></div>
         </form>
         <p id="gpsTrackingStatus" class="hint" role="status">A localização será solicitada uma única vez ao entrar no PWA; o rastreamento continuará automaticamente durante a jornada, sem botão.</p>
       </article>
       <article class="panel">
-        <div class="panel-title"><div><h2>2. Adicionar entrega</h2><p>Cadastre a ordem e o endereço de cada cliente.</p></div></div>
+        <div class="panel-title"><div><h2>2. Adicionar entrega</h2><p>O sistema gera o número da ordem automaticamente ao cadastrar cada entrega.</p></div></div>
         <form id="deliveryForm" class="form-grid">
-          <label>Nº da ordem<input id="orderNo" required placeholder="Ex.: 1042"></label>
+          <label>Nº da ordem<input id="orderNo" readonly placeholder="Gerado automaticamente ao cadastrar"></label>
           <label>Bairro<select id="neighborhood" required><option value="">Selecione o bairro</option></select></label>
           <label class="wide">Endereço completo<input id="address" required placeholder="Rua/avenida, número, complemento"></label>
           <label>Referência (opcional)<input id="reference" placeholder="Ponto de referência"></label>
