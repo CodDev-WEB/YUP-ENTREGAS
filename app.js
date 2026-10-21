@@ -1,8 +1,9 @@
 const $ = id => document.getElementById(id);
 const backend = window.YupBackend;
 const localKey = "yup-entregas-local-expenses-v1:" + (backend?.profile?.id || "unknown");
+const gpsConsentKey = "yup-entregas-gps-consent-v1:" + (backend?.profile?.id || "unknown");
 const admin = ["admin","manager"].includes(backend?.profile?.role);
-let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false;
+let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null;
 let local = (()=>{try{return JSON.parse(localStorage.getItem(localKey))||{fuel:[],maintenance:[]}}catch{return {fuel:[],maintenance:[]}}})();
 const now = () => new Date().toISOString();
 const fmtDate = v => v ? new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "—";
@@ -18,6 +19,60 @@ function fillSelect(el,items,value,label,placeholder){el.replaceChildren();const
 function ensureSelect(id,placeholder){const old=$(id);if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
 function openJourney(){const driverId=admin?$("driverId")?.value:currentDriver()?.id;return journeys.find(j=>j.status==="open"&&driverId&&j.driver_id===driverId)||null}
+function setGpsStatus(message){const el=$("gpsTrackingStatus");if(el)el.textContent=message}
+function stopGpsTracking(){
+ if(gpsWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatchId);
+ gpsWatchId=null;gpsJourneyId=null;lastGpsSaved=null;
+}
+function distanceMeters(a,b){
+ const rad=x=>x*Math.PI/180, dLat=rad(b.latitude-a.latitude),dLon=rad(b.longitude-a.longitude);
+ const h=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLon/2)**2;
+ return 6371000*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
+}
+function startGpsTracking(journey){
+ if(!journey||journey.status!=="open"||gpsJourneyId===journey.id||!navigator.geolocation)return;
+ stopGpsTracking();
+ gpsJourneyId=journey.id;
+ setGpsStatus("Solicitando posição do aparelho…");
+ gpsWatchId=navigator.geolocation.watchPosition(async pos=>{
+  const coords=pos.coords, nowMs=Date.now();
+  const point={latitude:coords.latitude,longitude:coords.longitude};
+  const shouldSave=!lastGpsSaved||nowMs-lastGpsSaved.time>=30000||distanceMeters(lastGpsSaved,point)>=30;
+  setGpsStatus("GPS ativo · última leitura "+new Date(pos.timestamp).toLocaleTimeString("pt-BR"));
+  if(!shouldSave)return;
+  try{
+   await backend.recordJourneyLocation({journeyId:journey.id,latitude:coords.latitude,longitude:coords.longitude,accuracy:coords.accuracy,speed:coords.speed,heading:coords.heading,capturedAt:new Date(pos.timestamp).toISOString()});
+   lastGpsSaved={...point,time:nowMs};
+  }catch(error){console.error(error);setGpsStatus("GPS capturado, mas não foi possível sincronizar. Verifique a conexão.");}
+ },err=>{
+  setGpsStatus("GPS indisponível: "+({1:"permissão negada",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message));
+ },{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
+}
+$("enableGpsTracking")?.addEventListener("click",()=>{
+ if(!navigator.geolocation)return notify("Este navegador não oferece geolocalização.");
+ navigator.geolocation.getCurrentPosition(pos=>{
+  localStorage.setItem(gpsConsentKey,"yes");
+  setGpsStatus("Permissão concedida. O rastreamento será iniciado quando houver uma jornada aberta.");
+  if(currentJourney)startGpsTracking(currentJourney);
+ },err=>notify("Não foi possível autorizar a localização: "+({1:"permissão negada nas configurações",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message)),{enableHighAccuracy:true,timeout:15000});
+});
+async function loadJourneyTimeline(){
+ const id=$("timelineJourney")?.value;
+ const target=$("journeyTimeline");
+ if(!id){target.innerHTML='<p class="hint">Selecione uma jornada.</p>';return}
+ target.innerHTML='<p class="hint">Carregando pontos GPS…</p>';
+ try{
+  const points=await backend.listJourneyLocationPoints(id);
+  if(!points.length){target.innerHTML='<p class="hint">Nenhum ponto GPS registrado nesta jornada. A linha do tempo não pode reconstruir trajetos anteriores à ativação do GPS.</p>';return}
+  let previous=null;
+  target.innerHTML='<table><thead><tr><th>Horário</th><th>Localização</th><th>Intervalo</th><th>Distância</th><th>Precisão</th><th>Velocidade</th></tr></thead><tbody>'+points.map(p=>{
+   const time=new Date(p.captured_at_device),gap=previous?(time-new Date(previous.captured_at_device))/1000:null,dist=previous?distanceMeters({latitude:previous.latitude,longitude:previous.longitude},{latitude:p.latitude,longitude:p.longitude}):null;
+   const row='<tr><td>'+fmtDate(p.captured_at_device)+'</td><td><a href="https://www.google.com/maps?q='+p.latitude+','+p.longitude+'" target="_blank" rel="noopener">Abrir ponto no mapa</a></td><td>'+(gap==null?"—":Math.round(gap/60)+" min "+Math.round(gap%60)+" s")+'</td><td>'+(dist==null?"—":dist>=1000?(dist/1000).toFixed(2)+" km":Math.round(dist)+" m")+'</td><td>'+(p.accuracy_m==null?"—":Math.round(p.accuracy_m)+" m")+'</td><td>'+(p.speed_mps==null?"—":(p.speed_mps*3.6).toFixed(1)+" km/h")+'</td></tr>';
+   previous=p;return row;
+  }).join("")+'</tbody></table><p class="hint">Distâncias calculadas em linha reta entre leituras GPS; não equivalem à distância rodoviária real. Intervalos longos podem indicar perda de sinal ou suspensão do aplicativo.</p>';
+ }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
+}
+$("loadTimeline")?.addEventListener("click",loadJourneyTimeline);
 async function refresh(){
  if(loading)return;loading=true;
  try{
@@ -41,7 +96,7 @@ $("journeyForm").addEventListener("submit",async e=>{
  const driverId=$("driverId").value,vehicleId=$("vehicle").value,odometerStart=Number($("odoStart").value);
  if(!driverId||!vehicleId)return notify("Selecione um entregador e um veículo cadastrados.");
  setBusy(e.target,true);
- try{await backend.startJourney({driverId,vehicleId,odometerStart});e.target.reset();await refresh();notify("Jornada iniciada e salva no banco de dados.");}
+ try{await backend.startJourney({driverId,vehicleId,odometerStart});e.target.reset();await refresh();if(localStorage.getItem(gpsConsentKey)==="yes"&&currentJourney)startGpsTracking(currentJourney);notify("Jornada iniciada e salva no banco de dados.");}
  catch(error){console.error(error);notify("Não foi possível iniciar a jornada: "+error.message);}
  finally{setBusy(e.target,false)}
 });
@@ -50,7 +105,7 @@ $("finishJourney").addEventListener("click",async()=>{
  const end=Number(raw);if(!Number.isFinite(end)||end<Number(currentJourney.odometer_start))return notify("Odômetro inválido: deve ser igual ou superior ao inicial.");
  const pending=deliveries.filter(d=>d.journey_id===currentJourney.id&&!["completed","failed"].includes(d.status));
  if(pending.length)return notify("Finalize ou marque como não realizada cada entrega antes de encerrar a jornada.");
- try{await backend.finishJourney({journeyId:currentJourney.id,odometerEnd:end});await refresh();notify("Jornada finalizada e salva no banco de dados.");}
+ try{const finishedId=currentJourney.id;await backend.finishJourney({journeyId:finishedId,odometerEnd:end});stopGpsTracking();await refresh();notify("Jornada finalizada e salva no banco de dados.");}
  catch(error){console.error(error);notify("Não foi possível finalizar a jornada: "+error.message)}
 });
 $("deliveryForm").addEventListener("submit",async e=>{
@@ -169,7 +224,7 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-function render(){
+const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}if(localStorage.getItem(gpsConsentKey)==="yes")setGpsStatus(currentJourney?"Acompanhamento autorizado; rastreamento da jornada em andamento.":"Acompanhamento autorizado; será iniciado ao abrir uma jornada.");function render(){
  renderDeliveries();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
