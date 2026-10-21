@@ -1386,3 +1386,56 @@ body.driver-mode .driver-screen-content :is(p,h1,h2,h3,small,strong,span,label) 
 @supports (height: 100svh) {
  body.driver-mode #driverExperience { height:100svh!important; height:100dvh!important; }
 }
+
+/* Estrutura responsiva final do entregador: Safari e PWA instalado */
+body.driver-mode #appLayout { display:block!important; width:100%!important; max-width:none!important; margin:0!important; }
+body.driver-mode #appLayout > .content { display:block!important; width:100%!important; max-width:none!important; margin:0!important; padding:0!important; }
+body.driver-mode #driverExperience {
+ box-sizing:border-box!important; position:fixed!important; inset:0!important; z-index:999!important;
+ display:flex!important; flex-direction:column!important; width:100%!important; max-width:none!important; min-width:0!important;
+ height:100%!important; height:100dvh!important; min-height:0!important; margin:0!important;
+ border:0!important; border-radius:0!important; overflow:hidden!important;
+ padding-top:calc(58px + env(safe-area-inset-top))!important;
+ padding-bottom:calc(76px + env(safe-area-inset-bottom))!important;
+}
+body.driver-mode #driverExperience .driver-top {
+ box-sizing:border-box!important; position:fixed!important; inset:0 0 auto 0!important; transform:none!important;
+ display:flex!important; width:100%!important; max-width:none!important; min-width:0!important;
+ height:calc(58px + env(safe-area-inset-top))!important; min-height:calc(58px + env(safe-area-inset-top))!important;
+ margin:0!important; padding-top:env(safe-area-inset-top)!important;
+ padding-left:max(16px,env(safe-area-inset-left))!important;
+ padding-right:max(16px,env(safe-area-inset-right))!important;
+}
+body.driver-mode #driverExperience .driver-screen-content {
+ box-sizing:border-box!important; display:block!important; position:relative!important;
+ flex:1 1 0!important; width:100%!important; max-width:760px!important; min-width:0!important;
+ min-height:0!important; height:auto!important; margin:0 auto!important;
+ padding:18px max(16px,env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-right))!important;
+ overflow-x:hidden!important; overflow-y:auto!important; overscroll-behavior:contain!important;
+ -webkit-overflow-scrolling:touch!important;
+}
+body.driver-mode #driverExperience .driver-bottom {
+ box-sizing:border-box!important; display:flex!important; position:fixed!important; inset:auto 0 0 0!important;
+ width:100%!important; max-width:none!important; min-width:0!important; margin:0!important;
+ padding:9px max(10px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+}
+body.driver-mode #driverExperience .driver-home-mode .driver-screen-content,
+body.driver-mode #driverExperience .driver-screen-content:has(.driver-home) { max-width:100%!important; padding:0!important; }
+body.driver-mode #driverExperience .driver-home { width:100%!important; max-width:100%!important; min-width:0!important; }
+body.driver-mode #driverExperience .driver-home-greeting { flex-wrap:wrap; }
+body.driver-mode #driverExperience .driver-home-greeting h1 { font-size:clamp(24px,6.2vw,32px)!important; overflow-wrap:normal!important; }
+body.driver-mode #driverExperience .driver-map-scene { width:100%!important; min-width:0!important; }
+body.driver-mode #driverExperience .driver-start-sheet { width:100%!important; min-width:0!important; }
+body.driver-mode #driverExperience :is(.driver-stop,.driver-profile,.driver-stat-grid,.driver-sequence-note,.driver-form,.driver-empty,.driver-outline,.driver-quiet) { max-width:100%!important; min-width:0!important; }
+body.driver-mode #driverExperience :is(input,select,textarea) { min-width:0!important; max-width:100%!important; font-size:16px!important; }
+body.driver-mode #driverExperience :is(p,small,strong,label) { overflow-wrap:anywhere; }
+body.driver-mode #driverExperience .driver-dock-action { flex:1 0 68px; min-width:68px; max-width:112px; }
+body.driver-mode footer { display:none!important; }
+@media(max-width:360px) {
+ body.driver-mode #driverExperience .driver-screen-content { padding-left:12px!important; padding-right:12px!important; }
+ body.driver-mode #driverExperience .driver-bottom { gap:5px!important; }
+ body.driver-mode #driverExperience .driver-dock-action { flex-basis:62px; min-width:62px; font-size:9px; }
+}
+@media(display-mode: standalone) {
+ body.driver-mode #driverExperience { padding-top:calc(58px + env(safe-area-inset-top))!important; }
+}
