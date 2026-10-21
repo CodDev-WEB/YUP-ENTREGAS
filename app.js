@@ -399,6 +399,7 @@ function initDriverExperience(){
  root.className="driver-app";
  root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><img class="driver-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div><button type="button" class="driver-logout" data-driver-logout aria-label="Sair da conta">Sair <span aria-hidden="true">↗</span></button></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
  $("appLayout").querySelector(".content").prepend(root);
+ root.addEventListener("input",event=>{const field=event.target;if(!(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement))return;if(field instanceof HTMLInputElement&&!(["text","search","tel"].includes(field.type)))return;const start=field.selectionStart,end=field.selectionEnd;const upper=field.value.toLocaleUpperCase("pt-BR");if(field.value!==upper){field.value=upper;if(typeof start==="number"&&typeof end==="number")field.setSelectionRange(start,end)}});
  root.querySelector("[data-driver-back]").addEventListener("click",()=>{driverScreen=currentJourney?"route":"start";renderDriverExperience()});
  root.querySelector("[data-driver-logout]").addEventListener("click",async()=>{const button=root.querySelector("[data-driver-logout]");button.disabled=true;button.textContent="Saindo…";try{await backend?.signOut()}finally{location.reload()}});
 }
