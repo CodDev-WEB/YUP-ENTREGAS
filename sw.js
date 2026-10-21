@@ -1,4 +1,4 @@
-const CACHE = "yup-entregas-shell-v31";
+const CACHE = "yup-entregas-shell-v32";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const ASSETS = [
   "./entregador.html",
   "./driver-access.js",
   "./styles.css",
-  "./styles.css?v=30",
+  "./styles.css?v=32",
   "./app.js",
   "./manifest.webmanifest",
   "./pwa-icon.svg",
