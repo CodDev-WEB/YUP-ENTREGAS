@@ -452,6 +452,7 @@ function renderDriverExperience(){
  const root=$("driverExperience");if(!root)return;
  const content=$("driverScreenContent"),bottom=$("driverBottom");
  content.innerHTML=driverScreenMarkup();
+ root.classList.toggle("driver-home-mode",driverScreen==="start");
  bottom.innerHTML=driverScreen==="start"||driverScreen==="new"||driverScreen==="summary"||driverScreen==="occurrence"?'': '<button type="button" class="driver-bottom-add" data-driver-screen="new">＋　Adicionar entrega</button>';
  root.querySelectorAll("[data-driver-screen]").forEach(b=>b.addEventListener("click",()=>{driverScreen=b.dataset.driverScreen;renderDriverExperience()}));
  root.querySelectorAll("[data-driver-action]").forEach(b=>b.addEventListener("click",async()=>{
