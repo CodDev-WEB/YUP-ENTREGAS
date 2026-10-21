@@ -1910,3 +1910,13 @@ button[aria-busy="true"]{opacity:.72;cursor:progress;pointer-events:none}
 .fleet-geo-heatmap .leaflet-control-attribution{font-size:9px}
 .fleet-geo-heatmap .leaflet-tile{filter:saturate(.85)}
 @media(max-width:620px){.fleet-geo-heatmap{height:340px;border-radius:12px}.fleet-geo-map-wrap{margin-top:14px;padding-top:14px}}
+
+/* Mapa de calor regional: comparação direta entre demanda e entregas concluídas */
+.fleet-heat-comparison{display:grid;gap:9px;margin:14px 0 10px}
+.fleet-heat-bar-row{display:grid;grid-template-columns:76px minmax(0,1fr) 24px;align-items:center;gap:8px;font-size:10px;color:#51665a}
+.fleet-heat-bar-row>strong{text-align:right;font-size:11px;color:#225640;font-variant-numeric:tabular-nums}
+.fleet-heat-bar-row .fleet-heat-bar{margin:0;height:8px}
+.fleet-heat-bar-requested{background:rgba(34,86,64,.12)}
+.fleet-heat-bar-requested i{background:#55bbd1}
+.fleet-heat-bar-completed{background:rgba(34,86,64,.12)}
+.fleet-heat-bar-completed i{background:#39845a}
