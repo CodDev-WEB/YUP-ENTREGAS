@@ -6,8 +6,8 @@
   "display": "standalone",
   "orientation": "portrait",
   "scope": "/",
-  "background_color": "#f3f6f4",
-  "theme_color": "#087d50",
+  "background_color": "#fefefd",
+  "theme_color": "#fcde52",
   "lang": "pt-BR",
   "id": "/",
   "display_override": [
