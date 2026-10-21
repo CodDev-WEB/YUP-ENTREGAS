@@ -107,10 +107,9 @@ function deliveryDestination(delivery){
 function openGoogleRoute(items,startIndex=0){
  const stops=items.slice(startIndex);
  if(!stops.length)return notify("Cadastre pelo menos uma entrega para abrir a rota.");
- // Google Maps URLs suportam até 9 waypoints em navegadores desktop e até 3 em navegadores móveis.
- // Mantemos até 3 paradas intermediárias para maior compatibilidade com celulares.
+ // Sem origem fixa, o Google Maps pode usar a posição atual como ponto de partida.
  const maxWaypoints=3;
- const batchSize=maxWaypoints+1; // destino final + até 3 waypoints anteriores
+ const batchSize=maxWaypoints+1;
  const batch=stops.slice(0,batchSize);
  const destinations=batch.map(deliveryDestination);
  const destination=destinations[destinations.length-1];
@@ -119,7 +118,7 @@ function openGoogleRoute(items,startIndex=0){
  if(waypoints.length)params.set("waypoints",waypoints.join("|"));
  window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
  if(stops.length>batch.length){
-  notify("O Google Maps limita a quantidade de paradas por rota em celulares. Abri o primeiro trecho com "+batch.length+" entregas. Após concluí-lo, abra novamente a rota para continuar pelas próximas paradas.");
+  notify("Este trecho inclui as entregas "+(startIndex+1)+" a "+(startIndex+batch.length)+". Para continuar, abra novamente a rota e selecione a próxima entrega.");
  }
 }
 async function deliveryAction(id,action){
@@ -154,16 +153,18 @@ function renderDeliveries(){
  list.querySelectorAll("button[data-act]").forEach(b=>b.addEventListener("click",()=>deliveryAction(b.dataset.id,b.dataset.act)));
 }
 $("openRoute").addEventListener("click",()=>{
- const ds=currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[];
- if(!ds.length)return notify("Não há entregas cadastradas na jornada atual.");
+ const ds=deliveries.filter(d=>currentJourney?d.journey_id===currentJourney.id:d.journey_id&&journeys.some(j=>j.id===d.journey_id&&j.status!=="cancelled"))
+  .filter(d=>!["completed","failed"].includes(d.status))
+  .sort((a,b)=>a.sequence_no-b.sequence_no);
+ if(!ds.length)return notify("Não há entregas pendentes cadastradas para montar a rota.");
  let startIndex=0;
  const maxStopsPerSegment=4;
  if(ds.length>maxStopsPerSegment){
-  const answer=prompt("Esta rota tem "+ds.length+" entregas. Para respeitar o limite do Google Maps em celulares, escolha o número da primeira entrega deste trecho (1, 5, 9...). Para abrir o primeiro trecho, digite 1.", "1");
+  const answer=prompt("Há "+ds.length+" entregas pendentes. O Google Maps no celular aceita um número limitado de paradas. Informe a primeira entrega do trecho: 1, 5, 9...", "1");
   if(answer===null)return;
   const first=Number(answer);
   if(!Number.isInteger(first)||first<1||first>ds.length||((first-1)%maxStopsPerSegment)!==0)
-   return notify("Número inválido. Escolha 1, 5, 9, 13... até a última entrega disponível.");
+   return notify("Escolha a primeira entrega de um trecho: 1, 5, 9, 13...");
   startIndex=first-1;
  }
  openGoogleRoute(ds,startIndex);
