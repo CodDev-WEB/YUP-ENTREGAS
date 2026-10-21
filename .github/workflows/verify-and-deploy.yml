@@ -34,11 +34,11 @@ jobs:
       - name: Check required files, links and public configuration
         run: |
           set -e
-          for file in index.html app.js styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql; do
+          for file in index.html app.js styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql supabase/route-plans-migration.sql; do
             test -s "$file"
           done
           grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
-          grep -q 'styles.css?v=54' index.html
+          grep -q 'styles.css?v=55' index.html
           grep -q 'yup-brand.svg' app.js
           ! grep -Eiq 'service_role|SUPABASE_SERVICE_ROLE_KEY' index.html app.js auth-ui.js supabase-client.js supabase-config.js
           ! grep -Fq '\\n\\n\\n' index.html
