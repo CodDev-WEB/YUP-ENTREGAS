@@ -226,9 +226,11 @@ create policy journeys_driver_insert_own on public.journeys for insert to authen
 with check(public.owns_driver(driver_id) and public.is_active_user());
 create policy journeys_management_insert on public.journeys for insert to authenticated
 with check(public.current_app_role() in ('admin','manager') and public.is_active_user());
+create policy journeys_management_manage on public.journeys for all to authenticated
+using(public.current_app_role() in ('admin','manager')) with check(public.current_app_role() in ('admin','manager'));
 create policy journeys_driver_update_own_or_admin on public.journeys for update to authenticated
-using(public.owns_driver(driver_id) or public.current_app_role()='admin')
-with check((public.owns_driver(driver_id) or public.current_app_role()='admin') and (odometer_end is null or odometer_end>=odometer_start));
+using(public.owns_driver(driver_id) or public.current_app_role() in ('admin','manager'))
+with check((public.owns_driver(driver_id) or public.current_app_role() in ('admin','manager')) and (odometer_end is null or odometer_end>=odometer_start));
 
 create policy journey_location_points_read_accessible on public.journey_location_points for select to authenticated
 using(public.can_access_journey(journey_id));
