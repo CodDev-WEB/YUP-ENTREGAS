@@ -397,9 +397,10 @@ function initDriverExperience(){
  const root=document.createElement("section");
  root.id="driverExperience";
  root.className="driver-app";
- root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><img class="driver-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
+ root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><img class="driver-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div><button type="button" class="driver-logout" data-driver-logout aria-label="Sair da conta">Sair <span aria-hidden="true">↗</span></button></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
  $("appLayout").querySelector(".content").prepend(root);
  root.querySelector("[data-driver-back]").addEventListener("click",()=>{driverScreen=currentJourney?"route":"start";renderDriverExperience()});
+ root.querySelector("[data-driver-logout]").addEventListener("click",async()=>{const button=root.querySelector("[data-driver-logout]");button.disabled=true;button.textContent="Saindo…";try{await backend?.signOut()}finally{location.reload()}});
 }
 function driverTime(v){return v?new Date(v).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"—"}
 function driverDate(){return new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}
