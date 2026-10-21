@@ -1742,3 +1742,33 @@ body.driver-mode #driverExperience .driver-quiet {
 /* Cabeçalho simplificado: somente logo e identificação */
 body.driver-mode #driverExperience .driver-top .driver-avatar { display:none!important; }
 body.driver-mode #driverExperience .driver-top .brand { margin-right:auto!important; }
+
+/* Tela 2 — mesmo eixo central, margens e alinhamento da Tela 1 */
+body.driver-mode #driverExperience .driver-screen-content:has(.driver-status-row) {
+ width:100%!important; max-width:414px!important; min-width:0!important;
+ margin-left:auto!important; margin-right:auto!important;
+ padding:22px 20px calc(28px + env(safe-area-inset-bottom))!important;
+}
+body.driver-mode #driverExperience .driver-screen-content:has(.driver-status-row) > * {
+ box-sizing:border-box!important; max-width:100%!important; min-width:0!important;
+}
+body.driver-mode #driverExperience .driver-status-row {
+ grid-template-columns:minmax(0,1fr) auto!important; align-items:center!important;
+}
+body.driver-mode #driverExperience .driver-status-row .driver-state { margin-top:0!important; }
+body.driver-mode #driverExperience .driver-vehicle-line { align-items:center!important; }
+body.driver-mode #driverExperience .driver-stats,
+body.driver-mode #driverExperience .driver-section-heading,
+body.driver-mode #driverExperience .driver-stop-list,
+body.driver-mode #driverExperience .driver-empty,
+body.driver-mode #driverExperience .driver-outline,
+body.driver-mode #driverExperience .driver-quiet {
+ width:100%!important; margin-left:0!important; margin-right:0!important;
+}
+body.driver-mode #driverExperience .driver-section-heading { align-items:center!important; }
+body.driver-mode #driverExperience .driver-stop { justify-self:stretch!important; }
+@media(max-width:380px) {
+ body.driver-mode #driverExperience .driver-screen-content:has(.driver-status-row) {
+  padding-left:16px!important; padding-right:16px!important;
+ }
+}
