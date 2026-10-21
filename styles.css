@@ -1335,3 +1335,54 @@ body.driver-mode .driver-screen-content .driver-form textarea { font-size:16px!i
  body.driver-mode .driver-home-date { margin:9px 0; }
  body.driver-mode .driver-start-form { gap:9px; }
 }
+
+/* Hotfix iOS: viewport integral, sem moldura estreita nem rodapé do site no modo entregador */
+html:has(body.driver-mode), body.driver-mode { width:100%; min-width:0; max-width:100%; height:100%; margin:0; overflow:hidden!important; }
+body.driver-mode #appLayout,
+body.driver-mode #appLayout > .content {
+ display:block!important; position:static!important; width:100%!important; max-width:none!important; min-width:0!important;
+ height:100dvh!important; min-height:100dvh!important; margin:0!important; padding:0!important; overflow:visible!important;
+}
+body.driver-mode #driverExperience {
+ display:flex!important; position:fixed!important; inset:0!important; z-index:999!important;
+ box-sizing:border-box!important; width:100vw!important; max-width:none!important; min-width:0!important;
+ height:100vh!important; height:100dvh!important; min-height:0!important; margin:0!important;
+ overflow:hidden!important; border:0!important; border-radius:0!important;
+ padding-top:calc(62px + env(safe-area-inset-top))!important;
+ padding-bottom:calc(78px + env(safe-area-inset-bottom))!important;
+}
+body.driver-mode #driverExperience * { box-sizing:border-box; }
+body.driver-mode #driverExperience .driver-top {
+ position:fixed!important; top:0!important; left:0!important; right:0!important; transform:none!important;
+ width:100%!important; max-width:none!important; margin:0!important;
+ padding-left:max(16px,env(safe-area-inset-left))!important;
+ padding-right:max(16px,env(safe-area-inset-right))!important;
+}
+body.driver-mode #driverScreenContent {
+ display:block!important; flex:1 1 auto!important; width:100%!important; max-width:760px!important; min-width:0!important;
+ min-height:0!important; height:auto!important; margin:0 auto!important;
+ padding-left:max(18px,env(safe-area-inset-left))!important;
+ padding-right:max(18px,env(safe-area-inset-right))!important;
+ padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;
+ overflow-x:hidden!important; overflow-y:auto!important;
+}
+body.driver-mode #driverBottom {
+ display:flex!important; position:fixed!important; left:0!important; right:0!important; bottom:0!important;
+ width:100%!important; max-width:none!important; min-width:0!important; margin:0!important;
+ padding-left:max(12px,env(safe-area-inset-left))!important;
+ padding-right:max(12px,env(safe-area-inset-right))!important;
+ padding-bottom:calc(10px + env(safe-area-inset-bottom))!important;
+}
+body.driver-mode > footer,
+body.driver-mode footer,
+body.driver-mode #prototypeWarning { display:none!important; }
+body.driver-mode .driver-home-mode .driver-screen-content { max-width:100%!important; padding:0!important; }
+body.driver-mode .driver-home { width:100%!important; min-width:0!important; }
+body.driver-mode .driver-map-scene { width:100%!important; }
+body.driver-mode .driver-start-sheet { min-width:0!important; }
+body.driver-mode .driver-screen-content > *,
+body.driver-mode .driver-start-sheet > * { max-width:100%; }
+body.driver-mode .driver-screen-content :is(p,h1,h2,h3,small,strong,span,label) { overflow-wrap:anywhere; }
+@supports (height: 100svh) {
+ body.driver-mode #driverExperience { height:100svh!important; height:100dvh!important; }
+}
