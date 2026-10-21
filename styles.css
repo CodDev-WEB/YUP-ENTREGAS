@@ -516,3 +516,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0
   .button{min-height:46px}
   body:not(.driver-mode) .content{padding-left:14px;padding-right:14px}
 }
+
+/* YUP admin mobile polish */
+body:not(.driver-mode) .content{max-width:1560px}
+body:not(.driver-mode) .table-wrap{border-color:var(--line);border-radius:14px}
+body:not(.driver-mode) th{background:#f2f7f4;color:#52665a}
+@media(max-width:720px){
+body:not(.driver-mode){padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+body:not(.driver-mode) .sidebar{position:fixed;inset:auto 10px calc(8px + env(safe-area-inset-bottom));z-index:60;display:flex;flex-direction:row;justify-content:space-around;gap:5px;height:68px;min-height:68px;padding:7px 8px;border:1px solid #dae6dd;border-radius:20px;background:rgba(255,255,255,.96);box-shadow:0 10px 35px rgba(20,49,31,.15);backdrop-filter:blur(18px);overflow-x:auto}
+body:not(.driver-mode) .sidebar .nav{flex:1 1 0;min-width:0;width:auto;min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:3px;padding:5px 3px;border-radius:13px;text-align:center;font-size:10px;white-space:normal}
+body:not(.driver-mode) .sidebar .nav span{font-size:10px;line-height:1.1;overflow:visible;text-overflow:clip}
+body:not(.driver-mode) .sidebar .nav.active{background:#e6f4ec;border-color:#d7ecdf;color:#07543c}
+body:not(.driver-mode) .content{padding:17px 13px calc(100px + env(safe-area-inset-bottom))}
+}
