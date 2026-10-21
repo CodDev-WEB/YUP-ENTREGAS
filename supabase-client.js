@@ -42,7 +42,8 @@
     state.channel=state.client.channel("yup-operations")
       .on("postgres_changes",{event:"*",schema:"public",table:"journeys"},onChange)
       .on("postgres_changes",{event:"*",schema:"public",table:"deliveries"},onChange)
-      .on("postgres_changes",{event:"*",schema:"public",table:"delivery_events"},onChange).subscribe();
+      .on("postgres_changes",{event:"*",schema:"public",table:"delivery_events"},onChange)
+      .on("postgres_changes",{event:"*",schema:"public",table:"journey_location_points"},onChange).subscribe();
     return state.channel;
   }
   async function requireReady() {
@@ -84,6 +85,24 @@
     }
     return {journeys:journeys || [],deliveries};
   }
+  async function recordJourneyLocation({journeyId,latitude,longitude,accuracy,speed,heading,capturedAt}) {
+    const client = await requireReady();
+    const {data,error} = await client.from("journey_location_points").insert({
+      journey_id:journeyId,latitude:Number(latitude),longitude:Number(longitude),
+      accuracy_m:accuracy==null?null:Number(accuracy),speed_mps:speed==null?null:Number(speed),
+      heading_deg:heading==null?null:Number(heading),captured_at_device:capturedAt||new Date().toISOString()
+    }).select("id,journey_id,latitude,longitude,accuracy_m,speed_mps,heading_deg,captured_at_device,received_at_server").single();
+    if(error)throw error;
+    return data;
+  }
+  async function listJourneyLocationPoints(journeyId) {
+    const client = await requireReady();
+    const {data,error} = await client.from("journey_location_points")
+      .select("id,journey_id,latitude,longitude,accuracy_m,speed_mps,heading_deg,captured_at_device,received_at_server")
+      .eq("journey_id",journeyId).order("captured_at_device",{ascending:true}).limit(10000);
+    if(error)throw error;
+    return data||[];
+  }
   async function startJourney({driverId,vehicleId,odometerStart}) {
     const client = await requireReady();
     const {data,error} = await client.from("journeys").insert({driver_id:driverId,vehicle_id:vehicleId,odometer_start:Number(odometerStart),status:"open"}).select("id,driver_id,vehicle_id,status,odometer_start,started_at_server").single();
@@ -123,5 +142,5 @@
     if (eventError) throw new Error("Status atualizado, mas não foi possível registrar o evento: " + eventError.message);
     return updated;
   }
-  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,startJourney,finishJourney,createDelivery,updateDeliveryStatus,get client(){return state.client;},get profile(){return state.profile;} };
+  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,startJourney,finishJourney,createDelivery,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,get client(){return state.client;},get profile(){return state.profile;} };
 })();
