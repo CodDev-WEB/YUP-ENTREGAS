@@ -1074,3 +1074,16 @@ body.driver-mode .driver-bottom { background:rgba(254,254,253,.97); }
 body.driver-mode .driver-bottom-add { background:var(--yup-yellow); color:var(--yup-ink); }
 body.driver-mode .driver-outline { border-color:var(--yup-blue); color:#245a66; }
 body.driver-mode .driver-state { background:#eaf8fb; color:#245a66; }
+
+body.driver-mode .driver-brand-logo {
+  display:block;
+  width:108px;
+  height:38px;
+  max-width:34vw;
+  object-fit:contain;
+  object-position:left center;
+  border-radius:7px;
+}
+@media(max-width:360px) {
+  body.driver-mode .driver-brand-logo { width:96px; height:34px; }
+}
