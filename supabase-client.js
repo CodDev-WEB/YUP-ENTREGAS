@@ -118,7 +118,7 @@
   async function createDelivery(input) {
     const client = await requireReady();
     const {data,error} = await client.from("deliveries").insert({
-      journey_id:input.journeyId,order_no:String(input.orderNo).trim(),neighborhood_id:input.neighborhoodId || null,
+      journey_id:input.journeyId,neighborhood_id:input.neighborhoodId || null,
       address:String(input.address).trim(),reference:String(input.reference || "").trim() || null,
       map_link:String(input.mapLink || "").trim() || null,priority:input.priority,status:"pending",sequence_no:input.sequenceNo
     }).select("id,journey_id,order_no,status,sequence_no").single();
