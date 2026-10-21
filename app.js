@@ -77,9 +77,8 @@ function mapLinkDestination(raw){
  if(!["https:","http:"].includes(url.protocol))return {kind:"text",value};
  const host=url.hostname.toLowerCase();
  const isGoogleMaps=host==="maps.google.com"||host==="maps.app.goo.gl"||host==="goo.gl"||host==="google.com"||host.endsWith(".google.com");
- const isWhatsApp=host==="wa.me"||host.endsWith(".whatsapp.com")||host.endsWith(".whatsapp.net");
  // Links curtos não expõem a coordenada no próprio URL. Abra o link original para o Maps resolver o destino.
- if(host==="maps.app.goo.gl"||host==="goo.gl"||isWhatsApp)return {kind:"direct",url:url.href};
+ if(host==="maps.app.goo.gl"||(host==="goo.gl"&&url.pathname.startsWith("/maps")))return {kind:"direct",url:url.href};
  const coordinatePatterns=[
   /@(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/,
   /!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/,
