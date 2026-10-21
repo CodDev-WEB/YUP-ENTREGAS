@@ -25,15 +25,15 @@
 <main class="layout hidden" id="appLayout">
   <aside class="sidebar">
     <p class="eyebrow">OPERAÇÃO</p>
-    <button class="nav active" data-view="entregador">▣ <span>Entregador</span></button>
-    <button class="nav" data-view="painel">▦ <span>Painel da frota</span></button>
+    <button class="nav" data-view="entregador">▣ <span>Entregador</span></button>
+    <button class="nav active" data-view="painel">▦ <span>Painel da frota</span></button>
     <button class="nav" data-view="combustivel">◉ <span>Combustível</span></button>
     <button class="nav" data-view="manutencao">⚙ <span>Manutenção</span></button>
     <div class="side-note"><strong>YUP Store</strong><p>Santarém — Pará</p><small>Jornadas e entregas sincronizadas pelo banco de dados.</small></div>
   </aside>
   <section class="content">
     <p class="warning" id="prototypeWarning">Jornadas e entregas são integradas ao Supabase. Combustível e manutenção ainda permanecem locais; aplique a migração de segurança antes de iniciar jornadas como administrador.</p>
-    <div id="view-entregador" class="view">
+    <div id="view-entregador" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">CENTRAL DO ENTREGADOR</p><h1>Jornada e entregas</h1><p>Registre cada etapa para manter a linha do tempo da operação.</p></div><span id="journeyBadge" class="badge">Jornada não iniciada</span></div>
       <div class="metrics">
         <article class="metric"><span>Paradas cadastradas</span><strong id="metricStops">0</strong></article>
@@ -68,7 +68,7 @@
         <div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div>
       </article>
     </div>
-    <div id="view-painel" class="view hidden">
+    <div id="view-painel" class="view">
       <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Resumo dos registros salvos neste dispositivo.</p></div></div>
       <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
       <article class="panel"><div class="panel-title"><div><h2>Histórico de jornadas</h2><p>Cada jornada recebe um número de ordem automático, sem digitação manual.</p></div><button class="button secondary" id="exportJourneyReport" type="button">Exportar relatório CSV</button></div><div id="journeyHistory" class="table-wrap"></div></article>
