@@ -156,7 +156,17 @@ function renderDeliveries(){
 $("openRoute").addEventListener("click",()=>{
  const ds=currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[];
  if(!ds.length)return notify("Não há entregas cadastradas na jornada atual.");
- openGoogleRoute(ds);
+ let startIndex=0;
+ const maxStopsPerSegment=4;
+ if(ds.length>maxStopsPerSegment){
+  const answer=prompt("Esta rota tem "+ds.length+" entregas. Para respeitar o limite do Google Maps em celulares, escolha o número da primeira entrega deste trecho (1, 5, 9...). Para abrir o primeiro trecho, digite 1.", "1");
+  if(answer===null)return;
+  const first=Number(answer);
+  if(!Number.isInteger(first)||first<1||first>ds.length||((first-1)%maxStopsPerSegment)!==0)
+   return notify("Número inválido. Escolha 1, 5, 9, 13... até a última entrega disponível.");
+  startIndex=first-1;
+ }
+ openGoogleRoute(ds,startIndex);
 });
 function render(){
  renderDeliveries();
