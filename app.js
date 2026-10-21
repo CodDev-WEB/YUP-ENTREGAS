@@ -397,7 +397,7 @@ function initDriverExperience(){
  const root=document.createElement("section");
  root.id="driverExperience";
  root.className="driver-app";
- root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><img class="driver-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div><span class="driver-avatar">'+esc((backend?.profile?.display_name||"RC").split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase())+'</span></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
+ root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><img class="driver-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
  $("appLayout").querySelector(".content").prepend(root);
  root.querySelector("[data-driver-back]").addEventListener("click",()=>{driverScreen=currentJourney?"route":"start";renderDriverExperience()});
 }
