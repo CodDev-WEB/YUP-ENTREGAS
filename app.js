@@ -3,7 +3,7 @@ const backend = window.YupBackend;
 const localKey = "yup-entregas-local-expenses-v1:" + (backend?.profile?.id || "unknown");
 const entryLocationKey = "yup-entregas-entry-location-v1:" + (backend?.profile?.id || "unknown");
 const admin = ["admin","manager"].includes(backend?.profile?.role);
-let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false, entryLocationRequested=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null, gpsSaving=false;
+let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], routePlans=[], routePlansError="", currentJourney=null, loading=false, entryLocationRequested=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null, gpsSaving=false;
 let local = (()=>{try{return JSON.parse(localStorage.getItem(localKey))||{fuel:[],maintenance:[]}}catch{return {fuel:[],maintenance:[]}}})();
 const now = () => new Date().toISOString();
 const fmtDate = v => v ? new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "—";
@@ -149,6 +149,7 @@ async function refresh(){
    driverSelect.onchange=()=>{currentJourney=openJourney();render();};
   }
   fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,neighborhoods.length?"Selecione o bairro":"Nenhum bairro ativo encontrado no banco de dados");
+  fillSelect($("routePlanDriver"),drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
   $("prototypeWarning").textContent="Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
   $("prototypeWarning").classList.remove("hidden");
 
@@ -157,6 +158,7 @@ async function refresh(){
    journeys=result.journeys;
    deliveries=result.deliveries;
    currentJourney=openJourney();
+   try{routePlans=await backend.listRoutePlans();routePlansError="";}catch(routeError){routePlans=[];routePlansError=routeError?.message||"erro desconhecido";console.error("YUP-ENTREGAS: falha ao carregar rotas prontas",routeError);}
    shareEntryLocationOnce();
    if(localStorage.getItem(entryLocationKey)==="done"&&currentJourney)startGpsTracking(currentJourney);
    else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
@@ -367,7 +369,28 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function render(){
+const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function renderRoutePlans(){
+ const target=$("routePlansList");if(!target)return;
+ if(routePlansError){target.innerHTML='<p class="warning">Não foi possível carregar rotas prontas: '+esc(routePlansError)+'. Confira se a migração supabase/route-plans-migration.sql foi aplicada no Supabase.</p>';return;}
+ if(!routePlans.length){target.innerHTML='<p class="hint">Nenhuma rota pronta cadastrada. Monte uma rota acima para atribuí-la a um entregador.</p>';return;}
+ target.innerHTML=routePlans.map(plan=>{
+  const journey=journeys.find(j=>j.route_plan_id===plan.id);
+  const status=journey?(journey.status==="open"?"Em andamento":journey.status==="finished"?"Concluída":"Jornada cancelada"):"Aguardando início";
+  const driverName=plan.drivers?.full_name||drivers.find(d=>d.id===plan.assigned_driver_id)?.full_name||"Entregador";
+  const stops=(plan.route_plan_stops||[]).slice().sort((a,b)=>a.sequence_no-b.sequence_no);
+  return '<article class="route-plan-card"><div class="route-plan-card-head"><div><span class="route-plan-eyebrow">'+stops.length+' parada(s)</span><h3>'+esc(plan.title)+'</h3><p>'+esc(driverName)+'</p></div><span class="route-plan-status '+(journey?.status==="open"?"is-active":journey?.status==="finished"?"is-done":"")+'">'+status+'</span></div><ol>'+stops.map(stop=>'<li><span>'+stop.sequence_no+'</span><div><strong>'+esc(stop.address)+'</strong><small>'+esc(stop.neighborhoods?.name||"Bairro não informado")+(stop.reference?" · "+esc(stop.reference):"")+'</small></div></li>').join("")+'</ol><p class="route-plan-date">Criada em '+fmtDate(plan.created_at)+'</p></article>';
+ }).join("");
+}
+function appendRoutePlanStop(){
+ const target=$("routePlanStopsEditor");if(!target)return;
+ const n=target.querySelectorAll(".route-stop-editor").length+1;
+ const card=document.createElement("section");card.className="route-stop-editor";
+ card.innerHTML='<div class="route-stop-editor-head"><strong>Parada '+n+'</strong><button type="button" class="route-stop-remove" aria-label="Remover parada">Remover</button></div><div class="form-grid"><label>Bairro<select name="neighborhood"><option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("")+'</select></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label></div><label>Endereço completo<input name="address" required maxlength="400" placeholder="Rua, número, complemento"></label><div class="form-grid"><label>Ponto de referência<input name="reference" maxlength="250" placeholder="Opcional"></label><label>Link de localização<input name="mapLink" type="url" placeholder="Link do Google Maps (opcional)"></label></div>';
+ card.querySelector(".route-stop-remove").addEventListener("click",()=>{card.remove();[...target.querySelectorAll(".route-stop-editor")].forEach((item,index)=>item.querySelector(".route-stop-editor-head strong").textContent="Parada "+(index+1));});
+ target.append(card);
+}
+function render(){
+ renderRoutePlans();
  renderDeliveries();
  renderDriverExperience();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
@@ -547,5 +570,26 @@ function renderDriverExperience(){
  });
 }
 
+$("addRouteStop")?.addEventListener("click",appendRoutePlanStop);
+appendRoutePlanStop();
+$("routePlanForm")?.addEventListener("submit",async event=>{
+ event.preventDefault();
+ const form=event.currentTarget,button=$("saveRoutePlan"),message=$("routePlanMessage");
+ const stops=[...$("routePlanStopsEditor").querySelectorAll(".route-stop-editor")].map(card=>({
+  neighborhoodId:card.querySelector('[name="neighborhood"]').value,
+  address:card.querySelector('[name="address"]').value.trim(),
+  reference:card.querySelector('[name="reference"]').value.trim(),
+  mapLink:card.querySelector('[name="mapLink"]').value.trim(),
+  priority:card.querySelector('[name="priority"]').value
+ }));
+ if(!stops.length||stops.some(stop=>!stop.address)){message.textContent="Informe pelo menos uma parada e o endereço de cada uma.";return;}
+ button.disabled=true;message.textContent="Salvando a rota e atribuindo ao entregador…";
+ try{
+  await backend.createRoutePlan({title:form.elements.title.value.trim(),driverId:form.elements.driver.value,stops});
+  await refresh();form.reset();$("routePlanStopsEditor").replaceChildren();appendRoutePlanStop();
+  message.textContent="Rota salva e atribuída. Ela já estará disponível no aplicativo do entregador selecionado.";
+ }catch(error){message.textContent="Não foi possível salvar a rota: "+(error?.message||"erro desconhecido");}
+ finally{button.disabled=false;}
+});
 backend.subscribeToOperations(()=>{refresh();if($("timelineJourney")?.value)loadJourneyTimeline();});
 refresh();
