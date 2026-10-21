@@ -120,7 +120,7 @@ async function refresh(){
   [drivers,vehicles,neighborhoods]=await Promise.all([backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()]);
   const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();shareEntryLocationOnce();if(localStorage.getItem(entryLocationKey)==="done"&&currentJourney)startGpsTracking(currentJourney);else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
-  const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
+  const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");vehicleSelect.disabled=false;
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
   vehicleSelect.replaceChildren();const vehiclePlaceholder=document.createElement("option");vehiclePlaceholder.value="";vehiclePlaceholder.textContent=vehicles.length?"Selecione o veículo":"Nenhum veículo encontrado no banco de dados";vehicleSelect.append(vehiclePlaceholder);vehicles.forEach(v=>{const option=document.createElement("option");option.value=v.id;option.textContent=v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:"")+(!v.active?" (INATIVO)":"");option.disabled=!v.active;vehicleSelect.append(option)});if(!vehicles.length)console.warn("YUP-ENTREGAS: a consulta de veículos não retornou registros.");
   if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;driverSelect.title="Preenchido automaticamente pelo usuário conectado";}else{driverSelect.disabled=true;}}
