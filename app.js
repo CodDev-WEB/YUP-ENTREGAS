@@ -445,6 +445,33 @@ function renderFleetHistory(){
  $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
  const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
  if($("fleetFilterSummary"))$("fleetFilterSummary").textContent=filtered.length+" jornada(s) · "+filterCaption;
+ const filteredJourneyIds=new Set(filtered.map(j=>j.id));
+ const regionalDeliveries=deliveries.filter(d=>filteredJourneyIds.has(d.journey_id));
+ const regions=new Map();
+ regionalDeliveries.forEach(d=>{
+  const region=String(d.neighborhoods?.name||"Bairro não informado").trim()||"Bairro não informado";
+  if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0,pending:0,journeys:new Set(),addresses:new Set()});
+  const item=regions.get(region);item.total++;item.journeys.add(d.journey_id);
+  if(d.status==="completed")item.completed++;
+  else if(d.status==="failed")item.failed++;
+  else item.pending++;
+  if(d.address)item.addresses.add(String(d.address).trim());
+ });
+ const rankedRegions=[...regions.values()].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name,"pt-BR"));
+ const maxRegion=Math.max(1,...rankedRegions.map(r=>r.total));
+ const completedCount=regionalDeliveries.filter(d=>d.status==="completed").length;
+ const failedCount=regionalDeliveries.filter(d=>d.status==="failed").length;
+ const heatSummary=$("fleetHeatSummary"),heatmap=$("fleetHeatmap");
+ if(heatSummary)heatSummary.innerHTML='<div class="fleet-heat-kpi"><strong>'+regionalDeliveries.length+'</strong><span>Entregas no filtro</span></div><div class="fleet-heat-kpi"><strong>'+rankedRegions.length+'</strong><span>Regiões atendidas</span></div><div class="fleet-heat-kpi"><strong>'+(regionalDeliveries.length?Math.round(completedCount/regionalDeliveries.length*100):0)+'%</strong><span>Taxa concluída</span></div><div class="fleet-heat-kpi"><strong>'+failedCount+'</strong><span>Não realizadas</span></div>';
+ if(heatmap){
+  if(!rankedRegions.length)heatmap.innerHTML='<p class="hint">Não há entregas para analisar no período e nos filtros selecionados.</p>';
+  else heatmap.innerHTML=rankedRegions.map(region=>{
+   const level=Math.max(1,Math.ceil(region.total/maxRegion*5));
+   const rate=region.total?Math.round(region.completed/region.total*100):0;
+   const addressPreview=[...region.addresses].slice(0,2).join(" • ");
+   return '<article class="fleet-heat-region heat-level-'+level+'"><div class="fleet-heat-region-head"><div><span class="fleet-heat-label">BAIRRO / REGIÃO</span><h3>'+esc(region.name)+'</h3></div><strong class="fleet-heat-count">'+region.total+' <small>'+(region.total===1?'entrega':'entregas')+'</small></strong></div><div class="fleet-heat-bar" role="img" aria-label="'+region.total+' entregas; '+rate+' por cento concluídas"><i style="width:'+Math.max(0,Math.min(100,region.total/maxRegion*100))+'%"></i></div><div class="fleet-heat-metrics"><span>'+region.completed+' concluídas</span><span>'+region.failed+' não realizadas</span><span>'+region.pending+' pendentes</span><span>'+region.journeys.size+' jornada(s)</span></div><div class="fleet-heat-footer"><span>'+rate+'% de conclusão</span><span>'+region.addresses.size+' endereço(s)</span></div>'+(addressPreview?'<p class="fleet-heat-addresses">'+esc(addressPreview)+(region.addresses.size>2?' · +'+(region.addresses.size-2)+' endereço(s)':'')+'</p>':'')+'</article>';
+  }).join("");
+ }
  const fuel=local.fuel.filter(x=>{const d=new Date(x.date);const f=getFleetFilter();return (!f.from||d>=f.from&&d<f.to)&&(($("fleetVehicle")?.value||"all")==="all"||String(x.vehicleId||x.vehicle)===(vehicles.find(v=>v.id===$("fleetVehicle").value)?.code||$("fleetVehicle").value));});
  const byVehicle={};fuel.forEach(x=>{const key=String(x.vehicleId||x.vehicle||"");(byVehicle[key]||(byVehicle[key]=[])).push(x)});
  let kmTotal=0,literTotal=0;
