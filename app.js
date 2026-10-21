@@ -269,11 +269,26 @@ const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=time
  renderDeliveries();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
- $("journeyHistory").innerHTML=journeys.length?'<table><thead><tr><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+journeys.map(j=>'<tr><td>'+esc(j.drivers?.registration_no||j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(j.odometer_end==null?"—":(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada no banco.</p>';
+ $("journeyHistory").innerHTML=journeys.length?'<table><thead><tr><th>Ordem</th><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+journeys.map(j=>'<tr><td>'+esc(j.order_number==null?"—":"JOR-"+String(j.order_number).padStart(6,"0"))+'</td><td>'+esc(j.drivers?.registration_no||j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(j.odometer_end==null?"—":(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada no banco.</p>';
  $("fuelTotalLiters").textContent=local.fuel.reduce((s,x)=>s+x.liters,0).toLocaleString("pt-BR",{maximumFractionDigits:2})+" L";const costs=local.fuel.reduce((s,x)=>s+x.cost,0),liters=local.fuel.reduce((s,x)=>s+x.liters,0);$("fuelTotalCost").textContent=money(costs);$("fuelAverage").textContent=liters?money(costs/liters)+"/L":"—";
  $("fuelHistory").innerHTML=table(local.fuel,[["date","Data"],["vehicle","Veículo"],["odo","Odômetro"],["liters","Litros"],["cost","Valor"]],x=>({...x,date:fmtDate(x.date),cost:money(x.cost)}));
  $("maintenanceHistory").innerHTML=table(local.maintenance,[["date","Data"],["vehicle","Veículo"],["type","Serviço"],["odo","Odômetro"],["cost","Valor"],["description","Descrição"]],x=>({...x,cost:money(x.cost)}));
 }
+function exportJourneyReport(){
+ const headers=["Ordem da jornada","Status","Entregador","Cadastro entregador","Veículo","Placa","Início","Fim","Odômetro inicial (km)","Odômetro final (km)","Distância odômetro (km)","Total de entregas","Concluídas","Não realizadas","Pendentes"];
+ const rows=journeys.map(j=>{
+  const ds=deliveries.filter(d=>d.journey_id===j.id);
+  const done=ds.filter(d=>d.status==="completed").length,failed=ds.filter(d=>d.status==="failed").length;
+  const end=j.odometer_end==null?"":Number(j.odometer_end);
+  return ["JOR-"+String(j.order_number??"").padStart(6,"0"),statusLabel[j.status]||j.status,j.drivers?.full_name||"",j.drivers?.registration_no||"",j.vehicles?.code||"",j.vehicles?.plate||"",j.started_at_server||"",j.finished_at_server||"",j.odometer_start??"",end,end===""?"":(Number(end)-Number(j.odometer_start)).toFixed(1),ds.length,done,failed,ds.length-done-failed];
+ });
+ const csv=[headers,...rows].map(row=>row.map(value=>'"'+String(value??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ const blob=new Blob(["\\uFEFF",csv],{type:"text/csv;charset=utf-8;"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="relatorio-jornadas-yup-"+new Date().toISOString().slice(0,10)+".csv";
+ document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
+}
+$("exportJourneyReport")?.addEventListener("click",exportJourneyReport);
 function table(items,cols,transform=x=>x){if(!items.length)return '<p class="hint">Nenhum registro ainda.</p>';return '<table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join("")+'</tr></thead><tbody>'+items.slice().reverse().map(raw=>{const x=transform(raw);return '<tr>'+cols.map(c=>'<td>'+esc(x[c[0]]??"—")+'</td>').join("")+'</tr>'}).join("")+'</tbody></table>'}
 $("fuelDate").value=new Date().toISOString().slice(0,16);$("maintDate").value=new Date().toISOString().slice(0,10);
 $("fuelForm").addEventListener("submit",e=>{e.preventDefault();local.fuel.push({id:crypto.randomUUID(),vehicle:$("fuelVehicle").value.trim(),date:$("fuelDate").value,odo:Number($("fuelOdo").value),liters:Number($("fuelLiters").value),cost:Number($("fuelCost").value),note:$("fuelNote").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("fuelDate").value=new Date().toISOString().slice(0,16);render()});
