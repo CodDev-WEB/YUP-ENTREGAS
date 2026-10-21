@@ -452,6 +452,15 @@ function renderFleetHistory(){
  if($("fleetConsumption"))$("fleetConsumption").textContent=literTotal>0?(kmTotal/literTotal).toLocaleString("pt-BR",{maximumFractionDigits:2})+" km/L":"—";
  if($("fleetConsumptionNote"))$("fleetConsumptionNote").textContent=literTotal>0?"Estimativa por abastecimentos locais consecutivos ("+kmTotal.toLocaleString("pt-BR",{maximumFractionDigits:1})+" km / "+literTotal.toLocaleString("pt-BR",{maximumFractionDigits:2})+" L).":"Sem dados suficientes de abastecimentos consecutivos neste período. Os abastecimentos atuais são locais neste dispositivo.";
 }
+function formatExportDateTime(value){
+ if(!value)return "";
+ const date=new Date(value);
+ if(!Number.isFinite(date.getTime()))return String(value);
+ return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"}).format(date).replace(",", "");
+}
+function formatFleetExportRows(rows){
+ return rows.map(row=>row.map((value,index)=>(index===8||index===9)?formatExportDateTime(value):value));
+}
 function fleetExportRows(){
  const {filtered}=getFleetFilter();
  const headers=["Código da jornada","Status","Código entregador","Nome entregador","Bairros","Código veículo","Placa","Modelo","Início","Fim","Odômetro inicial (km)","Odômetro final (km)","KM rodados","Ocorrências/observações","Entregas","Concluídas","Não realizadas","Pendentes"];
@@ -463,11 +472,11 @@ function fleetExportRows(){
  return {headers,rows};
 }
 function downloadFleetCsv(){
- const {headers,rows}=fleetExportRows(),csv=[headers,...rows].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ const {headers,rows}=fleetExportRows(),csv=[headers,...formatFleetExportRows(rows)].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
  downloadFleetFile("\uFEFF"+csv,"csv","text/csv;charset=utf-8;");
 }
 function downloadFleetXls(){
- const {headers,rows}=fleetExportRows(),html='<html><head><meta charset="utf-8"></head><body><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join("")+'</tr>').join("")+'</tbody></table></body></html>';
+ const {headers,rows}=fleetExportRows(),exportRows=formatFleetExportRows(rows),html='<html><head><meta charset="utf-8"></head><body><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'+exportRows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join("")+'</tr>').join("")+'</tbody></table></body></html>';
  downloadFleetFile(html,"xls","application/vnd.ms-excel;charset=utf-8;");
 }
 function downloadFleetFile(content,ext,type){
@@ -487,7 +496,7 @@ function printFleetPdf(){
   const minutes=Math.max(0,Math.floor((to-from)/60000)),hours=Math.floor(minutes/60),mins=minutes%60;
   return hours+"h "+String(mins).padStart(2,"0")+"min";
  };
- const pdfRows=rows.map(row=>{const copy=row.slice();copy.splice(durationIndex,0,formatDuration(row[8],row[9]));return copy});
+ const pdfRows=formatFleetExportRows(rows.map(row=>{const copy=row.slice();copy.splice(durationIndex,0,formatDuration(row[8],row[9]));return copy}));
  const page=window.open("","_blank");
  if(!page){notify("Permita a abertura da janela para gerar o PDF.");return}
  const logo=location.origin+"/yup-brand.svg",generated=new Date().toLocaleString("pt-BR");
