@@ -1782,3 +1782,8 @@ body.driver-mode #driverExperience .driver-status-copy{min-width:0;text-align:le
 body.driver-mode #driverExperience .driver-status-copy .driver-kicker,body.driver-mode #driverExperience .driver-status-copy h1{text-align:left}
 body.driver-mode #driverExperience .driver-status-copy h1{overflow-wrap:normal;max-width:100%}
 body.driver-mode #driverExperience .driver-status-row .driver-state{margin:20px 0 0!important;justify-self:end}
+
+/* Ação de saída acessível no cabeçalho do entregador */
+.driver-top .driver-logout{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:0 10px;border:1px solid #dce6df;border-radius:10px;background:#fff;color:#225640;font:700 12px/1 inherit;cursor:pointer;white-space:nowrap}
+.driver-top .driver-logout:active{background:#f4f8f5}
+.driver-top .driver-logout:disabled{opacity:.65;cursor:wait}
