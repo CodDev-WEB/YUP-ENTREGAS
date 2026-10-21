@@ -1,4 +1,4 @@
-const CACHE = "yup-entregas-shell-v30";
+const CACHE = "yup-entregas-shell-v31";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./styles.css?v=30",
   "./app.js",
   "./manifest.webmanifest",
+  "./pwa-icon.svg",
   "./supabase-config.js",
   "./supabase-client.js",
   "./auth-ui.js"
