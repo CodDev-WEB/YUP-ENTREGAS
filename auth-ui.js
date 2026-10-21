@@ -1,6 +1,13 @@
 (() => {
   const $ = id => document.getElementById(id);
   let appLoaded = false;
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(error => {
+        console.warn("YUP-ENTREGAS: não foi possível registrar o service worker", error);
+      });
+    }, { once: true });
+  }
   function message(text, type = "") {
     const el = $("authMessage");
     el.textContent = text;
