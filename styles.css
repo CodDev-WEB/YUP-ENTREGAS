@@ -1087,3 +1087,84 @@ body.driver-mode .driver-brand-logo {
 @media(max-width:360px) {
   body.driver-mode .driver-brand-logo { width:96px; height:34px; }
 }
+
+
+/* Viewport de referência do PWA do entregador: 414 × 824 CSS px.
+   Em telas menores, o app encolhe para a largura disponível; em telas maiores,
+   mantém a largura de projeto e fica centralizado, sem simular um telefone. */
+body.driver-mode #appLayout.layout,
+body.driver-mode .content {
+  width:100%;
+  min-width:0;
+  max-width:none;
+}
+body.driver-mode .content {
+  padding:0 0 calc(82px + env(safe-area-inset-bottom));
+}
+body.driver-mode .driver-app {
+  width:100%;
+  max-width:414px;
+  min-width:0;
+  min-height:max(824px, 100dvh);
+  margin-inline:auto;
+  box-shadow:none;
+}
+body.driver-mode .driver-top {
+  width:100%;
+  max-width:414px;
+  margin-inline:auto;
+}
+body.driver-mode .driver-screen-content {
+  width:100%;
+  max-width:414px;
+  min-width:0;
+  min-height:calc(824px - 58px);
+  padding:24px 16px calc(104px + env(safe-area-inset-bottom));
+  margin-inline:auto;
+}
+body.driver-mode .driver-bottom {
+  left:50%;
+  right:auto;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:414px;
+  padding-left:16px;
+  padding-right:16px;
+  border-left:1px solid var(--yup-border, #e5e8e8);
+  border-right:1px solid var(--yup-border, #e5e8e8);
+  box-sizing:border-box;
+}
+body.driver-mode .driver-bottom-add {
+  width:100%;
+  max-width:382px;
+  margin-inline:auto;
+}
+body.driver-mode .driver-form input:not([type=radio]),
+body.driver-mode .driver-form select,
+body.driver-mode .driver-form textarea {
+  min-width:0;
+  width:100%;
+  font-size:16px !important;
+}
+@media (max-width:413px) {
+  body.driver-mode .driver-app,
+  body.driver-mode .driver-top,
+  body.driver-mode .driver-screen-content,
+  body.driver-mode .driver-bottom {
+    max-width:100%;
+  }
+  body.driver-mode .driver-screen-content {
+    padding-left:14px;
+    padding-right:14px;
+  }
+  body.driver-mode .driver-bottom {
+    padding-left:14px;
+    padding-right:14px;
+  }
+}
+@media (min-width:415px) {
+  body.driver-mode .driver-app {
+    border-left:1px solid rgba(32,42,49,.05);
+    border-right:1px solid rgba(32,42,49,.05);
+  }
+}
