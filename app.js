@@ -150,6 +150,9 @@ async function refresh(){
   }
   fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,neighborhoods.length?"Selecione o bairro":"Nenhum bairro ativo encontrado no banco de dados");
   fillSelect($("routePlanDriver"),drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
+  $("routePlanStopsEditor")?.querySelectorAll('.route-stop-editor select[name="neighborhood"]').forEach(select=>{
+   const selected=select.value;select.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("");select.value=selected;
+  });
   $("prototypeWarning").textContent="Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
   $("prototypeWarning").classList.remove("hidden");
 
