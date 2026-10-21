@@ -37,7 +37,7 @@ jobs:
           test -s supabase-config.js
           test -s _worker.js
           test -s supabase/schema.sql
-          grep -q 'https://gswadshjadzobwhurxjc.supabase.co' supabase-config.js
+          grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
       - name: Deploy Worker and static assets
         if: github.event_name != 'pull_request'
         env:
