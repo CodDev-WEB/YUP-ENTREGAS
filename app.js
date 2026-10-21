@@ -353,6 +353,7 @@ $("openRoute").addEventListener("click",()=>{
 });
 const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function render(){
  renderDeliveries();
+ renderDriverExperience();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
  $("journeyHistory").innerHTML=journeys.length?'<table><thead><tr><th>Ordem</th><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+journeys.map(j=>'<tr><td>'+esc(j.order_number==null?"—":"JOR-"+String(j.order_number).padStart(6,"0"))+'</td><td>'+esc(j.drivers?.registration_no||j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(j.odometer_end==null?"—":(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada no banco.</p>';
@@ -379,5 +380,133 @@ function table(items,cols,transform=x=>x){if(!items.length)return '<p class="hin
 $("fuelDate").value=new Date().toISOString().slice(0,16);$("maintDate").value=new Date().toISOString().slice(0,10);
 $("fuelForm").addEventListener("submit",e=>{e.preventDefault();local.fuel.push({id:crypto.randomUUID(),vehicle:$("fuelVehicle").value.trim(),date:$("fuelDate").value,odo:Number($("fuelOdo").value),liters:Number($("fuelLiters").value),cost:Number($("fuelCost").value),note:$("fuelNote").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("fuelDate").value=new Date().toISOString().slice(0,16);render()});
 $("maintenanceForm").addEventListener("submit",e=>{e.preventDefault();local.maintenance.push({id:crypto.randomUUID(),vehicle:$("maintVehicle").value.trim(),date:$("maintDate").value,type:$("maintType").value,odo:$("maintOdo").value?Number($("maintOdo").value):null,cost:Number($("maintCost").value),description:$("maintDescription").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("maintDate").value=new Date().toISOString().slice(0,10);render()});
+
+
+/* YUP Driver Flow — seis telas operacionais conectadas ao Supabase */
+let driverScreen = "start";
+let driverDraftPriority = "Normal";
+let driverDraftNeighborhood = "";
+let driverOccurrenceReason = "Destinatário ausente";
+let driverOccurrenceNote = "";
+let driverNewDelivery = {neighborhood:"",address:"",reference:"",priority:"Normal",mapLink:""};
+function initDriverExperience(){
+ if(admin)return;
+ const oldView=$("view-entregador");
+ if(!oldView||$("driverExperience"))return;
+ oldView.classList.add("hidden");
+ const root=document.createElement("section");
+ root.id="driverExperience";
+ root.className="driver-app";
+ root.innerHTML='<div class="driver-top"><button type="button" class="driver-back" data-driver-back aria-label="Voltar">‹</button><div class="brand"><div class="brand-mark brand-wordmark">yup.</div><div class="brand-divider"></div><div class="brand-context"><strong>ENTREGAS</strong></div></div><span class="driver-avatar">'+esc((backend?.profile?.display_name||"RC").split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase())+'</span></div><div id="driverScreenContent" class="driver-screen-content"></div><div id="driverBottom" class="driver-bottom"></div>';
+ $("appLayout").querySelector(".content").prepend(root);
+ root.querySelector("[data-driver-back]").addEventListener("click",()=>{driverScreen=currentJourney?"route":"start";renderDriverExperience()});
+}
+function driverTime(v){return v?new Date(v).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"—"}
+function driverDate(){return new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}
+function driverStops(){return currentJourney?deliveries.filter(d=>d.journey_id===currentJourney.id).sort((a,b)=>a.sequence_no-b.sequence_no):[]}
+function driverNext(){return driverStops().find(d=>!["completed","failed"].includes(d.status))||null}
+function driverScreenMarkup(){
+ const ds=driverStops(),next=driverNext(),done=ds.filter(d=>d.status==="completed").length,failed=ds.filter(d=>d.status==="failed").length;
+ const driver=currentDriver(),vehicle=vehicles.find(v=>v.id===currentJourney?.vehicle_id);
+ const odoStart=currentJourney?.odometer_start;
+ const heading=(kicker,title,subtitle="")=>'<p class="driver-kicker">'+kicker+'</p><h1>'+title+'</h1>'+(subtitle?'<p class="driver-subtitle">'+subtitle+'</p>':"");
+ if(driverScreen==="start"||(!currentJourney&&driverScreen!=="new")){
+  driverScreen="start";
+  return heading("YUP STORE · SANTARÉM, PA","Tudo pronto<br>para sair?","Confira seus dados e o veículo antes de começar a jornada.")+
+   '<article class="driver-profile"><div class="driver-initials">'+esc((driver?.full_name||backend?.profile?.display_name||"RC").split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase())+'</div><div><strong>'+esc(driver?.full_name||backend?.profile?.display_name||"Entregador")+'</strong><p>Entregador · YUP Store</p></div><span class="driver-check">✓</span><div class="driver-profile-meta">'+driverDate()+' <span>Hoje</span></div></article>'+
+   '<h2 class="driver-section-title">Antes de sair</h2><form id="driverStartForm" class="driver-form"><label>Veículo da jornada<select name="vehicle" required '+(vehicles.filter(v=>v.active).length?'':'disabled')+'><option value="">Selecione o veículo</option>'+vehicles.filter(v=>v.active).map(v=>'<option value="'+v.id+'">'+esc([v.make_model||v.code,v.plate].filter(Boolean).join(" · "))+'</option>').join("")+'</select></label><label>Odômetro inicial<input name="odometer" type="number" min="0" step="0.1" required placeholder="Ex.: 18420"></label><p class="driver-helper">Digite o quilometragem exibida no painel.</p><div class="driver-info">◎ Para usar sua localização, permita o acesso no navegador. O GPS depende dessa permissão e pode parar em segundo plano.</div><button class="driver-primary" type="submit">→　Iniciar jornada</button></form>';
+ }
+ if(driverScreen==="route"){
+  return '<div class="driver-status-row">'+heading("JORNADA #J-"+String(currentJourney?.order_number||"—")+" · "+new Date(currentJourney?.started_at_server||Date.now()).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}),"Sua rota, em dia.")+'<span class="driver-state">Em andamento</span></div><p class="driver-vehicle-line">♧　'+esc([driver?.full_name,vehicle?.make_model||vehicle?.code,vehicle?.plate].filter(Boolean).join(" · "))+'</p><div class="driver-stats"><div><strong>'+String(ds.length).padStart(2,"0")+'</strong><span>Paradas</span></div><div><strong>'+String(done).padStart(2,"0")+'</strong><span>Concluídas</span></div><div><strong>'+Math.max(0,done+failed)+' / '+ds.length+'</strong><span>Finalizadas</span></div><div class="driver-progress"><i style="width:'+(ds.length?Math.round((done+failed)/ds.length*100):0)+'%"></i></div><small>Início às '+driverTime(currentJourney?.started_at_server)+' · Odômetro inicial '+Number(odoStart||0).toLocaleString("pt-BR")+' km</small></div>'+
+   '<div class="driver-section-heading"><h2>Sequência de paradas</h2><span>'+done+' de '+ds.length+' concluída(s)</span></div>'+
+   (ds.length?'<div class="driver-stop-list">'+ds.map((d,i)=>'<button type="button" class="driver-stop '+(next?.id===d.id?'is-next':'')+'" data-driver-action="detail" data-id="'+d.id+'"><span class="driver-stop-number">'+(d.status==="completed"?"✓":String(i+1).padStart(2,"0"))+'</span><span class="driver-stop-copy"><strong>'+esc(d.neighborhoods?.name||"Endereço da entrega")+'</strong><small>'+esc(d.address)+'</small><em class="driver-chip '+(d.status==="completed"?"success":d.status==="failed"?"warning":"")+'">'+esc(statusLabel[d.status]||d.status)+' · #'+esc(d.order_no||i+1)+'</em></span><span class="driver-stop-arrow">›</span></button>').join("")+'</div>':'<div class="driver-empty">Nenhuma entrega cadastrada. Adicione a primeira parada para começar.</div>')+
+   '<button type="button" class="driver-outline" data-driver-action="maps">↗　Abrir sequência no Maps</button><button type="button" class="driver-quiet" data-driver-screen="summary">⚑　Encerrar jornada</button>';
+ }
+ if(driverScreen==="new"){
+  return heading("JORNADA #J-"+String(currentJourney?.order_number||"—"),"Nova entrega")+
+   '<div class="driver-sequence-note"><strong>'+String(ds.length+1).padStart(2,"0")+'</strong><span><b>Próxima parada da sequência</b><small>Número atribuído automaticamente.</small></span></div>'+
+   '<form id="driverNewForm" class="driver-form"><button class="driver-outline" type="button" data-driver-action="location">◎　Usar minha localização atual</button><label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>'+neighborhoods.map(n=>'<option value="'+n.id+'">'+esc(n.name)+'</option>').join("")+'</select></label><label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label><label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Casa com portão azul"></label><fieldset class="driver-priority"><legend>Prioridade</legend>'+["Normal","Alta","Agendada"].map(p=>'<label class="'+(driverDraftPriority===p?'selected':'')+'"><input type="radio" name="priority" value="'+p+'" '+(driverDraftPriority===p?'checked':'')+'>'+p+'</label>').join("")+'</fieldset><label>Link de localização compartilhada <small>Opcional</small><input name="mapLink" type="url" placeholder="Cole o link do Maps ou WhatsApp"></label><div class="driver-info">ⓘ A localização atual exige permissão. Confira o endereço antes de adicionar a entrega.</div><button class="driver-primary" type="submit">＋　Adicionar à sequência</button></form>';
+ }
+ if(driverScreen==="detail"){
+  const d=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||next;
+  if(!d){driverScreen="route";return driverScreenMarkup()}
+  const idx=ds.findIndex(x=>x.id===d.id),stateEvents=d.delivery_events||[];
+  return '<p class="driver-kicker">JORNADA #J-'+String(currentJourney?.order_number||"—")+' · PARADA '+String(idx+1).padStart(2,"0")+' DE '+String(ds.length).padStart(2,"0")+'</p><div class="driver-detail-heading"><h1>Entrega #'+esc(d.order_no||idx+1)+'</h1><span class="driver-state">'+(d.status==="at_destination"?"No destino":esc(statusLabel[d.status]||d.status))+'</span></div><article class="driver-address-card"><p class="driver-kicker">◎　'+esc(d.neighborhoods?.name||"Endereço")+'</p><h2>'+esc(d.address)+'</h2><p>'+esc([d.neighborhoods?.name,"Santarém – PA"].filter(Boolean).join(" · "))+'</p>'+(d.reference?'<small>⚑　'+esc(d.reference)+'</small>':"")+'<a class="driver-outline" target="_blank" rel="noopener" href="'+(d.map_link&&/^https?:\\/\\//i.test(d.map_link)?esc(d.map_link):'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent([d.address,d.neighborhoods?.name,"Santarém, PA"].filter(Boolean).join(", ")))+'">↗　Abrir destino no Maps</a></article><div class="driver-section-heading"><h2>Etapas da entrega</h2><span>'+stateEvents.length+' registro(s)</span></div><div class="driver-timeline">'+[['departure','Saída registrada','A caminho desta parada.'],['arrival','Chegada registrada','Você está no endereço da entrega.'],['completed','Entrega concluída','Entrega confirmada.']].map(([type,title,sub])=>{const ev=stateEvents.find(e=>e.event_type===type);return '<div class="driver-timeline-row"><span class="driver-timeline-icon">'+(ev?'✓':'○')+'</span><div><strong>'+title+'</strong><small>'+sub+'</small></div><time>'+(ev?driverTime(ev.received_at_server||ev.occurred_at_device):'Pendente')+'</time></div>'}).join("")+'</div>'+(d.status==="failed"?'<div class="driver-warning">⚠ Ocorrência registrada: '+esc(d.result_note||"Entrega não realizada")+'</div>':'')+
+   (["pending","in_transit","at_destination"].includes(d.status)?'<button class="driver-warning-action" type="button" data-driver-action="occurrence" data-id="'+d.id+'">⚠　Registrar ocorrência　›</button>':"");
+ }
+ if(driverScreen==="occurrence"){
+  const d=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||next;
+  if(!d){driverScreen="route";return driverScreenMarkup()}
+  return heading("JORNADA #J-"+String(currentJourney?.order_number||"—")+" · ENTREGA #"+esc(d.order_no||""),"O que aconteceu?","Registre o motivo para manter a equipe informada sobre esta parada.")+'<article class="driver-address-card"><strong>#'+esc(d.order_no||"—")+' · '+esc(d.neighborhoods?.name||"Endereço")+'</strong><p>'+esc(d.address)+'</p><small>Chegada/etapa atual: '+esc(statusLabel[d.status]||d.status)+'</small></article><form id="driverOccurrenceForm" class="driver-form"><fieldset class="driver-reasons"><legend>Motivo</legend>'+["Destinatário ausente","Endereço não localizado","Outro motivo"].map(v=>'<label class="'+(driverOccurrenceReason===v?'selected':'')+'"><input type="radio" name="reason" value="'+v+'" '+(driverOccurrenceReason===v?'checked':'')+'><span>'+v+'</span></label>').join("")+'</fieldset><label>O que você tentou? <small>Opcional</small><textarea name="note" rows="4" placeholder="Descreva brevemente o que aconteceu.">'+esc(driverOccurrenceNote)+'</textarea></label><p class="driver-helper">Inclua apenas informações necessárias sobre a entrega. Evite dados pessoais de terceiros.</p><div class="driver-warning">⚠ Esta parada ficará como “Com ocorrência”, não como concluída. O registro ficará no resumo da jornada.</div><button class="driver-quiet" type="button" data-driver-screen="detail">←　Voltar sem registrar</button><button class="driver-primary" type="submit">✓　Registrar ocorrência</button></form>';
+ }
+ if(driverScreen==="summary"){
+  const allDone=ds.every(d=>["completed","failed"].includes(d.status));
+  const distance=currentJourney&&currentJourney.odometer_end!=null?Number(currentJourney.odometer_end)-Number(odoStart):null;
+  return heading("JORNADA #J-"+String(currentJourney?.order_number||"—")+" · "+new Date(currentJourney?.started_at_server||Date.now()).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}),"Resumo da jornada","Confira os registros antes de encerrar.")+'<p class="driver-vehicle-line">♧　'+esc([driver?.full_name,vehicle?.make_model||vehicle?.code,vehicle?.plate].filter(Boolean).join(" · "))+'</p><div class="driver-stats driver-summary-stats"><div><strong>'+String(ds.length).padStart(2,"0")+'</strong><span>Paradas</span></div><div><strong>'+String(done).padStart(2,"0")+'</strong><span>Concluídas</span></div><div><strong>'+String(failed).padStart(2,"0")+'</strong><span>Ocorrências</span></div><small>Início '+driverTime(currentJourney?.started_at_server)+' · '+(currentJourney?.started_at_server?Math.max(0,Math.round((Date.now()-new Date(currentJourney.started_at_server))/60000))+" min de jornada":"")+'</small></div><form id="driverFinishForm" class="driver-form"><label>Odômetro final (km)<input name="odometer" type="number" min="'+Number(odoStart||0)+'" step="0.1" required placeholder="Odômetro atual"></label><p class="driver-helper">Inicial: '+Number(odoStart||0).toLocaleString("pt-BR")+' km'+(distance!==null?' · Percurso registrado: '+distance.toLocaleString("pt-BR")+' km':'')+'</p><h2 class="driver-section-title">Resultado das entregas</h2><div class="driver-results">'+ds.map((d,i)=>'<div class="driver-result"><span class="'+(d.status==="failed"?"failed":"")+'">'+(d.status==="completed"?"✓":d.status==="failed"?"⚠":"○")+'</span><div><strong>#'+esc(d.order_no||i+1)+' · '+esc(d.neighborhoods?.name||"Endereço")+'</strong><small>'+esc(d.address)+'</small>'+(d.status==="failed"?'<em>'+esc(d.result_note||"Ocorrência registrada")+'</em>':"")+'</div><aside>'+esc(statusLabel[d.status]||d.status)+'<small>'+driverTime(d.updated_at||d.created_at)+'</small></aside></div>').join("")+'</div>'+(!allDone?'<div class="driver-warning">⚠ Ainda há '+ds.filter(d=>!["completed","failed"].includes(d.status)).length+' entrega(s) sem resultado. Registre conclusão ou ocorrência antes de encerrar.</div>':'')+'<button class="driver-primary" type="submit" '+(!allDone?'disabled':'')+'>⚑　Confirmar encerramento</button></form>';
+ }
+ return "";
+}
+function renderDriverExperience(){
+ if(admin)return;
+ initDriverExperience();
+ const root=$("driverExperience");if(!root)return;
+ const content=$("driverScreenContent"),bottom=$("driverBottom");
+ content.innerHTML=driverScreenMarkup();
+ bottom.innerHTML=driverScreen==="start"||driverScreen==="new"||driverScreen==="summary"||driverScreen==="occurrence"?'': '<button type="button" class="driver-bottom-add" data-driver-screen="new">＋　Adicionar entrega</button>';
+ root.querySelectorAll("[data-driver-screen]").forEach(b=>b.addEventListener("click",()=>{driverScreen=b.dataset.driverScreen;renderDriverExperience()}));
+ root.querySelectorAll("[data-driver-action]").forEach(b=>b.addEventListener("click",async()=>{
+  const action=b.dataset.driverAction,id=b.dataset.id;
+  if(action==="detail"){window.driverSelectedDeliveryId=id;driverScreen="detail";renderDriverExperience()}
+  if(action==="occurrence"){window.driverSelectedDeliveryId=id;driverOccurrenceReason="Destinatário ausente";driverOccurrenceNote="";driverScreen="occurrence";renderDriverExperience()}
+  if(action==="maps"){const stops=driverStops().filter(d=>!["completed","failed"].includes(d.status));openGoogleRoute(stops)}
+  if(action==="location"){if(!navigator.geolocation)return notify("Geolocalização indisponível.");navigator.geolocation.getCurrentPosition(pos=>{const f=$("driverNewForm");f.elements.mapLink.value="https://www.google.com/maps/search/?api=1&query="+pos.coords.latitude+","+pos.coords.longitude;},err=>notify("Não foi possível obter localização: "+err.message),{enableHighAccuracy:true,timeout:10000})}
+ }));
+ const startForm=$("driverStartForm");
+ if(startForm)startForm.addEventListener("submit",async e=>{
+  e.preventDefault();const vehicleId=e.target.elements.vehicle.value,odometerStart=Number(e.target.elements.odometer.value),d=currentDriver();
+  if(!d)return notify("Seu usuário ainda não está vinculado a um cadastro ativo de entregador.");
+  const button=e.target.querySelector("button[type=submit]");button.disabled=true;
+  try{await backend.startJourney({driverId:d.id,vehicleId,odometerStart});await refresh();driverScreen="route";renderDriverExperience()}
+  catch(error){notify("Não foi possível iniciar a jornada: "+error.message);button.disabled=false}
+ });
+ const newForm=$("driverNewForm");
+ if(newForm){
+  newForm.elements.neighborhood.value=driverNewDelivery.neighborhood;
+  newForm.elements.address.value=driverNewDelivery.address;
+  newForm.elements.reference.value=driverNewDelivery.reference;
+  newForm.elements.priority.value=driverDraftPriority;
+  newForm.elements.mapLink.value=driverNewDelivery.mapLink;
+  newForm.querySelectorAll('input[name="priority"]').forEach(r=>r.addEventListener("change",()=>{driverDraftPriority=r.value;renderDriverExperience()}));
+  newForm.addEventListener("input",()=>{driverNewDelivery={neighborhood:newForm.elements.neighborhood.value,address:newForm.elements.address.value,reference:newForm.elements.reference.value,priority:driverDraftPriority,mapLink:newForm.elements.mapLink.value}});
+  newForm.addEventListener("submit",async e=>{
+   e.preventDefault();const f=e.target,button=f.querySelector('button[type="submit"]');
+   const address=f.elements.address.value.trim();if(!address)return;
+   button.disabled=true;
+   try{const ds=driverStops();const created=await backend.createDelivery({journeyId:currentJourney.id,neighborhoodId:f.elements.neighborhood.value,address,reference:f.elements.reference.value.trim(),priority:priorityMap[driverDraftPriority]||"normal",mapLink:f.elements.mapLink.value.trim(),sequenceNo:ds.length+1});driverNewDelivery={neighborhood:"",address:"",reference:"",priority:"Normal",mapLink:""};driverDraftPriority="Normal";await refresh();window.driverSelectedDeliveryId=created.id;driverScreen="route";renderDriverExperience()}
+   catch(error){notify("Não foi possível cadastrar a entrega: "+error.message);button.disabled=false}
+  });
+ }
+ const occurrenceForm=$("driverOccurrenceForm");
+ if(occurrenceForm){
+  occurrenceForm.querySelectorAll('input[name="reason"]').forEach(r=>r.addEventListener("change",()=>{driverOccurrenceReason=r.value;renderDriverExperience()}));
+  occurrenceForm.addEventListener("input",()=>{driverOccurrenceNote=occurrenceForm.elements.note.value});
+  occurrenceForm.addEventListener("submit",async e=>{
+   e.preventDefault();const note=[driverOccurrenceReason,occurrenceForm.elements.note.value.trim()].filter(Boolean).join(" — ");
+   const button=e.target.querySelector('button[type="submit"]');button.disabled=true;
+   try{await backend.updateDeliveryStatus({deliveryId:window.driverSelectedDeliveryId,status:"failed",note});await refresh();driverScreen="summary";renderDriverExperience()}
+   catch(error){notify("Não foi possível registrar a ocorrência: "+error.message);button.disabled=false}
+  });
+ }
+ const finishForm=$("driverFinishForm");
+ if(finishForm)finishForm.addEventListener("submit",async e=>{
+  e.preventDefault();const odometerEnd=Number(e.target.elements.odometer.value);
+  if(!driverStops().every(d=>["completed","failed"].includes(d.status)))return notify("Registre o resultado de todas as entregas antes de encerrar.");
+  if(!Number.isFinite(odometerEnd)||odometerEnd<Number(currentJourney.odometer_start))return notify("O hodômetro final deve ser igual ou superior ao inicial.");
+  const button=e.target.querySelector('button[type="submit"]');button.disabled=true;
+  try{stopGpsTracking();await backend.finishJourney({journeyId:currentJourney.id,odometerEnd});await refresh();driverScreen="start";renderDriverExperience()}
+  catch(error){notify("Não foi possível encerrar a jornada: "+error.message);button.disabled=false}
+ });
+}
+
 backend.subscribeToOperations(()=>{refresh();if($("timelineJourney")?.value)loadJourneyTimeline();});
 refresh();
