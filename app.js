@@ -129,7 +129,7 @@ async function refresh(){
   $("prototypeWarning").textContent="Jornadas e entregas são gravadas no Supabase e respeitam as permissões da conta. Combustível e manutenção ainda são registros locais deste navegador.";
   $("prototypeWarning").classList.remove("hidden");
   render();
- }catch(error){console.error(error);$("prototypeWarning").textContent="Falha ao carregar dados operacionais do Supabase: "+(error.message||"erro desconhecido")+". Verifique cadastros e políticas RLS."; $("prototypeWarning").classList.remove("hidden");}
+ }catch(error){console.error("YUP-ENTREGAS: falha ao carregar dados operacionais",error);const vehicleSelect=$("vehicle");if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;} $("prototypeWarning").textContent="Falha ao carregar dados operacionais do Supabase. Confira a conexão, as políticas RLS e se todas as migrações SQL foram aplicadas. Detalhe técnico no console do navegador."; $("prototypeWarning").classList.remove("hidden");}
  finally{loading=false}
 }
 $("journeyForm").addEventListener("submit",async e=>{
