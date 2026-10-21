@@ -70,9 +70,22 @@
       </article>
     </div>
     <div id="view-painel" class="view">
-      <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Resumo dos registros salvos neste dispositivo.</p></div></div>
+      <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Visão consolidada das jornadas e entregas registradas no Supabase.</p></div></div>
       <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
-      <article class="panel"><div class="panel-title"><div><h2>Histórico de jornadas</h2><p>Cada jornada recebe um número de ordem automático, sem digitação manual.</p></div><button class="button secondary" id="exportJourneyReport" type="button">Exportar relatório CSV</button></div><div id="journeyHistory" class="table-wrap"></div></article>
+      <article class="panel">
+        <div class="panel-title"><div><h2>Histórico completo de jornadas</h2><p>Consulte o histórico operacional sincronizado com o banco de dados e filtre os registros.</p></div></div>
+        <div class="fleet-filters">
+          <label>Período<select id="fleetPeriod"><option value="all">Todo o período</option><option value="day">Dia</option><option value="week">Semana</option><option value="month">Mês</option><option value="year">Ano</option></select></label>
+          <label>Data de referência<input id="fleetAnchorDate" type="date" value="2026-10-21"></label>
+          <label>Entregador<select id="fleetDriver"><option value="all">Todos os entregadores</option></select></label>
+          <label>Veículo<select id="fleetVehicle"><option value="all">Todos os veículos</option></select></label>
+          <label>Status<select id="fleetStatus"><option value="all">Todos os status</option><option value="open">Em andamento</option><option value="finished">Finalizada</option><option value="cancelled">Cancelada</option></select></label>
+        </div>
+        <div class="fleet-export-actions"><button class="button secondary" id="exportJourneyReport" type="button">Exportar CSV</button><button class="button secondary" id="exportJourneyXls" type="button">Exportar Excel (.xls)</button><button class="button secondary" id="exportJourneyPdf" type="button">Exportar / salvar PDF</button></div>
+        <p id="fleetFilterSummary" class="hint" aria-live="polite">Carregando histórico…</p>
+        <div id="journeyHistory" class="table-wrap"></div>
+      </article>
+      <div class="metrics"><article class="metric"><span>Média estimada de consumo</span><strong id="fleetConsumption">—</strong><small id="fleetConsumptionNote" class="hint">O cálculo depende de abastecimentos consecutivos registrados neste dispositivo.</small></article></div>
       <article class="panel"><div class="panel-title"><div><h2>Linha do tempo da jornada</h2><p>Horários, pontos GPS e deslocamentos registrados pelo PWA.</p></div><label>Jornada<select id="timelineJourney"><option value="">Selecione uma jornada</option></select></label><button class="button secondary" id="loadTimeline" type="button">Atualizar linha do tempo</button></div><div id="journeyTimeline" class="table-wrap"><p class="hint">Selecione uma jornada para consultar os pontos registrados.</p></div></article>
       <p class="warning">Aviso: os dados são locais e não são compartilhados com outros usuários ou dispositivos.</p>
     </div>
