@@ -77,7 +77,7 @@ async function refresh(){
  if(loading)return;loading=true;
  try{
   [drivers,vehicles,neighborhoods]=await Promise.all([backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()]);
-  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();
+  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();if(localStorage.getItem(gpsConsentKey)==="yes"&&currentJourney)startGpsTracking(currentJourney);else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
   const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
