@@ -432,7 +432,7 @@ function driverScreenMarkup(){
   if(!d){driverScreen="route";return driverScreenMarkup()}
   const idx=ds.findIndex(x=>x.id===d.id),stateEvents=d.delivery_events||[];
   return '<p class="driver-kicker">JORNADA #J-'+String(currentJourney?.order_number||"—")+' · PARADA '+String(idx+1).padStart(2,"0")+' DE '+String(ds.length).padStart(2,"0")+'</p><div class="driver-detail-heading"><h1>Entrega #'+esc(d.order_no||idx+1)+'</h1><span class="driver-state">'+(d.status==="at_destination"?"No destino":esc(statusLabel[d.status]||d.status))+'</span></div><article class="driver-address-card"><p class="driver-kicker">◎　'+esc(d.neighborhoods?.name||"Endereço")+'</p><h2>'+esc(d.address)+'</h2><p>'+esc([d.neighborhoods?.name,"Santarém – PA"].filter(Boolean).join(" · "))+'</p>'+(d.reference?'<small>⚑　'+esc(d.reference)+'</small>':"")+'<a class="driver-outline" target="_blank" rel="noopener" href="'+(d.map_link&&/^https?:\\/\\//i.test(d.map_link)?esc(d.map_link):'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent([d.address,d.neighborhoods?.name,"Santarém, PA"].filter(Boolean).join(", ")))+'">↗　Abrir destino no Maps</a></article><div class="driver-section-heading"><h2>Etapas da entrega</h2><span>'+stateEvents.length+' registro(s)</span></div><div class="driver-timeline">'+[['departure','Saída registrada','A caminho desta parada.'],['arrival','Chegada registrada','Você está no endereço da entrega.'],['completed','Entrega concluída','Entrega confirmada.']].map(([type,title,sub])=>{const ev=stateEvents.find(e=>e.event_type===type);return '<div class="driver-timeline-row"><span class="driver-timeline-icon">'+(ev?'✓':'○')+'</span><div><strong>'+title+'</strong><small>'+sub+'</small></div><time>'+(ev?driverTime(ev.received_at_server||ev.occurred_at_device):'Pendente')+'</time></div>'}).join("")+'</div>'+(d.status==="failed"?'<div class="driver-warning">⚠ Ocorrência registrada: '+esc(d.result_note||"Entrega não realizada")+'</div>':'')+
-   (["pending","in_transit","at_destination"].includes(d.status)?'<button class="driver-warning-action" type="button" data-driver-action="occurrence" data-id="'+d.id+'">⚠　Registrar ocorrência　›</button>':"");
+   (d.status==="pending"?'<button class="driver-primary" type="button" data-driver-action="startDelivery" data-id="'+d.id+'">→　Registrar saída</button>':"")+(d.status==="in_transit"?'<button class="driver-primary" type="button" data-driver-action="arriveDelivery" data-id="'+d.id+'">✓　Registrar chegada</button>':"")+(d.status==="at_destination"?'<button class="driver-primary" type="button" data-driver-action="completeDelivery" data-id="'+d.id+'">✓　Concluir entrega</button>':"")+(["pending","in_transit","at_destination"].includes(d.status)?'<button class="driver-warning-action" type="button" data-driver-action="occurrence" data-id="'+d.id+'">⚠　Registrar ocorrência　›</button>':"");
  }
  if(driverScreen==="occurrence"){
   const d=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||next;
@@ -448,6 +448,7 @@ function driverScreenMarkup(){
 }
 function renderDriverExperience(){
  if(admin)return;
+ if(currentJourney&&driverScreen==="start")driverScreen="route";
  initDriverExperience();
  const root=$("driverExperience");if(!root)return;
  const content=$("driverScreenContent"),bottom=$("driverBottom");
@@ -457,6 +458,7 @@ function renderDriverExperience(){
  root.querySelectorAll("[data-driver-action]").forEach(b=>b.addEventListener("click",async()=>{
   const action=b.dataset.driverAction,id=b.dataset.id;
   if(action==="detail"){window.driverSelectedDeliveryId=id;driverScreen="detail";renderDriverExperience()}
+  if(["startDelivery","arriveDelivery","completeDelivery"].includes(action)){const status={startDelivery:"in_transit",arriveDelivery:"at_destination",completeDelivery:"completed"}[action];if(status==="completed"&&!confirm("Confirmar conclusão desta entrega?"))return;try{await backend.updateDeliveryStatus({deliveryId:id,status});await refresh();window.driverSelectedDeliveryId=id;driverScreen="detail";renderDriverExperience()}catch(error){notify("Não foi possível atualizar a entrega: "+error.message)}}
   if(action==="occurrence"){window.driverSelectedDeliveryId=id;driverOccurrenceReason="Destinatário ausente";driverOccurrenceNote="";driverScreen="occurrence";renderDriverExperience()}
   if(action==="maps"){const stops=driverStops().filter(d=>!["completed","failed"].includes(d.status));openGoogleRoute(stops)}
   if(action==="location"){if(!navigator.geolocation)return notify("Geolocalização indisponível.");navigator.geolocation.getCurrentPosition(pos=>{const f=$("driverNewForm");f.elements.mapLink.value="https://www.google.com/maps/search/?api=1&query="+pos.coords.latitude+","+pos.coords.longitude;},err=>notify("Não foi possível obter localização: "+err.message),{enableHighAccuracy:true,timeout:10000})}
