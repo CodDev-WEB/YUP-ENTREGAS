@@ -57,19 +57,46 @@ $("enableGpsTracking")?.addEventListener("click",()=>{
  },err=>notify("Não foi possível autorizar a localização: "+({1:"permissão negada nas configurações",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message)),{enableHighAccuracy:true,timeout:15000});
 });
 async function loadJourneyTimeline(){
- const id=$("timelineJourney")?.value;
- const target=$("journeyTimeline");
+ const id=$("timelineJourney")?.value,target=$("journeyTimeline");
  if(!id){target.innerHTML='<p class="hint">Selecione uma jornada.</p>';return}
- target.innerHTML='<p class="hint">Carregando pontos GPS…</p>';
+ target.innerHTML='<p class="hint">Carregando histórico completo…</p>';
  try{
+  const journey=journeys.find(j=>j.id===id);
   const points=await backend.listJourneyLocationPoints(id);
-  if(!points.length){target.innerHTML='<p class="hint">Nenhum ponto GPS registrado nesta jornada. A linha do tempo não pode reconstruir trajetos anteriores à ativação do GPS.</p>';return}
-  let previous=null;
-  target.innerHTML='<table><thead><tr><th>Horário</th><th>Localização</th><th>Intervalo</th><th>Distância</th><th>Precisão</th><th>Velocidade</th></tr></thead><tbody>'+points.map(p=>{
-   const time=new Date(p.captured_at_device),gap=previous?(time-new Date(previous.captured_at_device))/1000:null,dist=previous?distanceMeters({latitude:previous.latitude,longitude:previous.longitude},{latitude:p.latitude,longitude:p.longitude}):null;
-   const row='<tr><td>'+fmtDate(p.captured_at_device)+'</td><td><a href="https://www.google.com/maps?q='+p.latitude+','+p.longitude+'" target="_blank" rel="noopener">Abrir ponto no mapa</a></td><td>'+(gap==null?"—":Math.round(gap/60)+" min "+Math.round(gap%60)+" s")+'</td><td>'+(dist==null?"—":dist>=1000?(dist/1000).toFixed(2)+" km":Math.round(dist)+" m")+'</td><td>'+(p.accuracy_m==null?"—":Math.round(p.accuracy_m)+" m")+'</td><td>'+(p.speed_mps==null?"—":(p.speed_mps*3.6).toFixed(1)+" km/h")+'</td></tr>';
-   previous=p;return row;
-  }).join("")+'</tbody></table><p class="hint">Distâncias calculadas em linha reta entre leituras GPS; não equivalem à distância rodoviária real. Intervalos longos podem indicar perda de sinal ou suspensão do aplicativo.</p>';
+  const related=deliveries.filter(d=>d.journey_id===id);
+  const events=[];
+  if(journey?.started_at_server)events.push({time:journey.started_at_server,type:"Início da jornada",detail:"Jornada iniciada no sistema",kind:"journey"});
+  related.forEach(d=>{
+   (d.delivery_events||[]).forEach(ev=>events.push({time:ev.received_at_server||ev.occurred_at_device,type:statusLabel[ev.event_type]||ev.event_type,detail:"Entrega "+d.order_no+" · "+d.address+(ev.note?" · "+ev.note:""),kind:"delivery"}));
+   if(d.status==="completed"&&!d.delivery_events?.some(ev=>ev.event_type==="completed"))events.push({time:d.updated_at||d.created_at,type:"Entrega concluída",detail:"Entrega "+d.order_no+" · "+d.address,kind:"delivery"});
+  });
+  points.forEach(p=>events.push({time:p.captured_at_device,type:"Localização GPS",detail:p.latitude.toFixed(6)+", "+p.longitude.toFixed(6),kind:"gps",point:p}));
+  if(journey?.finished_at_server)events.push({time:journey.finished_at_server,type:"Fim da jornada",detail:"Jornada finalizada no sistema",kind:"journey"});
+  events.sort((a,b)=>new Date(a.time)-new Date(b.time));
+  if(!events.length){target.innerHTML='<p class="hint">Ainda não há eventos nem pontos GPS registrados nesta jornada.</p>';return}
+  let previousPoint=null,previousTime=null,totalStraight=0;
+  const rows=events.map(ev=>{
+   let gap="—",dist="—",location="—",speed="—";
+   if(ev.kind==="gps"){
+    const p=ev.point;
+    location='<a href="https://www.google.com/maps?q='+p.latitude+','+p.longitude+'" target="_blank" rel="noopener">Abrir ponto no mapa</a>';
+    speed=p.speed_mps==null?"—":(p.speed_mps*3.6).toFixed(1)+" km/h";
+    if(previousPoint){
+     const seconds=(new Date(p.captured_at_device)-new Date(previousPoint.captured_at_device))/1000;
+     const meters=distanceMeters({latitude:previousPoint.latitude,longitude:previousPoint.longitude},{latitude:p.latitude,longitude:p.longitude});
+     gap=seconds<0?"—":Math.floor(seconds/60)+" min "+Math.round(seconds%60)+" s";
+     dist=meters>=1000?(meters/1000).toFixed(2)+" km":Math.round(meters)+" m";
+     totalStraight+=meters;
+    }
+    previousPoint=p;
+   }
+   const time=new Date(ev.time);
+   const elapsed=previousTime?Math.max(0,Math.round((time-previousTime)/60000))+" min":"—";
+   previousTime=time;
+   return '<tr><td>'+fmtDate(ev.time)+'</td><td>'+esc(ev.type)+'</td><td>'+esc(ev.detail)+'</td><td>'+location+'</td><td>'+gap+'</td><td>'+dist+'</td><td>'+speed+'</td></tr>';
+  });
+  const total=totalStraight>=1000?(totalStraight/1000).toFixed(2)+" km":Math.round(totalStraight)+" m";
+  target.innerHTML='<p><strong>Eventos:</strong> '+events.length+' · <strong>Pontos GPS:</strong> '+points.length+' · <strong>Distância estimada em linha reta:</strong> '+total+'</p><div class="table-wrap"><table><thead><tr><th>Horário</th><th>Evento</th><th>Detalhes</th><th>Mapa</th><th>Intervalo GPS</th><th>Distância GPS</th><th>Velocidade</th></tr></thead><tbody>'+rows.join("")+'</tbody></table></div><p class="hint">Os intervalos e distâncias GPS são calculados entre leituras disponíveis; distância em linha reta não é quilometragem rodoviária. O navegador pode suspender a localização quando o PWA fica em segundo plano ou sem conexão.</p>';
  }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
 }
 $("loadTimeline")?.addEventListener("click",loadJourneyTimeline);
