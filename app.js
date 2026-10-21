@@ -1,9 +1,9 @@
 const $ = id => document.getElementById(id);
 const backend = window.YupBackend;
 const localKey = "yup-entregas-local-expenses-v1:" + (backend?.profile?.id || "unknown");
-const gpsConsentKey = "yup-entregas-gps-consent-v1:" + (backend?.profile?.id || "unknown");
+const entryLocationKey = "yup-entregas-entry-location-v1:" + (backend?.profile?.id || "unknown");
 const admin = ["admin","manager"].includes(backend?.profile?.role);
-let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null, gpsSaving=false;
+let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], currentJourney=null, loading=false, entryLocationRequested=false;
 let local = (()=>{try{return JSON.parse(localStorage.getItem(localKey))||{fuel:[],maintenance:[]}}catch{return {fuel:[],maintenance:[]}}})();
 const now = () => new Date().toISOString();
 const fmtDate = v => v ? new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "—";
@@ -20,42 +20,20 @@ function ensureSelect(id,placeholder){const old=$(id);if(old.tagName==="SELECT")
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
 function openJourney(){const driverId=admin?$("driverId")?.value:currentDriver()?.id;return journeys.find(j=>j.status==="open"&&driverId&&j.driver_id===driverId)||null}
 function setGpsStatus(message){const el=$("gpsTrackingStatus");if(el)el.textContent=message}
-function stopGpsTracking(){
- if(gpsWatchId!==null&&navigator.geolocation)navigator.geolocation.clearWatch(gpsWatchId);
- gpsWatchId=null;gpsJourneyId=null;lastGpsSaved=null;gpsSaving=false;
-}
-function distanceMeters(a,b){
- const rad=x=>x*Math.PI/180, dLat=rad(b.latitude-a.latitude),dLon=rad(b.longitude-a.longitude);
- const h=Math.sin(dLat/2)**2+Math.cos(rad(a.latitude))*Math.cos(rad(b.latitude))*Math.sin(dLon/2)**2;
- return 6371000*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));
-}
-function startGpsTracking(journey){
- if(!journey||journey.status!=="open"||gpsJourneyId===journey.id||!navigator.geolocation)return;
- stopGpsTracking();
- gpsJourneyId=journey.id;
- setGpsStatus("Solicitando posição do aparelho…");
- gpsWatchId=navigator.geolocation.watchPosition(async pos=>{
-  const coords=pos.coords, nowMs=Date.now();
-  const point={latitude:coords.latitude,longitude:coords.longitude};
-  const shouldSave=!lastGpsSaved||nowMs-lastGpsSaved.time>=30000||distanceMeters(lastGpsSaved,point)>=30;
-  setGpsStatus("GPS ativo · última leitura "+new Date(pos.timestamp).toLocaleTimeString("pt-BR"));
-  if(!shouldSave)return;
+function shareEntryLocationOnce(){
+ if(entryLocationRequested)return;
+ entryLocationRequested=true;
+ if(localStorage.getItem(entryLocationKey)==="done"){setGpsStatus("Localização de entrada já compartilhada neste dispositivo.");return;}
+ if(!navigator.geolocation){setGpsStatus("Este navegador não oferece acesso à localização.");return;}
+ setGpsStatus("Solicitando localização uma única vez…");
+ navigator.geolocation.getCurrentPosition(async pos=>{
   try{
-   await backend.recordJourneyLocation({journeyId:journey.id,latitude:coords.latitude,longitude:coords.longitude,accuracy:coords.accuracy,speed:coords.speed,heading:coords.heading,capturedAt:new Date(pos.timestamp).toISOString()});
-   lastGpsSaved={...point,time:nowMs};
-  }catch(error){console.error(error);setGpsStatus("GPS capturado, mas não foi possível sincronizar. Verifique a conexão.");}
- },err=>{
-  setGpsStatus("GPS indisponível: "+({1:"permissão negada",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message));
- },{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
+   if(currentJourney) await backend.recordJourneyLocation({journeyId:currentJourney.id,latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy,speed:pos.coords.speed,heading:pos.coords.heading,capturedAt:new Date(pos.timestamp).toISOString()});
+   localStorage.setItem(entryLocationKey,"done");
+   setGpsStatus(currentJourney?"Localização de entrada registrada na jornada.":"Localização obtida na entrada. Nenhuma jornada estava aberta para associá-la.");
+  }catch(error){console.error(error);setGpsStatus("Não foi possível registrar a localização. Verifique a conexão.");}
+ },err=>setGpsStatus("Localização não compartilhada: "+({1:"permissão negada",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message)),{enableHighAccuracy:true,maximumAge:0,timeout:20000});
 }
-$("enableGpsTracking")?.addEventListener("click",()=>{
- if(!navigator.geolocation)return notify("Este navegador não oferece geolocalização.");
- navigator.geolocation.getCurrentPosition(pos=>{
-  localStorage.setItem(gpsConsentKey,"yes");
-  setGpsStatus("Permissão concedida. O rastreamento será iniciado quando houver uma jornada aberta.");
-  if(currentJourney)startGpsTracking(currentJourney);
- },err=>notify("Não foi possível autorizar a localização: "+({1:"permissão negada nas configurações",2:"posição indisponível",3:"tempo esgotado"}[err.code]||err.message)),{enableHighAccuracy:true,timeout:15000});
-});
 async function loadJourneyTimeline(){
  const id=$("timelineJourney")?.value,target=$("journeyTimeline");
  if(!id){target.innerHTML='<p class="hint">Selecione uma jornada.</p>';return}
@@ -104,7 +82,7 @@ async function refresh(){
  if(loading)return;loading=true;
  try{
   [drivers,vehicles,neighborhoods]=await Promise.all([backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()]);
-  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();if(localStorage.getItem(gpsConsentKey)==="yes"&&currentJourney)startGpsTracking(currentJourney);else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
+  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();shareEntryLocationOnce();
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
   const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
@@ -123,7 +101,7 @@ $("journeyForm").addEventListener("submit",async e=>{
  const driverId=$("driverId").value,vehicleId=$("vehicle").value,odometerStart=Number($("odoStart").value);
  if(!driverId||!vehicleId)return notify("Selecione um entregador e um veículo cadastrados.");
  setBusy(e.target,true);
- try{await backend.startJourney({driverId,vehicleId,odometerStart});e.target.reset();await refresh();if(localStorage.getItem(gpsConsentKey)==="yes"&&currentJourney)startGpsTracking(currentJourney);notify("Jornada iniciada e salva no banco de dados.");}
+ try{await backend.startJourney({driverId,vehicleId,odometerStart});e.target.reset();await refresh();notify("Jornada iniciada e salva no banco de dados.");}
  catch(error){console.error(error);notify("Não foi possível iniciar a jornada: "+error.message);}
  finally{setBusy(e.target,false)}
 });
@@ -132,7 +110,7 @@ $("finishJourney").addEventListener("click",async()=>{
  const end=Number(raw);if(!Number.isFinite(end)||end<Number(currentJourney.odometer_start))return notify("Odômetro inválido: deve ser igual ou superior ao inicial.");
  const pending=deliveries.filter(d=>d.journey_id===currentJourney.id&&!["completed","failed"].includes(d.status));
  if(pending.length)return notify("Finalize ou marque como não realizada cada entrega antes de encerrar a jornada.");
- try{const finishedId=currentJourney.id;await backend.finishJourney({journeyId:finishedId,odometerEnd:end});stopGpsTracking();await refresh();notify("Jornada finalizada e salva no banco de dados.");}
+ try{const finishedId=currentJourney.id;await backend.finishJourney({journeyId:finishedId,odometerEnd:end});await refresh();notify("Jornada finalizada e salva no banco de dados.");}
  catch(error){console.error(error);notify("Não foi possível finalizar a jornada: "+error.message)}
 });
 $("deliveryForm").addEventListener("submit",async e=>{
@@ -251,7 +229,7 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}if(localStorage.getItem(gpsConsentKey)==="yes")setGpsStatus(currentJourney?"Acompanhamento autorizado; rastreamento da jornada em andamento.":"Acompanhamento autorizado; será iniciado ao abrir uma jornada.");function render(){
+const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function render(){
  renderDeliveries();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
