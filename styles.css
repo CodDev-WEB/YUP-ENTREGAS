@@ -465,3 +465,54 @@ body.driver-mode .route-history>summary{padding:15px 16px;cursor:pointer;font-si
 body.driver-mode .route-history[open]>summary{border-bottom:1px solid #e7eee9;background:#f7fbf8}
 body.driver-mode .route-history .delivery-list{padding:10px;gap:8px}
 body.driver-mode .route-history .delivery-card{margin:0;box-shadow:none;background:#fbfdfb}
+
+
+/* YUP Design System 2026 — identidade compartilhada entre administração e entregador */
+:root{
+  --bg:#f2f5f3;
+  --surface:#ffffff;
+  --surface-soft:#f7faf8;
+  --text:#1d3028;
+  --muted:#73827b;
+  --line:#e0e9e3;
+  --line-strong:#d2dfd7;
+  --green:#087d50;
+  --green-hover:#066b44;
+  --green-soft:#e6f4ec;
+  --green-ink:#07543c;
+  --amber-bg:#fff3dc;
+  --amber-ink:#96621d;
+  --red-bg:#fff0ed;
+  --red-ink:#a94335;
+  --shadow:0 2px 8px rgba(17,55,36,.025),0 8px 24px rgba(17,55,36,.045);
+  --radius:16px;
+  --radius-sm:12px;
+}
+body{background:var(--bg);color:var(--text)}
+.topbar{background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);box-shadow:0 2px 12px rgba(19,52,34,.025)}
+.brand-mark{background:var(--green);border-radius:12px;box-shadow:0 4px 12px rgba(8,125,80,.15)}
+.brand strong,.brand small{letter-spacing:-.02em}
+.button{border-radius:12px;font-weight:750;transition:background .16s ease,transform .16s ease,box-shadow .16s ease}
+.button:not(.secondary){background:var(--green);box-shadow:0 3px 8px rgba(8,125,80,.12)}
+.button:not(.secondary):hover{background:var(--green-hover);box-shadow:0 5px 14px rgba(8,125,80,.18)}
+.button:active{transform:scale(.985)}
+.button.secondary{background:#fff;border-color:var(--line-strong);color:var(--green-ink)}
+.auth-card,.panel,.metric,.delivery-card,.next-stop-card,.route-history,.card,.modal-card{border-color:var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.auth-card{background:var(--surface)}
+input,select,textarea{border-color:var(--line-strong);border-radius:12px;background:#fff;color:var(--text);min-height:44px}
+textarea{min-height:100px}
+input:hover,select:hover,textarea:hover{border-color:#a7cbbb}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(8,125,80,.10);outline:none}
+.panel-title h2,.page-heading h1,.auth-card h1{letter-spacing:-.035em}
+.eyebrow,.page-heading .eyebrow{color:var(--green);font-weight:800;letter-spacing:.055em}
+.status-pill,.tag,.badge,.pill{border-radius:999px}
+.metric{background:#fff}
+.metric strong,.metric .value{color:var(--green-ink)}
+.nav.active{color:var(--green-ink)}
+@media(max-width:720px){
+  .topbar{padding-top:calc(10px + env(safe-area-inset-top))}
+  .auth-card{border-radius:20px}
+  .panel{padding:16px}
+  .button{min-height:46px}
+  body:not(.driver-mode) .content{padding-left:14px;padding-right:14px}
+}
