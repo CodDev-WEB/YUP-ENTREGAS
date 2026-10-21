@@ -115,22 +115,64 @@ async function loadJourneyTimeline(){
 }
 $("loadTimeline")?.addEventListener("click",loadJourneyTimeline);
 async function refresh(){
- if(loading)return;loading=true;
+ if(loading)return;
+ loading=true;
  try{
-  [drivers,vehicles,neighborhoods]=await Promise.all([backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()]);
-  const result=await backend.listOperations();journeys=result.journeys;deliveries=result.deliveries;currentJourney=openJourney();shareEntryLocationOnce();if(localStorage.getItem(entryLocationKey)==="done"&&currentJourney)startGpsTracking(currentJourney);else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
+  // Carrega e exibe os cadastros mestres antes das operações. Assim, uma migração
+  // ausente em journeys/deliveries não apaga as opções de veículos, entregadores e bairros.
+  [drivers,vehicles,neighborhoods]=await Promise.all([
+   backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()
+  ]);
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
-  const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");vehicleSelect.disabled=false;
+  const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
-  vehicleSelect.replaceChildren();const vehiclePlaceholder=document.createElement("option");vehiclePlaceholder.value="";vehiclePlaceholder.textContent=vehicles.length?"Selecione o veículo":"Nenhum veículo encontrado no banco de dados";vehicleSelect.append(vehiclePlaceholder);vehicles.forEach(v=>{const option=document.createElement("option");option.value=v.id;option.textContent=v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:"")+(!v.active?" (INATIVO)":"");option.disabled=!v.active;vehicleSelect.append(option)});if(!vehicles.length)console.warn("YUP-ENTREGAS: a consulta de veículos não retornou registros.");
-  if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;driverSelect.title="Preenchido automaticamente pelo usuário conectado";}else{driverSelect.disabled=true;}}
-  else {driverSelect.disabled=false;if(!driverSelect.value&&drivers.length)driverSelect.value=drivers[0].id;driverSelect.onchange=()=>{currentJourney=openJourney();render();};}
-  fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,"Selecione o bairro");
-  $("prototypeWarning").textContent="Jornadas e entregas são gravadas no Supabase e respeitam as permissões da conta. Combustível e manutenção ainda são registros locais deste navegador.";
+  vehicleSelect.replaceChildren();
+  const vehiclePlaceholder=document.createElement("option");
+  vehiclePlaceholder.value="";
+  vehiclePlaceholder.textContent=vehicles.length?"Selecione o veículo":"Nenhum veículo ativo encontrado no banco de dados";
+  vehicleSelect.append(vehiclePlaceholder);
+  vehicles.forEach(v=>{
+   const option=document.createElement("option");
+   option.value=v.id;
+   option.textContent=v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:"")+(!v.active?" (INATIVO)":"");
+   option.disabled=!v.active;
+   vehicleSelect.append(option);
+  });
+  vehicleSelect.disabled=vehicles.length===0;
+  if(!admin){
+   const d=currentDriver();
+   if(d){driverSelect.value=d.id;driverSelect.disabled=true;driverSelect.title="Preenchido automaticamente pelo usuário conectado";}
+   else{driverSelect.disabled=true;driverSelect.title="Nenhum cadastro ativo vinculado a esta conta";}
+  }else{
+   driverSelect.disabled=false;
+   if(!driverSelect.value&&drivers.length)driverSelect.value=drivers[0].id;
+   driverSelect.onchange=()=>{currentJourney=openJourney();render();};
+  }
+  fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,neighborhoods.length?"Selecione o bairro":"Nenhum bairro ativo encontrado no banco de dados");
+  $("prototypeWarning").textContent="Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
   $("prototypeWarning").classList.remove("hidden");
+
+  try{
+   const result=await backend.listOperations();
+   journeys=result.journeys;
+   deliveries=result.deliveries;
+   currentJourney=openJourney();
+   shareEntryLocationOnce();
+   if(localStorage.getItem(entryLocationKey)==="done"&&currentJourney)startGpsTracking(currentJourney);
+   else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
+  }catch(operationsError){
+   console.error("YUP-ENTREGAS: falha ao carregar jornadas/entregas",operationsError);
+   $("prototypeWarning").textContent="Cadastros de veículos, entregadores e bairros carregados. Falha ao carregar jornadas/entregas: "+(operationsError?.message||"erro desconhecido")+". Verifique as migrações SQL e as permissões RLS.";
+   $("prototypeWarning").classList.remove("hidden");
+  }
   render();
- }catch(error){console.error("YUP-ENTREGAS: falha ao carregar dados operacionais",error);const vehicleSelect=$("vehicle");if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;} $("prototypeWarning").textContent="Falha ao carregar dados operacionais do Supabase: "+(error?.message||"erro desconhecido")+". Confira a URL do projeto, a chave pública, as políticas RLS e se as tabelas/cadastros existem."; $("prototypeWarning").classList.remove("hidden");}
- finally{loading=false}
+ }catch(error){
+  console.error("YUP-ENTREGAS: falha ao carregar cadastros do Supabase",error);
+  const vehicleSelect=$("vehicle");
+  if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;}
+  $("prototypeWarning").textContent="Falha ao carregar os cadastros do Supabase: "+(error?.message||"erro desconhecido")+". Verifique a URL/chave pública, autenticação, tabelas e políticas RLS.";
+  $("prototypeWarning").classList.remove("hidden");
+ }finally{loading=false}
 }
 $("journeyForm").addEventListener("submit",async e=>{
  e.preventDefault();if(currentJourney)return notify("Já existe uma jornada aberta para este entregador.");
