@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#087d50"/>
-<circle cx="256" cy="256" r="178" fill="#fff" opacity=".10"/>
-<text x="256" y="300" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="190" font-weight="800" letter-spacing="-12" fill="#fff">yup.</text>
-<rect x="142" y="350" width="228" height="12" rx="6" fill="#bce8ce"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#fcde52"/><circle cx="256" cy="256" r="190" fill="#fefefd" stroke="#202a31" stroke-width="10"/><text x="256" y="276" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="176" font-weight="900" letter-spacing="-14" fill="#55bbd1" stroke="#202a31" stroke-width="2">yup!</text><path d="M178 330c30 26 59 26 78 0 25 26 52 26 78 0" fill="none" stroke="#202a31" stroke-width="12" stroke-linecap="round"/><text x="256" y="390" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="37" font-weight="900" letter-spacing="6" fill="#202a31">PET STORE</text></svg>
