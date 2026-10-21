@@ -1,10 +1,10 @@
 {
-  "name": "YUP-ENTREGAS - Gestão de Frota",
+  "name": "YUP Entregas — Entregador",
   "short_name": "YUP Entregas",
   "description": "Gestão de entregas e frota da YUP Store",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#f4f7f5",
-  "theme_color": "#176b43",
+  "start_url": "/",
+  "display": "standalone",\n  "orientation": "portrait-primary",\n  "scope": "/",
+  "background_color": "#f3f6f4",
+  "theme_color": "#087d50",
   "lang": "pt-BR"
 }
