@@ -432,11 +432,54 @@ function getFleetFilter(){
  });
  return {filtered,period,anchor,from,to};
 }
+let fleetGeoHeatmapMap=null,fleetGeoHeatLayer=null,fleetGeoHeatRequest=0;
+async function refreshFleetGeoHeatmap(filteredJourneys){
+ const target=$("fleetGeoHeatmap"),status=$("fleetGeoHeatmapStatus");
+ if(!target)return;
+ const request=++fleetGeoHeatRequest;
+ if(!window.L||typeof L.heatLayer!=="function"){
+  target.innerHTML='<p class="hint">O mapa geográfico não carregou. Verifique a conexão e recarregue a página.</p>';
+  if(status)status.textContent="Biblioteca de mapas indisponível.";
+  return;
+ }
+ if(!fleetGeoHeatmapMap){
+  fleetGeoHeatmapMap=L.map(target,{scrollWheelZoom:false}).setView([-2.443,-54.708],12);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(fleetGeoHeatmapMap);
+  fleetGeoHeatLayer=L.heatLayer([],{radius:25,blur:19,maxZoom:17,minOpacity:.28,gradient:{0.25:"#55bbd1",0.5:"#fcde52",0.75:"#f59b38",1:"#d83a3a"}}).addTo(fleetGeoHeatmapMap);
+ }
+ const ids=(filteredJourneys||[]).map(j=>j.id).filter(Boolean);
+ if(!ids.length){
+  fleetGeoHeatLayer.setLatLngs([]);
+  if(status)status.textContent="Nenhuma jornada corresponde aos filtros atuais.";
+  return;
+ }
+ if(status)status.textContent="Carregando posições GPS das jornadas filtradas…";
+ try{
+  const points=await backend.listJourneyLocationPointsForJourneys(ids);
+  if(request!==fleetGeoHeatRequest)return;
+  const valid=points.filter(p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))&&Math.abs(Number(p.latitude))<=90&&Math.abs(Number(p.longitude))<=180&&(!Number.isFinite(Number(p.accuracy_m))||Number(p.accuracy_m)<=100));
+  const heat=valid.map(p=>[Number(p.latitude),Number(p.longitude),1]);
+  fleetGeoHeatLayer.setLatLngs(heat);
+  if(heat.length){
+   const bounds=L.latLngBounds(heat.map(p=>[p[0],p[1]]));
+   if(bounds.isValid())fleetGeoHeatmapMap.fitBounds(bounds.pad(.15),{maxZoom:15});
+   if(status)status.textContent=heat.length+" posições GPS válidas em "+ids.length+" jornada(s). A intensidade mostra concentração dos trajetos registrados.";
+  }else{
+   fleetGeoHeatmapMap.setView([-2.443,-54.708],12);
+   if(status)status.textContent="Ainda não há posições GPS válidas para as jornadas selecionadas. O mapa será preenchido quando os entregadores registrarem suas rotas.";
+  }
+  setTimeout(()=>fleetGeoHeatmapMap?.invalidateSize(),80);
+ }catch(error){
+  if(request!==fleetGeoHeatRequest)return;
+  if(status)status.textContent="Não foi possível carregar o mapa de calor: "+(error?.message||"erro desconhecido");
+ }
+}
 function renderFleetHistory(){
  const driverSelect=$("fleetDriver"),vehicleSelect=$("fleetVehicle");
  if(driverSelect){const old=driverSelect.value;driverSelect.innerHTML='<option value="all">Todos os entregadores</option>'+drivers.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.registration_no+" — "+d.full_name)+'</option>').join("");driverSelect.value=[...driverSelect.options].some(o=>o.value===old)?old:"all"}
  if(vehicleSelect){const old=vehicleSelect.value;vehicleSelect.innerHTML='<option value="all">Todos os veículos</option>'+vehicles.map(v=>'<option value="'+esc(v.id)+'">'+esc([v.code,v.plate,v.make_model].filter(Boolean).join(" — "))+'</option>').join("");vehicleSelect.value=[...vehicleSelect.options].some(o=>o.value===old)?old:"all"}
  const {filtered,period,anchor}=getFleetFilter();
+ refreshFleetGeoHeatmap(filtered);
  const rows=filtered.map(j=>{
   const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
   const km=j.odometer_end==null?null:Number(j.odometer_end)-Number(j.odometer_start);
