@@ -3,15 +3,12 @@
 -- Não exige recriar as tabelas existentes.
 
 drop policy if exists journeys_admin_manage on public.journeys;
-create policy journeys_admin_manage on public.journeys
+drop policy if exists journeys_management_manage on public.journeys;
+create policy journeys_management_manage on public.journeys
 for all to authenticated
-using (public.current_app_role() = 'admin')
-with check (public.current_app_role() = 'admin');
+using (public.current_app_role() in ('admin','manager'))
+with check (public.current_app_role() in ('admin','manager'));
 
-drop policy if exists journeys_management_insert on public.journeys;
-create policy journeys_management_insert on public.journeys
-for insert to authenticated
-with check (public.current_app_role() in ('admin','manager') and public.is_active_user());
 
 -- Regras de transição no banco: não dependem somente do JavaScript do navegador.
 create or replace function public.enforce_delivery_status_transition()
