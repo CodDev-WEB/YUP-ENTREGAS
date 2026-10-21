@@ -123,7 +123,7 @@ async function refresh(){
   const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
   fillSelect(vehicleSelect,vehicles,"id",v=>v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:""),vehicles.length?"Selecione o veículo":"Nenhum veículo ativo cadastrado");
-  if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;}else{driverSelect.disabled=true;}}
+  if(!admin){const d=currentDriver();if(d){driverSelect.value=d.id;driverSelect.disabled=true;driverSelect.title="Preenchido automaticamente pelo usuário conectado";}else{driverSelect.disabled=true;}}
   else {driverSelect.disabled=false;if(!driverSelect.value&&drivers.length)driverSelect.value=drivers[0].id;driverSelect.onchange=()=>{currentJourney=openJourney();render();};}
   fillSelect($("neighborhood"),neighborhoods,"id",n=>n.name,"Selecione o bairro");
   $("prototypeWarning").textContent="Jornadas e entregas são gravadas no Supabase e respeitam as permissões da conta. Combustível e manutenção ainda são registros locais deste navegador.";
@@ -151,13 +151,13 @@ $("finishJourney").addEventListener("click",async()=>{
 });
 $("deliveryForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!currentJourney)return notify("Inicie uma jornada antes de adicionar entregas.");
- const orderNo=$("orderNo").value.trim(),address=$("address").value.trim();
- if(!orderNo||!address)return notify("Informe número da ordem e endereço.");
+ const address=$("address").value.trim();
+ if(!address)return notify("Informe o endereço da entrega.");
  const related=deliveries.filter(d=>d.journey_id===currentJourney.id);
  setBusy(e.target,true);
  try{
-  await backend.createDelivery({journeyId:currentJourney.id,orderNo,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
-  e.target.reset();await refresh();notify("Entrega salva no Supabase.");
+  const created=await backend.createDelivery({journeyId:currentJourney.id,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
+  e.target.reset();await refresh();notify("Entrega "+(created.order_no||"") +" cadastrada com número automático.");
  }catch(error){console.error(error);notify("Não foi possível cadastrar a entrega: "+error.message)}
  finally{setBusy(e.target,false)}
 });
