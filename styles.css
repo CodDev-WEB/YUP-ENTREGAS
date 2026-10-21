@@ -1168,3 +1168,101 @@ body.driver-mode .driver-form textarea {
     border-right:1px solid rgba(32,42,49,.05);
   }
 }
+
+
+/* Nova experiência do entregador: mapa + painel operacional, estilo app de mobilidade */
+body.driver-mode .driver-app.driver-home-mode {
+  max-width:414px;
+  width:100%;
+  height:100dvh;
+  min-height:824px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  background:#f7f8f6;
+}
+body.driver-mode .driver-home-mode .driver-top {
+  position:absolute;
+  top:0;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:30;
+  height:64px;
+  min-height:64px;
+  padding:env(safe-area-inset-top) 18px 0;
+  background:rgba(254,254,253,.94);
+  border:0;
+  box-shadow:0 2px 14px rgba(32,42,49,.06);
+  backdrop-filter:blur(16px);
+}
+body.driver-mode .driver-home-mode .driver-back { display:none; }
+body.driver-mode .driver-home-mode .driver-top .brand { gap:10px; }
+body.driver-mode .driver-home-mode .driver-brand-logo { width:74px;height:42px;max-width:74px;object-fit:cover;object-position:center;border-radius:8px; }
+body.driver-mode .driver-home-mode .driver-top .brand-divider { height:26px; }
+body.driver-mode .driver-home-mode .driver-top .brand-context strong { font-size:12px;letter-spacing:.12em; }
+body.driver-mode .driver-home-mode .driver-avatar { width:36px;height:36px;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:800;border:2px solid white;box-shadow:0 1px 5px #0001; }
+body.driver-mode .driver-home-mode .driver-screen-content {
+  flex:1;
+  min-height:0;
+  height:100%;
+  max-width:414px;
+  width:100%;
+  margin:0;
+  padding:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:none;
+}
+body.driver-mode .driver-home-mode .driver-screen-content::-webkit-scrollbar { display:none; }
+body.driver-mode .driver-home-mode .driver-bottom { display:none; }
+body.driver-mode .driver-home { min-height:100%;width:100%;display:flex;flex-direction:column;background:#f7f8f6;padding-top:64px; }
+body.driver-mode .driver-map-scene { position:relative;isolation:isolate;flex:1 0 285px;min-height:285px;max-height:44vh;overflow:hidden;background:#e8eee4; }
+body.driver-mode .driver-map-art { position:absolute;inset:0;width:100%;height:100%; }
+body.driver-mode .driver-map-art .map-water { fill:#cfe7e5; }
+body.driver-mode .driver-map-art .map-parks { fill:#d7e9d0; }
+body.driver-mode .driver-map-art .map-roads { fill:none;stroke:#fff;stroke-width:13;stroke-linecap:round;stroke-linejoin:round; }
+body.driver-mode .driver-map-art .map-road-detail { fill:none;stroke:#d5dcd5;stroke-width:1.5;stroke-linecap:round; }
+body.driver-mode .driver-map-art .map-place-labels { fill:#738177;font:700 8px system-ui,sans-serif;letter-spacing:1.2px; }
+body.driver-mode .driver-map-art .map-user-halo { fill:#55bbd1;opacity:.25; }
+body.driver-mode .driver-map-art .map-user-dot { fill:#fcde52;stroke:#fff;stroke-width:4; }
+body.driver-mode .driver-map-art .map-user-core { fill:#202a31; }
+body.driver-mode .driver-map-label { position:absolute;top:16px;left:16px;z-index:2;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:#fff;color:#202a31;font-size:12px;font-weight:750;box-shadow:0 3px 12px #20302012; }
+body.driver-mode .driver-map-pulse, body.driver-mode .driver-online-dot { display:inline-block;width:8px;height:8px;border-radius:50%;background:#28a879;box-shadow:0 0 0 4px #28a87920; }
+body.driver-mode .driver-map-bottom-note { position:absolute;left:16px;right:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#ffffffed;border:1px solid #fff;border-radius:16px;box-shadow:0 4px 16px #20302010; }
+body.driver-mode .driver-map-location-icon { display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fcde52;color:#202a31;font-size:25px; }
+body.driver-mode .driver-map-bottom-note strong, body.driver-mode .driver-map-bottom-note small { display:block; }
+body.driver-mode .driver-map-bottom-note strong { font-size:13px;color:#202a31; }
+body.driver-mode .driver-map-bottom-note small { margin-top:3px;font-size:11px;color:#667078; }
+body.driver-mode .driver-start-sheet { position:relative;z-index:3;flex:0 0 auto;margin-top:-12px;padding:0 20px calc(18px + env(safe-area-inset-bottom));background:#fefefd;border-radius:22px 22px 0 0;box-shadow:0 -8px 28px #263b2d0b; }
+body.driver-mode .driver-sheet-handle { width:38px;height:4px;border-radius:99px;background:#d9dedb;margin:10px auto 17px; }
+body.driver-mode .driver-home-greeting { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+body.driver-mode .driver-eyebrow { color:#287f92;font-size:10px;font-weight:850;letter-spacing:.13em; }
+body.driver-mode .driver-home-greeting h1 { margin:5px 0 4px;color:#202a31;font-size:26px;line-height:1.1;letter-spacing:-.04em;font-weight:850; }
+body.driver-mode .driver-home-greeting p { margin:0;color:#667078;font-size:13px;line-height:1.4; }
+body.driver-mode .driver-home-avatar { flex:0 0 46px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#fcde52;color:#202a31;font-size:14px;font-weight:850; }
+body.driver-mode .driver-home-date { display:flex;align-items:center;gap:9px;margin:16px 0;padding:10px 12px;background:#f5f7f4;border:1px solid #e9ece7;border-radius:12px;color:#5c6860;font-size:11px;font-weight:650;text-transform:capitalize; }
+body.driver-mode .driver-start-form { display:grid;gap:13px; }
+body.driver-mode .driver-start-form > label { display:grid;gap:7px;color:#202a31;font-size:12px;font-weight:750; }
+body.driver-mode .driver-field-unit { color:#7c8580;font-weight:500; }
+body.driver-mode .driver-start-form select, body.driver-mode .driver-start-form input { width:100%;height:49px;min-height:49px;padding:0 13px;border:1px solid #dfe5df;border-radius:12px;background:#fff;color:#202a31;font-size:16px!important;box-shadow:none; }
+body.driver-mode .driver-start-form input::placeholder { color:#a0a8a2; }
+body.driver-mode .driver-gps-hint { display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:#eaf7f9; }
+body.driver-mode .driver-gps-hint > span { flex:0 0 32px;display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#d2eef3;color:#246c7b;font-size:22px; }
+body.driver-mode .driver-gps-hint p { margin:0; }
+body.driver-mode .driver-gps-hint strong, body.driver-mode .driver-gps-hint small { display:block; }
+body.driver-mode .driver-gps-hint strong { color:#245a66;font-size:12px; }
+body.driver-mode .driver-gps-hint small { margin-top:3px;color:#51747b;font-size:10px;line-height:1.4; }
+body.driver-mode .driver-start-cta { display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:54px;margin-top:2px;border:0;border-radius:14px;background:#fcde52;color:#202a31;font-size:15px;font-weight:850;box-shadow:0 3px 0 #d9bd39; }
+body.driver-mode .driver-start-cta span { font-size:21px;transition:transform .15s ease; }
+body.driver-mode .driver-start-cta:active span { transform:translateX(3px); }
+body.driver-mode .driver-home-footnote { margin:12px 0 0;text-align:center;color:#8a938d;font-size:10px;line-height:1.4; }
+@media(max-height:760px) {
+ body.driver-mode .driver-map-scene { flex-basis:230px;min-height:230px;max-height:34vh; }
+ body.driver-mode .driver-start-sheet { padding-left:16px;padding-right:16px; }
+ body.driver-mode .driver-home-greeting h1 { font-size:23px; }
+ body.driver-mode .driver-home-date { margin:10px 0;padding:8px 10px; }
+ body.driver-mode .driver-start-form { gap:10px; }
+}
+@media(min-width:415px) {
+ body.driver-mode .driver-home-mode .driver-top { border-left:1px solid #e9ece7;border-right:1px solid #e9ece7; }
+}
