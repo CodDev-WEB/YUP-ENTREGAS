@@ -682,3 +682,44 @@ body.driver-mode .driver-bottom{display:block;position:fixed;z-index:55;bottom:0
  .driver-stats strong{font-size:25px}
  .driver-address-card h2{font-size:21px}
 }
+
+
+/* Modo PWA do entregador: uma única barra superior e viewport integral */
+html:has(body.driver-mode){min-width:320px;min-height:100%;height:100%;overscroll-behavior-y:none}
+body.driver-mode{min-width:320px;min-height:100dvh;height:100%;margin:0;padding:0;background:#f3f6f4;overflow-x:hidden}
+body.driver-mode .topbar,
+body.driver-mode .sidebar,
+body.driver-mode #prototypeWarning,
+body.driver-mode .header-actions{display:none!important}
+body.driver-mode #appLayout.layout{display:block!important;width:100%;max-width:none;min-height:100dvh;margin:0;padding:0;grid-template-columns:minmax(0,1fr);gap:0}
+body.driver-mode .content{display:block;width:100%;max-width:none;min-width:0;min-height:100dvh;margin:0;padding:0 0 calc(84px + env(safe-area-inset-bottom));overflow:visible}
+body.driver-mode .driver-app{display:block;width:100%;max-width:480px;min-height:100dvh;margin:0 auto;background:#f3f6f4;box-shadow:0 0 36px rgba(21,48,32,.05)}
+body.driver-mode .driver-top{position:sticky;top:0;z-index:60;width:100%;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 18px 0;background:rgba(255,255,255,.97);backdrop-filter:blur(14px)}
+body.driver-mode .driver-screen-content{width:100%;max-width:480px;margin:0 auto;padding:22px 18px calc(28px + env(safe-area-inset-bottom));overflow-wrap:anywhere}
+body.driver-mode .driver-screen-content h1{overflow-wrap:anywhere}
+body.driver-mode .driver-bottom{position:fixed;z-index:70;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 18px calc(10px + env(safe-area-inset-bottom));}
+body.driver-mode .driver-bottom-add{width:100%;max-width:none;min-height:50px}
+body.driver-mode .driver-form input,
+body.driver-mode .driver-form select,
+body.driver-mode .driver-form textarea{min-width:0;max-width:100%;font-size:16px}
+body.driver-mode .driver-stats{grid-template-columns:repeat(3,minmax(0,1fr));min-width:0}
+body.driver-mode .driver-stop{min-width:0}
+body.driver-mode .driver-stop-copy{overflow-wrap:anywhere}
+body.driver-mode .driver-detail-heading{flex-wrap:wrap}
+body.driver-mode .driver-timeline-row{grid-template-columns:30px minmax(0,1fr) auto}
+body.driver-mode .driver-result{grid-template-columns:29px minmax(0,1fr) auto}
+@media(max-width:360px){
+ body.driver-mode .driver-screen-content{padding-left:14px;padding-right:14px}
+ body.driver-mode .driver-top{padding-left:14px;padding-right:14px}
+ body.driver-mode .driver-bottom{padding-left:14px;padding-right:14px}
+ body.driver-mode .driver-stats{gap:6px;padding:14px 10px}
+ body.driver-mode .driver-stats strong{font-size:22px}
+ body.driver-mode .driver-status-row{display:block}
+ body.driver-mode .driver-status-row .driver-state{display:inline-block;margin:6px 0 0}
+ body.driver-mode .driver-result{grid-template-columns:26px minmax(0,1fr)}
+ body.driver-mode .driver-result aside{grid-column:2;text-align:left}
+}
+@media(min-width:481px){
+ body.driver-mode .driver-app{min-height:100dvh}
+ body.driver-mode .driver-bottom{border-left:1px solid #e0e9e3;border-right:1px solid #e0e9e3}
+}
