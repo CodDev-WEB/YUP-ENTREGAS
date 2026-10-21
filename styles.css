@@ -833,3 +833,186 @@ body.driver-mode .content {
   html, body { min-height: 100%; }
   body.driver-mode .driver-app { padding-bottom: env(safe-area-inset-bottom); }
 }
+
+
+/* Tela 1 — Início da jornada: adaptação do layout de referência Figma */
+body.driver-mode .driver-screen-content {
+  width:100%;
+  max-width:560px;
+  margin-inline:auto;
+  padding:24px 20px calc(116px + env(safe-area-inset-bottom));
+}
+body.driver-mode .driver-screen-content .driver-kicker {
+  margin:0 0 10px;
+  color:#087b4e;
+  font-size:11px;
+  line-height:1.35;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+body.driver-mode .driver-screen-content h1 {
+  margin:0;
+  max-width:100%;
+  color:#172d25;
+  font-size:clamp(30px,7.4vw,36px);
+  line-height:1.04;
+  letter-spacing:-.045em;
+  font-weight:800;
+}
+body.driver-mode .driver-screen-content .driver-subtitle {
+  margin:12px 0 22px;
+  color:#64736c;
+  font-size:15px;
+  line-height:1.5;
+}
+body.driver-mode .driver-profile {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 24px;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-width:0;
+  margin:0 0 24px;
+  padding:18px 16px 14px;
+  border:1px solid #e0e9e3;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 4px 18px rgba(23,45,37,.035);
+}
+body.driver-mode .driver-profile .driver-initials {
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:#e7f4ed;
+  color:#087b4e;
+  font-size:16px;
+  font-weight:800;
+}
+body.driver-mode .driver-profile > div:nth-child(2) { min-width:0; }
+body.driver-mode .driver-profile strong {
+  display:block;
+  overflow-wrap:anywhere;
+  color:#172d25;
+  font-size:16px;
+  line-height:1.3;
+}
+body.driver-mode .driver-profile p {
+  margin:4px 0 0;
+  color:#64736c;
+  font-size:12px;
+  line-height:1.4;
+}
+body.driver-mode .driver-profile .driver-check {
+  display:grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  border:1.5px solid #087b4e;
+  border-radius:50%;
+  color:#087b4e;
+  font-size:13px;
+  font-weight:700;
+}
+body.driver-mode .driver-profile .driver-profile-meta {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  grid-column:1 / -1;
+  min-width:0;
+  margin-top:2px;
+  padding-top:13px;
+  border-top:1px solid #dce5df;
+  color:#172d25;
+  font-size:12px;
+  font-weight:600;
+}
+body.driver-mode .driver-profile-meta span {
+  flex:0 0 auto;
+  padding:5px 10px;
+  border-radius:999px;
+  background:#e7f4ed;
+  color:#087b4e;
+  font-size:11px;
+  font-weight:700;
+}
+body.driver-mode .driver-screen-content .driver-section-title {
+  margin:0 0 18px;
+  color:#172d25;
+  font-size:17px;
+  line-height:1.3;
+  font-weight:800;
+}
+body.driver-mode .driver-form {
+  display:grid;
+  gap:14px;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+body.driver-mode .driver-form > label {
+  display:grid;
+  gap:8px;
+  min-width:0;
+  color:#172d25;
+  font-size:13px;
+  line-height:1.4;
+  font-weight:700;
+}
+body.driver-mode .driver-form input:not([type=radio]),
+body.driver-mode .driver-form select,
+body.driver-mode .driver-form textarea {
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:52px;
+  padding:14px;
+  border:1px solid #dce5df;
+  border-radius:13px;
+  background:#fff;
+  color:#172d25;
+  font-size:16px !important;
+  line-height:1.35;
+  box-shadow:0 1px 2px rgba(23,45,37,.02);
+}
+body.driver-mode .driver-form input::placeholder,
+body.driver-mode .driver-form textarea::placeholder { color:#99a39e; opacity:1; }
+body.driver-mode .driver-form .driver-helper {
+  margin:-7px 0 0;
+  color:#64736c;
+  font-size:11px;
+  line-height:1.45;
+}
+body.driver-mode .driver-form .driver-info {
+  position:relative;
+  margin:0;
+  padding:14px 14px 14px 42px;
+  border-radius:13px;
+  background:#e7f4ed;
+  color:#064d35;
+  font-size:14px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+body.driver-mode .driver-form .driver-primary {
+  width:100%;
+  min-height:54px;
+  margin-top:0;
+  border:0;
+  border-radius:13px;
+  background:#087b4e;
+  color:#fff;
+  font-size:15px;
+  font-weight:750;
+  box-shadow:none;
+}
+body.driver-mode .driver-form .driver-primary:active { transform:scale(.99); }
+@media(max-width:360px) {
+  body.driver-mode .driver-screen-content { padding:20px 14px calc(112px + env(safe-area-inset-bottom)); }
+  body.driver-mode .driver-profile { grid-template-columns:42px minmax(0,1fr) 22px; gap:10px; padding:15px 13px 12px; }
+  body.driver-mode .driver-profile .driver-initials { width:42px; height:42px; }
+  body.driver-mode .driver-profile .driver-profile-meta { font-size:11px; }
+  body.driver-mode .driver-form .driver-info { padding-left:38px; font-size:13px; }
+}
