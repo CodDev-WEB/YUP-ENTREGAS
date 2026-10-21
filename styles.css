@@ -1439,3 +1439,44 @@ body.driver-mode footer { display:none!important; }
 @media(display-mode: standalone) {
  body.driver-mode #driverExperience { padding-top:calc(58px + env(safe-area-inset-top))!important; }
 }
+
+/* Ajuste de foco iOS e alinhamento da dock inferior */
+body.driver-mode #driverExperience,
+body.driver-mode #driverExperience * { box-sizing:border-box!important; }
+body.driver-mode #driverExperience :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) {
+ font-size:16px!important; line-height:1.35!important; transform:none!important; zoom:1!important;
+ -webkit-text-size-adjust:100%!important; text-size-adjust:100%!important;
+}
+body.driver-mode #driverExperience :is(input,select,textarea):focus {
+ font-size:16px!important; transform:none!important; scroll-margin-block:100px;
+}
+body.driver-mode #driverExperience .driver-start-form :is(input,select,textarea) {
+ width:100%!important; min-width:0!important; max-width:100%!important; font-size:16px!important;
+}
+body.driver-mode #driverExperience .driver-bottom {
+ box-sizing:border-box!important; width:100%!important; left:0!important; right:0!important;
+ display:flex!important; flex-flow:row nowrap!important; align-items:stretch!important; justify-content:flex-start!important;
+ gap:8px!important; overflow-x:auto!important; overflow-y:hidden!important;
+ padding-left:max(12px,env(safe-area-inset-left))!important;
+ padding-right:max(12px,env(safe-area-inset-right))!important;
+ scroll-padding-inline:12px; overscroll-behavior-x:contain!important;
+}
+body.driver-mode #driverExperience .driver-bottom > * {
+ box-sizing:border-box!important; flex:0 0 76px!important; min-width:76px!important; max-width:112px!important;
+ margin:0!important; align-self:stretch!important;
+}
+body.driver-mode #driverExperience .driver-bottom > .driver-dock-primary {
+ flex:1 0 100%!important; min-width:0!important; max-width:none!important;
+}
+body.driver-mode #driverExperience .driver-bottom:has(> .driver-dock-primary) {
+ overflow:hidden!important;
+}
+body.driver-mode #driverExperience .driver-bottom > .driver-dock-action {
+ min-height:56px!important; height:auto!important; padding:6px 4px!important;
+ white-space:normal!important; overflow-wrap:anywhere!important;
+}
+body.driver-mode #driverExperience .driver-bottom::-webkit-scrollbar { display:none!important; }
+@media(max-width:390px) {
+ body.driver-mode #driverExperience .driver-bottom { gap:6px!important; }
+ body.driver-mode #driverExperience .driver-bottom > .driver-dock-action { flex-basis:70px!important; min-width:70px!important; font-size:10px!important; }
+}
