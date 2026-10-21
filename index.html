@@ -41,8 +41,7 @@
           <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required placeholder="Ex.: 24580"></label>
           <div class="form-action"><button class="button primary" id="startJourney" type="submit">Iniciar jornada</button><button class="button danger hidden" id="finishJourney" type="button">Finalizar jornada</button></div>
         </form>
-        <div class="form-action"><button class="button secondary" id="enableGpsTracking" type="button">Ativar acompanhamento da localização</button><span id="gpsTrackingStatus" class="hint" role="status">Acompanhamento GPS desativado.</span></div>
-        <p class="hint">Com autorização, o PWA registra pontos durante a jornada enquanto estiver aberto e conectado. O navegador pode suspender o rastreamento em segundo plano; não é rastreamento garantido com o aplicativo fechado.</p>
+        <p id="gpsTrackingStatus" class="hint" role="status">A localização será solicitada uma única vez ao entrar no PWA, sem botão na jornada.</p>
       </article>
       <article class="panel">
         <div class="panel-title"><div><h2>2. Adicionar entrega</h2><p>Cadastre a ordem e o endereço de cada cliente.</p></div></div>
@@ -55,7 +54,7 @@
           <label class="wide">Localização compartilhada / link do WhatsApp (opcional)<input id="mapLink" type="url" placeholder="Cole o link do mapa ou localização"></label>
           <div class="form-action wide"><button class="button primary" type="submit">＋ Adicionar entrega à rota</button><button class="button secondary" id="pasteLocation" type="button">Usar localização atual do aparelho</button></div>
         </form>
-        <p class="hint">A localização do aparelho exige permissão do usuário e HTTPS. Para WhatsApp, use Compartilhar localização ou copie o link e cole acima.</p>
+        <p class="hint">A localização do aparelho é solicitada uma única vez ao entrar no PWA. Para o endereço da entrega, cole o link compartilhado pelo cliente no WhatsApp.</p>
       </article>
       <article class="panel">
         <div class="panel-title"><div><h2>3. Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button></div>
