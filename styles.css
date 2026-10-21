@@ -723,3 +723,38 @@ body.driver-mode .driver-result{grid-template-columns:29px minmax(0,1fr) auto}
  body.driver-mode .driver-app{min-height:100dvh}
  body.driver-mode .driver-bottom{border-left:1px solid #e0e9e3;border-right:1px solid #e0e9e3}
 }
+
+
+/* Layout responsivo real do entregador: ocupar o viewport, sem moldura fixa de celular */
+html, body { width:100%; max-width:100%; }
+body.driver-mode { width:100%; min-width:0; height:auto; min-height:100dvh; overflow-x:clip; }
+body.driver-mode #appLayout.layout { width:100%; min-width:0; }
+body.driver-mode .content { width:100%; min-width:0; min-height:100dvh; padding:0 0 calc(88px + env(safe-area-inset-bottom)); }
+body.driver-mode .driver-app { width:100%; max-width:none; min-width:0; min-height:100dvh; margin:0; box-shadow:none; }
+body.driver-mode .driver-top { width:100%; }
+body.driver-mode .driver-screen-content { width:100%; max-width:760px; box-sizing:border-box; padding:clamp(16px, 3.5vw, 30px) clamp(14px, 4vw, 28px) calc(30px + env(safe-area-inset-bottom)); }
+body.driver-mode .driver-bottom { left:0; right:0; width:100%; max-width:none; transform:none; box-sizing:border-box; }
+body.driver-mode .driver-bottom-add { width:100%; max-width:760px; }
+body.driver-mode .driver-form,
+body.driver-mode .driver-stats,
+body.driver-mode .driver-stop-list,
+body.driver-mode .driver-results,
+body.driver-mode .driver-timeline { min-width:0; max-width:100%; }
+body.driver-mode .driver-top { box-sizing:border-box; }
+body.driver-mode .driver-screen-content > * { max-width:100%; }
+body.driver-mode .driver-form label,
+body.driver-mode .driver-form input,
+body.driver-mode .driver-form select,
+body.driver-mode .driver-form textarea { box-sizing:border-box; }
+@media (min-width: 761px) {
+ body.driver-mode .driver-screen-content { margin-inline:auto; }
+ body.driver-mode .driver-top { padding-left:max(20px, calc((100vw - 760px)/2)); padding-right:max(20px, calc((100vw - 760px)/2)); }
+ body.driver-mode .driver-bottom { padding-left:max(18px, calc((100vw - 760px)/2)); padding-right:max(18px, calc((100vw - 760px)/2)); }
+}
+@media (max-width: 380px) {
+ body.driver-mode .driver-screen-content { padding-left:12px; padding-right:12px; }
+ body.driver-mode .driver-stats { gap:5px; padding:12px 8px; }
+ body.driver-mode .driver-stats strong { font-size:clamp(18px, 6vw, 22px); }
+ body.driver-mode .driver-stop { grid-template-columns:30px minmax(0,1fr) 10px; gap:8px; padding:10px; }
+ body.driver-mode .driver-stop-number { width:30px; height:30px; }
+}
