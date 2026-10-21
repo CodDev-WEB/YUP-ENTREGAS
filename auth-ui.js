@@ -8,6 +8,15 @@
       });
     }, { once: true });
   }
+  function explainAuthError(raw) {
+    const detail = String(raw || "");
+    const lower = detail.toLowerCase();
+    if (lower.includes("invalid login credentials")) return "E-mail ou senha incorretos. Confirme que o usuário foi criado em Supabase → Authentication → Users.";
+    if (lower.includes("email not confirmed")) return "Este e-mail ainda não foi confirmado no Supabase. Confirme o endereço ou ajuste a confirmação de e-mail nas configurações de autenticação.";
+    if (lower.includes("fetch") || lower.includes("network") || lower.includes("failed to") || lower.includes("load failed")) return "Não foi possível conectar ao Supabase. Verifique a internet, a URL/chave pública e se o projeto está ativo.";
+    if (lower.includes("profiles") || lower.includes("permission denied") || lower.includes("row-level security") || lower.includes("schema cache")) return "O login ou a leitura do perfil falhou no banco. Verifique se o esquema SQL foi aplicado e se as políticas RLS de public.profiles estão configuradas. Detalhe: " + detail;
+    return "Falha no login: " + (detail || "o Supabase não retornou detalhes") + ".";
+  }
   function message(text, type = "") {
     const el = $("authMessage");
     el.textContent = text;
@@ -65,7 +74,7 @@
       }
       message("Entre com sua conta individual do Supabase.");
     } catch (error) {
-      message("Não foi possível validar a sessão. Confira o projeto Supabase e as políticas RLS.", "error");
+      message("Não foi possível validar a sessão: " + (error?.message || "erro desconhecido") + ". Confira o projeto Supabase e as políticas RLS.", "error");
     }
   }
   $("loginForm").addEventListener("submit", async event => {
@@ -77,12 +86,12 @@
       if (result.reason === "missing-config") {
         message("Configuração pendente: crie supabase-config.js a partir do modelo antes de entrar.", "warning");
       } else if (!result.ok) {
-        message(result.reason === "profile-inactive" ? "Conta sem perfil ativo. Peça à administração para verificar o cadastro." : "Não foi possível entrar. Confira e-mail e senha ou a configuração do Supabase.", "error");
+        message(result.reason === "profile-inactive" ? "O login foi aceito, mas a conta não possui perfil ativo em public.profiles. Peça à administração para conferir o usuário no Supabase." : result.reason === "auth-error" ? explainAuthError(result.message) : "Não foi possível entrar. Motivo: " + (result.reason || "erro desconhecido") + ". Confira a configuração do Supabase.", "error");
       } else {
         startApp(result.profile);
       }
     } catch (error) {
-      message("Falha de conexão. Verifique a configuração do Supabase e tente novamente.", "error");
+      message(explainAuthError(error?.message || error), "error");
     } finally {
       $("loginButton").disabled = false;
     }
