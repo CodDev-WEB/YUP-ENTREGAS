@@ -398,26 +398,94 @@ function render(){
  renderDriverExperience();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
- $("journeyHistory").innerHTML=journeys.length?'<table><thead><tr><th>Ordem</th><th>Entregador</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM</th><th>Status</th></tr></thead><tbody>'+journeys.map(j=>'<tr><td>'+esc(j.order_number==null?"—":"JOR-"+String(j.order_number).padStart(6,"0"))+'</td><td>'+esc(j.drivers?.registration_no||j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(j.odometer_end==null?"—":(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada registrada no banco.</p>';
+ renderFleetHistory();
  $("fuelTotalLiters").textContent=local.fuel.reduce((s,x)=>s+x.liters,0).toLocaleString("pt-BR",{maximumFractionDigits:2})+" L";const costs=local.fuel.reduce((s,x)=>s+x.cost,0),liters=local.fuel.reduce((s,x)=>s+x.liters,0);$("fuelTotalCost").textContent=money(costs);$("fuelAverage").textContent=liters?money(costs/liters)+"/L":"—";
  $("fuelHistory").innerHTML=table(local.fuel,[["date","Data"],["vehicle","Veículo"],["odo","Odômetro"],["liters","Litros"],["cost","Valor"]],x=>({...x,date:fmtDate(x.date),cost:money(x.cost)}));
  $("maintenanceHistory").innerHTML=table(local.maintenance,[["date","Data"],["vehicle","Veículo"],["type","Serviço"],["odo","Odômetro"],["cost","Valor"],["description","Descrição"]],x=>({...x,cost:money(x.cost)}));
 }
-function exportJourneyReport(){
- const headers=["Ordem da jornada","Status","Entregador","Cadastro entregador","Veículo","Placa","Início","Fim","Odômetro inicial (km)","Odômetro final (km)","Distância odômetro (km)","Total de entregas","Concluídas","Não realizadas","Pendentes"];
- const rows=journeys.map(j=>{
-  const ds=deliveries.filter(d=>d.journey_id===j.id);
-  const done=ds.filter(d=>d.status==="completed").length,failed=ds.filter(d=>d.status==="failed").length;
-  const end=j.odometer_end==null?"":Number(j.odometer_end);
-  return ["JOR-"+String(j.order_number??"").padStart(6,"0"),statusLabel[j.status]||j.status,j.drivers?.full_name||"",j.drivers?.registration_no||"",j.vehicles?.code||"",j.vehicles?.plate||"",j.started_at_server||"",j.finished_at_server||"",j.odometer_start??"",end,end===""?"":(Number(end)-Number(j.odometer_start)).toFixed(1),ds.length,done,failed,ds.length-done-failed];
- });
- const csv=[headers,...rows].map(row=>row.map(value=>'"'+String(value??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
- const blob=new Blob(["\\uFEFF",csv],{type:"text/csv;charset=utf-8;"});
- const url=URL.createObjectURL(blob),link=document.createElement("a");
- link.href=url;link.download="relatorio-jornadas-yup-"+new Date().toISOString().slice(0,10)+".csv";
- document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
+function journeyNeighborhoods(j){
+ const names=deliveries.filter(d=>d.journey_id===j.id).map(d=>d.neighborhoods?.name).filter(Boolean);
+ return [...new Set(names)].join(", ")||"—";
 }
-$("exportJourneyReport")?.addEventListener("click",exportJourneyReport);
+function journeyIncidents(j){
+ const ds=deliveries.filter(d=>d.journey_id===j.id);
+ const notes=[];
+ if(j.notes)notes.push(String(j.notes));
+ ds.forEach(d=>(d.delivery_events||[]).filter(e=>e.event_type==="incident"||e.event_type==="failed"||e.note).forEach(e=>{
+  const label=d.order_no||"Entrega";
+  const detail=e.note||statusLabel[e.event_type]||e.event_type;
+  notes.push(label+": "+detail);
+ }));
+ return [...new Set(notes)].join(" | ")||"—";
+}
+function getFleetFilter(){
+ const period=$("fleetPeriod")?.value||"all", anchor=$("fleetAnchorDate")?.value||new Date().toISOString().slice(0,10);
+ const base=new Date(anchor+"T12:00:00");let from=null,to=null;
+ if(period==="day"){from=new Date(base);to=new Date(base);to.setDate(to.getDate()+1)}
+ if(period==="week"){from=new Date(base);const day=(from.getDay()+6)%7;from.setDate(from.getDate()-day);to=new Date(from);to.setDate(to.getDate()+7)}
+ if(period==="month"){from=new Date(base.getFullYear(),base.getMonth(),1);to=new Date(base.getFullYear(),base.getMonth()+1,1)}
+ if(period==="year"){from=new Date(base.getFullYear(),0,1);to=new Date(base.getFullYear()+1,0,1)}
+ const driver=$("fleetDriver")?.value||"all",vehicle=$("fleetVehicle")?.value||"all",status=$("fleetStatus")?.value||"all";
+ const filtered=journeys.filter(j=>{
+  const d=j.started_at_server?new Date(j.started_at_server):null;
+  return (!from||d&&d>=from&&d<to)&&(driver==="all"||j.driver_id===driver)&&(vehicle==="all"||j.vehicle_id===vehicle)&&(status==="all"||j.status===status);
+ });
+ return {filtered,period,anchor,from,to};
+}
+function renderFleetHistory(){
+ const driverSelect=$("fleetDriver"),vehicleSelect=$("fleetVehicle");
+ if(driverSelect){const old=driverSelect.value;driverSelect.innerHTML='<option value="all">Todos os entregadores</option>'+drivers.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.registration_no+" — "+d.full_name)+'</option>').join("");driverSelect.value=[...driverSelect.options].some(o=>o.value===old)?old:"all"}
+ if(vehicleSelect){const old=vehicleSelect.value;vehicleSelect.innerHTML='<option value="all">Todos os veículos</option>'+vehicles.map(v=>'<option value="'+esc(v.id)+'">'+esc([v.code,v.plate,v.make_model].filter(Boolean).join(" — "))+'</option>').join("");vehicleSelect.value=[...vehicleSelect.options].some(o=>o.value===old)?old:"all"}
+ const {filtered,period,anchor}=getFleetFilter();
+ const rows=filtered.map(j=>{
+  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
+  const km=j.odometer_end==null?null:Number(j.odometer_end)-Number(j.odometer_start);
+  return '<tr><td>'+esc(j.order_number==null?"—":"JOR-"+String(j.order_number).padStart(6,"0"))+'</td><td>'+esc(j.drivers?.registration_no||"—")+' · '+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(journeyNeighborhoods(j))+'</td><td>'+esc([j.vehicles?.code,j.vehicles?.plate,j.vehicles?.make_model].filter(Boolean).join(" · ")||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(km==null?"—":km.toLocaleString("pt-BR",{maximumFractionDigits:1}))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td><td>'+esc(journeyIncidents(j))+'</td><td>'+done+'/'+ds.length+'</td></tr>';
+ });
+ $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
+ const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
+ if($("fleetFilterSummary"))$("fleetFilterSummary").textContent=filtered.length+" jornada(s) · "+filterCaption;
+ const fuel=local.fuel.filter(x=>{const d=new Date(x.date);const f=getFleetFilter();return (!f.from||d>=f.from&&d<f.to)&&(($("fleetVehicle")?.value||"all")==="all"||String(x.vehicleId||x.vehicle)===(vehicles.find(v=>v.id===$("fleetVehicle").value)?.code||$("fleetVehicle").value));});
+ const byVehicle={};fuel.forEach(x=>{const key=String(x.vehicleId||x.vehicle||"");(byVehicle[key]||(byVehicle[key]=[])).push(x)});
+ let kmTotal=0,literTotal=0;
+ Object.values(byVehicle).forEach(items=>{items.sort((a,b)=>new Date(a.date)-new Date(b.date));for(let i=1;i<items.length;i++){const delta=Number(items[i].odo)-Number(items[i-1].odo);if(delta>0&&Number(items[i].liters)>0){kmTotal+=delta;literTotal+=Number(items[i].liters)}}});
+ if($("fleetConsumption"))$("fleetConsumption").textContent=literTotal>0?(kmTotal/literTotal).toLocaleString("pt-BR",{maximumFractionDigits:2})+" km/L":"—";
+ if($("fleetConsumptionNote"))$("fleetConsumptionNote").textContent=literTotal>0?"Estimativa por abastecimentos locais consecutivos ("+kmTotal.toLocaleString("pt-BR",{maximumFractionDigits:1})+" km / "+literTotal.toLocaleString("pt-BR",{maximumFractionDigits:2})+" L).":"Sem dados suficientes de abastecimentos consecutivos neste período. Os abastecimentos atuais são locais neste dispositivo.";
+}
+function fleetExportRows(){
+ const {filtered}=getFleetFilter();
+ const headers=["Código da jornada","Status","Código entregador","Nome entregador","Bairros","Código veículo","Placa","Modelo","Início","Fim","Odômetro inicial (km)","Odômetro final (km)","KM rodados","Ocorrências/observações","Entregas","Concluídas","Não realizadas","Pendentes"];
+ const rows=filtered.map(j=>{
+  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length,failed=ds.filter(d=>d.status==="failed").length;
+  const km=j.odometer_end==null?"":Number(j.odometer_end)-Number(j.odometer_start);
+  return ["JOR-"+String(j.order_number??"").padStart(6,"0"),statusLabel[j.status]||j.status,j.drivers?.registration_no||"",j.drivers?.full_name||"",journeyNeighborhoods(j),j.vehicles?.code||"",j.vehicles?.plate||"",j.vehicles?.make_model||"",j.started_at_server||"",j.finished_at_server||"",j.odometer_start??"",j.odometer_end??"",km,journeyIncidents(j),ds.length,done,failed,ds.length-done-failed];
+ });
+ return {headers,rows};
+}
+function downloadFleetCsv(){
+ const {headers,rows}=fleetExportRows(),csv=[headers,...rows].map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(";")).join("\r\n");
+ downloadFleetFile("\uFEFF"+csv,"csv","text/csv;charset=utf-8;");
+}
+function downloadFleetXls(){
+ const {headers,rows}=fleetExportRows(),html='<html><head><meta charset="utf-8"></head><body><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join("")+'</tr>').join("")+'</tbody></table></body></html>';
+ downloadFleetFile(html,"xls","application/vnd.ms-excel;charset=utf-8;");
+}
+function downloadFleetFile(content,ext,type){
+ const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="historico-frota-yup-"+new Date().toISOString().slice(0,10)+"."+ext;
+ document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function printFleetPdf(){
+ const {headers,rows}=fleetExportRows(),title="Histórico de jornadas — YUP Entregas";
+ const page=window.open("","_blank");
+ if(!page){notify("Permita a abertura da janela para gerar o PDF.");return}
+ page.document.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+title+'</title><style>body{font:11px Arial,sans-serif;color:#222;padding:18px}h1{font-size:18px}p{color:#555}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:5px;text-align:left;vertical-align:top}th{background:#eee} @media print{@page{size:landscape;margin:10mm}}</style></head><body><h1>'+title+'</h1><p>Gerado em '+new Date().toLocaleString("pt-BR")+' · '+rows.length+' jornada(s)</p><table><thead><tr>'+headers.map(h=>'<th>'+esc(h)+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(v)+'</td>').join("")+'</tr>').join("")+'</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>');
+ page.document.close();
+}
+["fleetPeriod","fleetAnchorDate","fleetDriver","fleetVehicle","fleetStatus"].forEach(id=>$(id)?.addEventListener("change",renderFleetHistory));
+$("exportJourneyReport")?.addEventListener("click",downloadFleetCsv);
+$("exportJourneyXls")?.addEventListener("click",downloadFleetXls);
+$("exportJourneyPdf")?.addEventListener("click",printFleetPdf);
 function table(items,cols,transform=x=>x){if(!items.length)return '<p class="hint">Nenhum registro ainda.</p>';return '<table><thead><tr>'+cols.map(c=>'<th>'+c[1]+'</th>').join("")+'</tr></thead><tbody>'+items.slice().reverse().map(raw=>{const x=transform(raw);return '<tr>'+cols.map(c=>'<td>'+esc(x[c[0]]??"—")+'</td>').join("")+'</tr>'}).join("")+'</tbody></table>'}
 $("fuelDate").value=new Date().toISOString().slice(0,16);$("maintDate").value=new Date().toISOString().slice(0,10);
 $("fuelForm").addEventListener("submit",e=>{e.preventDefault();local.fuel.push({id:crypto.randomUUID(),vehicle:$("fuelVehicle").value.trim(),date:$("fuelDate").value,odo:Number($("fuelOdo").value),liters:Number($("fuelLiters").value),cost:Number($("fuelCost").value),note:$("fuelNote").value.trim()});localStorage.setItem(localKey,JSON.stringify(local));e.target.reset();$("fuelDate").value=new Date().toISOString().slice(0,16);render()});
