@@ -134,6 +134,21 @@
     if(error)throw error;
     return data||[];
   }
+  async function listJourneyLocationPointsForJourneys(journeyIds) {
+    const client = await requireReady();
+    const ids=[...new Set((journeyIds||[]).filter(Boolean))];
+    if(!ids.length)return [];
+    const results=[];
+    for(let i=0;i<ids.length;i+=100){
+      const batch=ids.slice(i,i+100);
+      const {data,error}=await client.from("journey_location_points")
+        .select("id,journey_id,latitude,longitude,accuracy_m,speed_mps,heading_deg,captured_at_device,received_at_server")
+        .in("journey_id",batch).order("captured_at_device",{ascending:true}).limit(10000);
+      if(error)throw error;
+      results.push(...(data||[]));
+    }
+    return results;
+  }
   async function startJourney({driverId,vehicleId,odometerStart,routePlanId=null}) {
     const client = await requireReady();
     let plan=null;
@@ -192,5 +207,5 @@
     if (eventError) throw new Error("Status atualizado, mas não foi possível registrar o evento: " + eventError.message);
     return updated;
   }
-  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,get client(){return state.client;},get profile(){return state.profile;} };
+  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
 })();
