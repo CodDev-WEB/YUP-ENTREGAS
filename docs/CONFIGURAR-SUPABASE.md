@@ -11,9 +11,10 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 
 ## 2. Aplicar o banco
 1. Abra SQL Editor no Supabase.
-2. Cole e execute supabase/schema.sql.
-3. Confirme as tabelas e políticas RLS.
-4. Em Authentication > Providers, habilite e-mail/senha. Se a empresa controlar os acessos, desabilite cadastro público e crie usuários pela administração.
+2. Para um projeto novo, execute `supabase/schema.sql`.
+3. Para o projeto existente, execute individualmente as migrações ainda não aplicadas: `20261020_operations_hardening.sql`, `20261020_one_open_journey_per_vehicle.sql`, `20261020_journey_gps_timeline.sql`, `20261020_journey_order_numbers.sql` e `20261020_delivery_order_numbers.sql`.
+4. Confirme tabelas, colunas, gatilhos e políticas RLS. O GitHub não executa os SQLs automaticamente; não execute novamente o esquema inicial em um banco já existente.
+5. Em Authentication > Providers, habilite e-mail/senha. Se a empresa controlar os acessos, desabilite cadastro público e crie usuários pela administração.
 
 ## 3. Criar o primeiro administrador
 1. Em Authentication > Users, crie o usuário administrativo.
@@ -32,5 +33,10 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 ## 5. Publicação gratuita
 O código fica no GitHub. A configuração pública do Supabase também precisa estar presente no deploy. Para servir a interface, escolha hospedagem estática gratuita compatível com o uso pretendido e configure HTTPS. Não presuma que GitHub Pages é apropriado para um serviço comercial/SaaS. Não publique dados operacionais no repositório.
 
-## Próxima etapa
-Migrar os formulários de jornada, entrega, combustível e manutenção de localStorage para PostgreSQL; associar as jornadas ao usuário autenticado; implementar fila offline idempotente; testar sincronização entre dois navegadores e completar o painel ao vivo. Até isso ser concluído, o aplicativo não está pronto para dados reais.
+## Limitações atuais
+- O portal por código em `/entregador` ainda não autentica; utilize o login individual no painel principal.
+- Combustível e manutenção permanecem locais no navegador.
+- Não existe fila offline durável para jornadas e entregas.
+- A captura GPS pode ser suspensa pelo navegador em segundo plano.
+
+Até aplicar as migrações e testar cada perfil e fluxo, não use dados reais de clientes.
