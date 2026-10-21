@@ -72,9 +72,40 @@
     if (error) throw error;
     return data || [];
   }
+  async function listRoutePlans() {
+    const client = await requireReady();
+    const {data,error} = await client.from("route_plans")
+      .select("id,title,assigned_driver_id,status,created_at,created_by,drivers(id,full_name,registration_no),route_plan_stops(id,sequence_no,neighborhood_id,address,reference,map_link,priority,neighborhoods(name))")
+      .order("created_at",{ascending:false});
+    if(error) throw error;
+    return (data||[]).map(plan=>({...plan,route_plan_stops:(plan.route_plan_stops||[]).sort((a,b)=>a.sequence_no-b.sequence_no)}));
+  }
+  async function createRoutePlan({title,driverId,stops}) {
+    const client = await requireReady();
+    const {data:{user},error:userError} = await client.auth.getUser();
+    if(userError||!user) throw new Error("Sessão expirada. Entre novamente.");
+    const {data:plan,error} = await client.from("route_plans").insert({
+      title:String(title||"").trim(),assigned_driver_id:driverId,status:"assigned",created_by:user.id
+    }).select("id,title,assigned_driver_id,status,created_at").single();
+    if(error) throw error;
+    try {
+      const rows=(stops||[]).map((stop,index)=>({
+        route_plan_id:plan.id,sequence_no:index+1,neighborhood_id:stop.neighborhoodId||null,
+        address:String(stop.address||"").trim(),reference:String(stop.reference||"").trim()||null,
+        map_link:String(stop.mapLink||"").trim()||null,priority:stop.priority||"normal"
+      }));
+      if(!rows.length) throw new Error("Adicione pelo menos uma parada à rota.");
+      const {error:stopsError}=await client.from("route_plan_stops").insert(rows);
+      if(stopsError) throw stopsError;
+    } catch(error) {
+      await client.from("route_plans").delete().eq("id",plan.id);
+      throw error;
+    }
+    return plan;
+  }
   async function listOperations() {
     const client = await requireReady();
-    const {data:journeys,error:jError} = await client.from("journeys").select("id,order_number,driver_id,vehicle_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate)").order("started_at_server",{ascending:false});
+    const {data:journeys,error:jError} = await client.from("journeys").select("id,order_number,driver_id,vehicle_id,route_plan_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate)").order("started_at_server",{ascending:false});
     if (jError) throw jError;
     const ids = (journeys || []).map(j => j.id);
     let deliveries = [];
@@ -103,10 +134,29 @@
     if(error)throw error;
     return data||[];
   }
-  async function startJourney({driverId,vehicleId,odometerStart}) {
+  async function startJourney({driverId,vehicleId,odometerStart,routePlanId=null}) {
     const client = await requireReady();
-    const {data,error} = await client.from("journeys").insert({driver_id:driverId,vehicle_id:vehicleId,odometer_start:Number(odometerStart),status:"open"}).select("id,driver_id,vehicle_id,status,odometer_start,started_at_server").single();
+    let plan=null;
+    if(routePlanId){
+      const {data,error}=await client.from("route_plans")
+        .select("id,title,assigned_driver_id,status,route_plan_stops(id,sequence_no,neighborhood_id,address,reference,map_link,priority)")
+        .eq("id",routePlanId).eq("assigned_driver_id",driverId).eq("status","assigned").single();
+      if(error) throw error;
+      plan=data;
+      if(!plan.route_plan_stops?.length) throw new Error("Esta rota não possui paradas cadastradas.");
+    }
+    const {data,error} = await client.from("journeys").insert({
+      driver_id:driverId,vehicle_id:vehicleId,odometer_start:Number(odometerStart),status:"open",route_plan_id:routePlanId||null
+    }).select("id,driver_id,vehicle_id,route_plan_id,status,odometer_start,started_at_server").single();
     if (error) throw error;
+    if(plan){
+      const stops=plan.route_plan_stops.slice().sort((a,b)=>a.sequence_no-b.sequence_no).map((stop,index)=>({
+        journey_id:data.id,neighborhood_id:stop.neighborhood_id,address:stop.address,reference:stop.reference,
+        map_link:stop.map_link,priority:stop.priority||"normal",status:"pending",sequence_no:index+1
+      }));
+      const {error:copyError}=await client.from("deliveries").insert(stops);
+      if(copyError) throw new Error("A jornada foi criada, mas as paradas da rota não foram copiadas: "+copyError.message);
+    }
     return data;
   }
   async function finishJourney({journeyId,odometerEnd}) {
@@ -142,5 +192,5 @@
     if (eventError) throw new Error("Status atualizado, mas não foi possível registrar o evento: " + eventError.message);
     return updated;
   }
-  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,startJourney,finishJourney,createDelivery,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,get client(){return state.client;},get profile(){return state.profile;} };
+  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,get client(){return state.client;},get profile(){return state.profile;} };
 })();
