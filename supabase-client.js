@@ -74,7 +74,7 @@
   }
   async function listOperations() {
     const client = await requireReady();
-    const {data:journeys,error:jError} = await client.from("journeys").select("id,driver_id,vehicle_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate)").order("started_at_server",{ascending:false});
+    const {data:journeys,error:jError} = await client.from("journeys").select("id,order_number,driver_id,vehicle_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate)").order("started_at_server",{ascending:false});
     if (jError) throw jError;
     const ids = (journeys || []).map(j => j.id);
     let deliveries = [];
