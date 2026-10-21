@@ -1873,3 +1873,30 @@ button[aria-busy="true"]{opacity:.72;cursor:progress;pointer-events:none}
 #fleetConsumptionNote{display:block;margin-top:8px;font-weight:400;line-height:1.4}
 @media(max-width:900px){.fleet-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.fleet-filters{grid-template-columns:1fr}.fleet-export-actions{display:grid;grid-template-columns:1fr}.fleet-export-actions .button{width:100%}}
+
+
+/* Painel analítico: mapa de calor de entregas por bairro */
+.fleet-heat-panel{overflow:hidden}
+.fleet-heat-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 18px}
+.fleet-heat-kpi{display:flex;flex-direction:column;gap:5px;min-width:0;padding:14px;border:1px solid #e3e9e5;border-radius:13px;background:#fbfcfb}
+.fleet-heat-kpi strong{font-size:24px;line-height:1.1;letter-spacing:-.04em;color:#225640}
+.fleet-heat-kpi span{font-size:11px;line-height:1.35;color:#718078}
+.fleet-heatmap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fleet-heat-region{min-width:0;border:1px solid #e1e8e3;border-left:5px solid #c8ddd0;border-radius:13px;padding:14px;background:#fff}
+.fleet-heat-region.heat-level-1{background:#fbfdfb;border-left-color:#dce9df}
+.fleet-heat-region.heat-level-2{background:#f5faf6;border-left-color:#b9d8c2}
+.fleet-heat-region.heat-level-3{background:#edf7ef;border-left-color:#83bd94}
+.fleet-heat-region.heat-level-4{background:#e2f2e6;border-left-color:#4f9e69}
+.fleet-heat-region.heat-level-5{background:#d5ebdc;border-left-color:#267a49}
+.fleet-heat-region-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fleet-heat-label{font-size:9px;letter-spacing:.09em;font-weight:800;color:#6f8074}
+.fleet-heat-region h3{margin:4px 0 0;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.fleet-heat-count{font-size:24px;line-height:1;font-weight:850;color:#225640;white-space:nowrap}
+.fleet-heat-count small{font-size:10px;font-weight:650}
+.fleet-heat-bar{height:7px;margin:14px 0 10px;background:rgba(34,86,64,.12);border-radius:99px;overflow:hidden}
+.fleet-heat-bar i{display:block;height:100%;border-radius:inherit;background:#39845a}
+.fleet-heat-metrics{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;line-height:1.4;color:#51665a}
+.fleet-heat-footer{display:flex;justify-content:space-between;gap:8px;margin-top:11px;padding-top:10px;border-top:1px solid rgba(34,86,64,.14);font-size:11px;font-weight:750;color:#225640}
+.fleet-heat-addresses{margin:8px 0 0;font-size:10px;line-height:1.45;color:#66766c;overflow-wrap:anywhere}
+.fleet-heat-note{margin-top:14px}
+@media(max-width:620px){.fleet-heat-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fleet-heat-kpi{padding:12px}.fleet-heat-kpi strong{font-size:22px}.fleet-heatmap{grid-template-columns:minmax(0,1fr)}.fleet-heat-region{padding:13px}}
