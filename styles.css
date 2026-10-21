@@ -458,3 +458,10 @@ body.driver-mode .sidebar::-webkit-scrollbar {
     animation-duration: .01ms !important;
   }
 }
+
+/* Histórico de rota recolhido para manter o foco nas entregas pendentes */
+body.driver-mode .route-history{margin-top:14px;border:1px solid #dfe9e2;border-radius:15px;background:#fff;overflow:hidden}
+body.driver-mode .route-history>summary{padding:15px 16px;cursor:pointer;font-size:13px;font-weight:800;color:#176b43;list-style-position:inside}
+body.driver-mode .route-history[open]>summary{border-bottom:1px solid #e7eee9;background:#f7fbf8}
+body.driver-mode .route-history .delivery-list{padding:10px;gap:8px}
+body.driver-mode .route-history .delivery-card{margin:0;box-shadow:none;background:#fbfdfb}
