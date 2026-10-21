@@ -1775,3 +1775,10 @@ body.driver-mode #driverExperience .driver-stop { justify-self:stretch!important
 
 /* Cabeçalho YUP: alinhamento padrão à esquerda */
 .driver-top{justify-content:flex-start}.driver-top .brand{flex:1;min-width:0;justify-content:flex-start;margin:0 auto 0 0;text-align:left}.driver-top .brand-context,.driver-top .brand-context strong{text-align:left;justify-content:flex-start}
+
+/* Tela 2: título e status alinhados no mesmo eixo esquerdo da Tela 1 */
+body.driver-mode #driverExperience .driver-status-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;gap:10px!important}
+body.driver-mode #driverExperience .driver-status-copy{min-width:0;text-align:left}
+body.driver-mode #driverExperience .driver-status-copy .driver-kicker,body.driver-mode #driverExperience .driver-status-copy h1{text-align:left}
+body.driver-mode #driverExperience .driver-status-copy h1{overflow-wrap:normal;max-width:100%}
+body.driver-mode #driverExperience .driver-status-row .driver-state{margin:20px 0 0!important;justify-self:end}
