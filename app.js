@@ -111,12 +111,11 @@ function openGoogleRoute(items,startIndex=0){
  // Mantemos até 3 paradas intermediárias para maior compatibilidade com celulares.
  const maxWaypoints=3;
  const batchSize=maxWaypoints+1; // destino final + até 3 waypoints anteriores
- const batch=stops.slice(0,batchSize+1);
+ const batch=stops.slice(0,batchSize);
  const destinations=batch.map(deliveryDestination);
- const origin="Santarém, PA, Brasil";
  const destination=destinations[destinations.length-1];
  const waypoints=destinations.slice(0,-1);
- const params=new URLSearchParams({api:"1",origin,destination,travelmode:"driving"});
+ const params=new URLSearchParams({api:"1",destination,travelmode:"driving"});
  if(waypoints.length)params.set("waypoints",waypoints.join("|"));
  window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
  if(stops.length>batch.length){
