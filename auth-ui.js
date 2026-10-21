@@ -30,6 +30,7 @@
   function applyRole(profile) {
     const role = profile.role;
     document.querySelectorAll('[data-view="painel"]').forEach(el => el.classList.toggle("hidden", !["admin","manager"].includes(role)));
+    document.querySelectorAll('[data-view="rotas"]').forEach(el => el.classList.toggle("hidden", !["admin","manager"].includes(role)));
     document.querySelectorAll('[data-view="manutencao"]').forEach(el => el.classList.toggle("hidden", role !== "admin"));
     if (!["admin","manager"].includes(role)) {
       document.getElementById("view-painel").classList.add("hidden");
