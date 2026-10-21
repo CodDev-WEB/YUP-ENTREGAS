@@ -25,6 +25,7 @@
     });
   }
   function startApp(profile) {
+    document.body.classList.toggle("driver-mode", profile.role === "driver");
     $("authGate").classList.add("hidden");
     $("appLayout").classList.remove("hidden");
     $("logoutButton").classList.remove("hidden");
