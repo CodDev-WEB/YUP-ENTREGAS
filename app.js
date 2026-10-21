@@ -69,9 +69,45 @@ $("pasteLocation").addEventListener("click",()=>{
  if(!navigator.geolocation)return notify("Geolocalização não disponível neste navegador.");
  navigator.geolocation.getCurrentPosition(pos=>{const {latitude,longitude}=pos.coords;$("mapLink").value="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(latitude+","+longitude);if(!$("address").value)$("address").value=latitude.toFixed(6)+", "+longitude.toFixed(6)},err=>notify("Não foi possível obter a localização. Verifique a permissão do navegador. ("+err.message+")"),{enableHighAccuracy:true,timeout:10000});
 });
+function mapLinkDestination(raw){
+ const value=String(raw||"").trim();
+ if(!value)return {kind:"none"};
+ let url;
+ try{url=new URL(value)}catch{return {kind:"text",value};}
+ if(!["https:","http:"].includes(url.protocol))return {kind:"text",value};
+ const host=url.hostname.toLowerCase();
+ const isGoogleMaps=host==="maps.google.com"||host==="maps.app.goo.gl"||host==="goo.gl"||host==="google.com"||host.endsWith(".google.com");
+ const isWhatsApp=host==="wa.me"||host.endsWith(".whatsapp.com")||host.endsWith(".whatsapp.net");
+ // Links curtos não expõem a coordenada no próprio URL. Abra o link original para o Maps resolver o destino.
+ if(host==="maps.app.goo.gl"||host==="goo.gl"||isWhatsApp)return {kind:"direct",url:url.href};
+ const coordinatePatterns=[
+  /@(-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/,
+  /!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/,
+  /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/
+ ];
+ const candidates=[url.searchParams.get("q"),url.searchParams.get("query"),url.searchParams.get("destination"),url.pathname,url.href].filter(Boolean);
+ for(const candidate of candidates){
+  for(const pattern of coordinatePatterns){
+   const match=candidate.match(pattern);
+   if(match){
+    const lat=Number(match[1]),lng=Number(match[2]);
+    if(Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180)
+     return {kind:"coordinates",value:lat+","+lng};
+   }
+  }
+ }
+ if(isGoogleMaps)return {kind:"direct",url:url.href};
+ return {kind:"text",value};
+}
 async function deliveryAction(id,action){
  const d=deliveries.find(x=>x.id===id);if(!d)return;
- if(action==="navigate"){const destination=d.map_link||[d.address,d.neighborhoods?.name,"Santarém, PA, Brasil"].filter(Boolean).join(", ");window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination)+"&travelmode=driving","_blank","noopener");return}
+ if(action==="navigate"){
+  const parsed=mapLinkDestination(d.map_link);
+  if(parsed.kind==="direct"){window.open(parsed.url,"_blank","noopener,noreferrer");return}
+  const destination=parsed.kind==="coordinates"?parsed.value:(parsed.kind==="text"&&d.map_link&&!/^https?:\/\//i.test(parsed.value)?parsed.value:[d.address,d.neighborhoods?.name,"Santarém, PA, Brasil"].filter(Boolean).join(", "));
+  window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(destination)+"&travelmode=driving","_blank","noopener,noreferrer");
+  return
+ }
  if(action==="up"||action==="down"){
   const siblings=deliveries.filter(x=>x.journey_id===d.journey_id).sort((a,b)=>a.sequence_no-b.sequence_no);const i=siblings.findIndex(x=>x.id===id),j=action==="up"?i-1:i+1;if(j<0||j>=siblings.length)return;
   // Reordering requires a dedicated transactional RPC to avoid duplicate sequence values.
