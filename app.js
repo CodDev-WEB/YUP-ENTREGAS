@@ -270,14 +270,30 @@ async function deliveryAction(id,action){
  }
  if(action==="up"||action==="down"){
   const siblings=deliveries.filter(x=>x.journey_id===d.journey_id).sort((a,b)=>a.sequence_no-b.sequence_no);const i=siblings.findIndex(x=>x.id===id),j=action==="up"?i-1:i+1;if(j<0||j>=siblings.length)return;
-  // Reordering requires a dedicated transactional RPC to avoid duplicate sequence values.
   return notify("A reordenação segura da rota será ativada na próxima etapa.");
  }
  const statuses={start:"in_transit",arrive:"at_destination",complete:"completed",failed:"failed"};const status=statuses[action];if(!status)return;
  if(action==="complete"&&!confirm("Confirmar conclusão desta entrega?"))return;
  if(action==="failed"&&!confirm("Marcar esta entrega como não realizada?"))return;
- try{await backend.updateDeliveryStatus({deliveryId:id,status});await refresh();notify("Status atualizado no banco de dados.");}
- catch(error){console.error(error);notify("Não foi possível atualizar a entrega: "+error.message)}
+ const previousStatus=d.status;
+ const buttons=[...document.querySelectorAll('[data-act][data-id]')].filter(b=>b.dataset.id===id&&b.dataset.act===action);
+ buttons.forEach(b=>{b.disabled=true;b.dataset.originalLabel=b.textContent;b.textContent="Atualizando…";b.setAttribute("aria-busy","true")});
+ // Atualização otimista: a interface responde imediatamente enquanto o banco confirma a alteração.
+ d.status=status;
+ renderDeliveries();
+ notify("Atualizando entrega…");
+ try{
+  await backend.updateDeliveryStatus({deliveryId:id,status});
+  await refresh();
+  notify("Entrega atualizada.");
+ }catch(error){
+  console.error(error);
+  d.status=previousStatus;
+  renderDeliveries();
+  notify("Não foi possível atualizar a entrega. Confira a conexão e tente novamente.");
+ }finally{
+  buttons.forEach(b=>{b.disabled=false;b.removeAttribute("aria-busy");delete b.dataset.originalLabel});
+ }
 }
 function renderDeliveries(){
  const list=$("deliveryList");
