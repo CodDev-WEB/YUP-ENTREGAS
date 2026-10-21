@@ -74,11 +74,10 @@
       <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Visão consolidada das jornadas e entregas registradas no Supabase.</p></div></div>
       <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
       <article class="panel fleet-heat-panel">
-        <div class="panel-title"><div><h2>Mapa de calor por região</h2><p>Concentração de entregas, conclusão e ocorrências por bairro, conforme os endereços cadastrados e o período selecionado.</p></div></div>
-        <div class="fleet-geo-map-wrap"><div class="panel-title"><div><h3>Mapa geográfico de calor</h3><p>Concentração real das posições GPS registradas durante as jornadas.</p></div></div><div id="fleetGeoHeatmap" class="fleet-geo-heatmap" role="img" aria-label="Mapa geográfico de calor das rotas registradas"></div><p id="fleetGeoHeatmapStatus" class="hint" aria-live="polite">Aguardando dados GPS das jornadas…</p></div>
+        <div class="panel-title"><div><h2>Mapa de calor por região</h2><p>Compare os pedidos solicitados com as entregas efetivamente realizadas em cada bairro, conforme os filtros e o período selecionado.</p></div></div>
         <div id="fleetHeatSummary" class="fleet-heat-summary" aria-live="polite"></div>
         <div id="fleetHeatmap" class="fleet-heatmap"><p class="hint">Carregando análise regional…</p></div>
-        <p class="hint fleet-heat-note">A intensidade representa o volume de entregas por bairro, não a densidade geográfica. Para um mapa geográfico real, os endereços precisam ter coordenadas validadas.</p>
+        <p class="hint fleet-heat-note">A intensidade é calculada pelo volume de entregas solicitadas em cada bairro; as barras comparam o total solicitado com as entregas concluídas.</p>
       </article>
       <article class="panel">
         <div class="panel-title"><div><h2>Histórico completo de jornadas</h2><p>Consulte o histórico operacional sincronizado com o banco de dados e filtre os registros.</p></div></div>
