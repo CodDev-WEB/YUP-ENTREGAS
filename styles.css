@@ -1817,3 +1817,6 @@ body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primar
 body.driver-mode #driverExperience .driver-bottom:not(:has(> .driver-dock-primary)) > .driver-dock-action > span:last-child {
  text-align:center!important;
 }
+
+/* Feedback imediato para ações em processamento */
+button[aria-busy="true"]{opacity:.72;cursor:progress;pointer-events:none}
