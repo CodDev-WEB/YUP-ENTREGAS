@@ -33,8 +33,10 @@ Consulte [docs/ARQUITETURA-MVP.md](docs/ARQUITETURA-MVP.md) para arquitetura, pa
 ## Publicar e acessar pela internet
 Endereço informado da publicação: https://yup-entregas.jordano-19-silva.workers.dev. Para configurar o banco e a autenticação, siga [docs/CONFIGURAR-SUPABASE.md](docs/CONFIGURAR-SUPABASE.md). A publicação do frontend, por si só, não habilita a sincronização de dados.
 
-## Executar protótipo
-Abra `index.html` em um navegador ou publique os arquivos em hospedagem estática. Para testar PWA/service worker, use HTTPS ou localhost.
+## Verificação e publicação contínua
+O GitHub Actions valida a sintaxe JavaScript, os manifestos PWA/Wrangler, os arquivos locais referenciados pelo HTML e a configuração de assets antes de publicar. A implantação exige os secrets `CLOUDFLARE_API_TOKEN` e `CLOUDFLARE_ACCOUNT_ID` em **Settings → Secrets and variables → Actions**. Sem esses secrets, a etapa de deploy falha explicitamente em vez de marcar a publicação como bem-sucedida.
+
+Para testar localmente, sirva os arquivos por HTTP/HTTPS (por exemplo, localhost); abrir `index.html` via `file://` não testa corretamente autenticação, rotas do Worker ou service worker.
 
 ## Limitações conhecidas antes de produção
 - O portal por código em `/entregador` é apenas visual e não autentica usuários.
