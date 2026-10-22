@@ -44,6 +44,7 @@ jobs:
             ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
             ['driver mobile interface loads after authentication', fs.readFileSync('auth-ui.js', 'utf8').includes('driver-mobile.js?v=1')],
             ['sales role is restricted to its view', html.includes('data-sales-view')],
+            ['sales profile hides administrative sidebar', fs.readFileSync('styles.css', 'utf8').includes('body.sales-mode .sidebar{display:none!important}')],
             ['driver starts without route selection', !app.includes('name="routeMode"') && !driverMobile.includes('name="routeMode"')],
             ['start action uses fixed dock', app.includes('form="driverStartForm"')],
             ['new delivery submits from dock', app.includes('data-driver-submit="driverNewForm"')],
@@ -71,7 +72,7 @@ jobs:
           done
           grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
           grep -q 'styles.css?v=72' index.html
-          grep -q 'yup-entregas-shell-v88' sw.js
+          grep -q 'yup-entregas-shell-v89' sw.js
           grep -q 'if(!old){console.warn' app.js
           grep -q 'if(vehicleSelect){' app.js
           grep -q 'yup-brand.svg' app.js
