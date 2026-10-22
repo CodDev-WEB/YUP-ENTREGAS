@@ -157,6 +157,19 @@
         <button class="fuel-tab" type="button" data-fuel-tab="dashboard">Dashboard</button>
       </div>
       <section data-fuel-panel="lancamentos" class="fuel-tab-panel">
+        <article class="panel">
+          <h2>Fechamento diário das taxas</h2>
+          <p class="hint">Informe o total recebido em taxas e o preço por litro. O sistema divide as taxas igualmente entre as jornadas concluídas no dia e calcula o combustível pelo consumo médio de 30 km/L.</p>
+          <form id="dailyJourneyRatesForm" class="form-grid">
+            <label>Dia das jornadas<input id="dailyRatesDate" type="date" required></label>
+            <label>Total de taxas de entrega do dia (R$)<input id="dailyRatesFees" type="number" min="0" step="0.01" placeholder="Ex.: 300,00" required></label>
+            <label>Preço do combustível por litro (R$)<input id="dailyRatesFuelPrice" type="number" min="0" step="0.001" placeholder="Ex.: 6,00" required></label>
+            <label>Consumo médio (km/L)<input id="dailyRatesEfficiency" type="number" min="1" step="0.1" value="30" required></label>
+            <div class="wide fuel-live-summary" id="dailyRatesPreview">Selecione um dia para consultar as jornadas concluídas.</div>
+            <div class="form-action wide"><button class="button secondary" type="button" id="previewDailyRates">Consultar jornadas do dia</button><button class="button primary" type="submit">Calcular e salvar ganhos</button></div>
+          </form>
+          <div id="dailyRatesJourneys" class="table-wrap"></div>
+        </article>
         <article class="panel"><h2>Novo lançamento diário</h2><p class="hint">Baseado na aba LANÇAMENTOS da planilha enviada.</p>
           <form id="odometerForm" class="form-grid">
             <label>Data<input id="odoDate" type="date" required></label>
