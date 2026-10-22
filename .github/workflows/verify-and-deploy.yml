@@ -33,12 +33,13 @@ jobs:
           import fs from 'node:fs';
           const app = fs.readFileSync('app.js', 'utf8');
           const sales = fs.readFileSync('sales-portal.js', 'utf8');
+          const driverMobile = fs.readFileSync('driver-mobile.js', 'utf8');
           const html = fs.readFileSync('index.html', 'utf8');
           const checks = [
             ['sales area integrated into main application', html.includes('id="view-vendas"')],
             ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
             ['sales role is restricted to its view', html.includes('data-sales-view')],
-            ['driver starts without route selection', !app.includes('name="routeMode"') && !sales.includes('name="routeMode"')],
+            ['driver starts without route selection', !app.includes('name="routeMode"') && !driverMobile.includes('name="routeMode"')],
             ['start action uses fixed dock', app.includes('form="driverStartForm"')],
             ['new delivery submits from dock', app.includes('data-driver-submit="driverNewForm"')],
             ['occurrence submits from dock', app.includes('data-driver-submit="driverOccurrenceForm"')],
