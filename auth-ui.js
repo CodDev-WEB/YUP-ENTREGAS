@@ -36,7 +36,11 @@
     document.querySelectorAll('[data-view="painel"],[data-view="rotas"]').forEach(el => el.classList.toggle("hidden", !isManager));
     document.querySelectorAll('[data-view="manutencao"]').forEach(el => el.classList.toggle("hidden", role !== "admin"));
     document.querySelectorAll('[data-sales-view]').forEach(el => el.classList.toggle("hidden", !isSales));
-    document.querySelectorAll('[data-view="entregador"],[data-view="combustivel"]').forEach(el => el.classList.toggle("hidden", isSales));
+    document.querySelectorAll('[data-view="entregador"]').forEach(el => el.classList.toggle("hidden", isSales));
+    document.querySelectorAll('[data-view="combustivel"]').forEach(el => el.classList.toggle("hidden", isSales || role === "driver"));
+    document.querySelectorAll(".nav").forEach(el => {
+      if (role === "driver") el.classList.toggle("hidden", el.dataset.view !== "entregador");
+    });
     if (isSales) {
       ["entregador","painel","rotas","combustivel","manutencao"].forEach(name => document.getElementById("view-"+name)?.classList.add("hidden"));
       document.querySelectorAll(".nav").forEach(el => el.classList.remove("active"));
