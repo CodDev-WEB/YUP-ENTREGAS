@@ -2413,3 +2413,13 @@ body.sales-mode .topbar .header-actions #logoutButton{
   body.sales-mode .topbar .sales-brand-logo{width:86px;height:40px}
   body.sales-mode .topbar .header-actions{gap:0}
 }
+
+/* Vendas: manter marca (logo + ENTREGAS) agrupada e alinhada à esquerda. */
+body.sales-mode .topbar{justify-content:flex-start!important}
+body.sales-mode .topbar .brand{
+  flex:0 1 auto!important;
+  width:auto!important;
+  margin:0 auto 0 0!important;
+  justify-content:flex-start!important;
+}
+body.sales-mode .topbar .header-actions{margin-left:auto!important}
