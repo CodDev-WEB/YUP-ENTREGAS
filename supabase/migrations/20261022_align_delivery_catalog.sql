@@ -68,3 +68,32 @@ with check (
 
 notify pgrst, 'reload schema';
 commit;
+
+ 
+-- Controle de odômetro, ganhos e combustível conforme a planilha mensal.
+create table if not exists public.odometer_entries (
+ id uuid primary key default gen_random_uuid(),
+ entry_date date not null,
+ vehicle_code text not null check (vehicle_code in ('C','MP','MV')),
+ odometer_start numeric(10,1) not null check (odometer_start >= 0),
+ odometer_end numeric(10,1) not null check (odometer_end >= odometer_start),
+ deliveries_count integer not null default 0 check (deliveries_count >= 0),
+ revenue numeric(12,2) not null default 0 check (revenue >= 0),
+ fuel_cost numeric(12,2) not null default 0 check (fuel_cost >= 0),
+ created_by uuid not null references public.profiles(id),
+ created_at timestamptz not null default now(),
+ updated_at timestamptz not null default now()
+);
+create index if not exists odometer_entries_date_idx on public.odometer_entries(entry_date desc);
+create index if not exists odometer_entries_vehicle_date_idx on public.odometer_entries(vehicle_code,entry_date desc);
+alter table public.odometer_entries enable row level security;
+drop policy if exists odometer_entries_admin_select on public.odometer_entries;
+create policy odometer_entries_admin_select on public.odometer_entries for select to authenticated using (public.current_app_role() in ('admin','manager'));
+drop policy if exists odometer_entries_admin_insert on public.odometer_entries;
+create policy odometer_entries_admin_insert on public.odometer_entries for insert to authenticated with check (public.is_active_user() and public.current_app_role() in ('admin','manager') and created_by = (select auth.uid()));
+drop policy if exists odometer_entries_admin_update on public.odometer_entries;
+create policy odometer_entries_admin_update on public.odometer_entries for update to authenticated using (public.current_app_role() in ('admin','manager')) with check (public.current_app_role() in ('admin','manager'));
+drop policy if exists odometer_entries_admin_delete on public.odometer_entries;
+create policy odometer_entries_admin_delete on public.odometer_entries for delete to authenticated using (public.current_app_role() in ('admin','manager'));
+grant select,insert,update,delete on public.odometer_entries to authenticated;
+notify pgrst, 'reload schema';
