@@ -41,8 +41,6 @@
         `<section class="driver-profile" aria-label="Perfil do entregador"><div class="driver-initials" aria-hidden="true">${escape(initials)}</div><div><strong>${escape(name)}</strong><p>Entregador</p></div><div class="driver-profile-meta">${escape(driverDate())}</div></section>
         <h2 class="driver-section-title">Sua jornada começa aqui</h2>
         <form id="driverStartForm" class="driver-form">
-          <label>Como deseja iniciar?<select name="routeMode"><option value="manual">Cadastrar rota</option><option value="ready">Rota pronta</option></select></label>
-          <div id="driverReadyRouteFields" class="driver-ready-route-fields" hidden><label>Selecionar rota atribuída<select name="routePlanId"><option value="">Selecione a rota pronta</option></select></label><div id="driverReadyRoutePreview" class="driver-route-preview"></div></div>
           <label>Veículo<select name="vehicle" required${activeVehicles.length ? "" : " disabled"}><option value="">Selecione seu veículo</option>${activeVehicles.map(item => `<option value="${escape(item.id)}">${escape([item.make_model || item.code, item.plate].filter(Boolean).join(" · "))}</option>`).join("")}</select></label>
           ${activeVehicles.length ? "" : '<p class="driver-warning" role="status">Nenhum veículo ativo disponível. Peça à equipe para verificar o cadastro antes de iniciar.</p>'}
           <label>Odômetro inicial (km)<input name="odometer" type="number" min="0" step="0.1" inputmode="decimal" required placeholder="Informe a quilometragem"></label>
@@ -203,7 +201,6 @@
     const form = root.querySelector("form");
     if (form && form.id === oldForm?.id) {
       for (const [name, value] of values) if (form.elements.namedItem(name)) form.elements.namedItem(name).value = value;
-      if (form.id === "driverStartForm" && values.length) form.elements.routeMode.dispatchEvent(new Event("change"));
     }
     if (form?.id === "driverFinishForm" && finishDraft?.journey === currentJourney?.id) form.elements.odometer.value = finishDraft.value;
     const bottom = root.querySelector("#driverBottom");
