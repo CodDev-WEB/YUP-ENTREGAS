@@ -29,12 +29,25 @@
   }
   function applyRole(profile) {
     const role = profile.role;
-    document.querySelectorAll('[data-view="painel"]').forEach(el => el.classList.toggle("hidden", !["admin","manager"].includes(role)));
-    document.querySelectorAll('[data-view="rotas"]').forEach(el => el.classList.toggle("hidden", !["admin","manager"].includes(role)));
+    const isManager = ["admin","manager"].includes(role);
+    const isSales = role === "sales";
+    document.body.classList.toggle("sales-mode", isSales);
+    document.body.classList.toggle("driver-mode", role === "driver");
+    document.querySelectorAll('[data-view="painel"],[data-view="rotas"]').forEach(el => el.classList.toggle("hidden", !isManager));
     document.querySelectorAll('[data-view="manutencao"]').forEach(el => el.classList.toggle("hidden", role !== "admin"));
-    if (!["admin","manager"].includes(role)) {
+    document.querySelectorAll('[data-sales-view]').forEach(el => el.classList.toggle("hidden", !isSales));
+    document.querySelectorAll('[data-view="entregador"],[data-view="combustivel"]').forEach(el => el.classList.toggle("hidden", isSales));
+    if (isSales) {
+      ["entregador","painel","rotas","combustivel","manutencao"].forEach(name => document.getElementById("view-"+name)?.classList.add("hidden"));
+      document.querySelectorAll(".nav").forEach(el => el.classList.remove("active"));
+      return;
+    }
+    if (!isManager) {
       document.getElementById("view-painel").classList.add("hidden");
       document.getElementById("view-entregador").classList.remove("hidden");
+      document.getElementById("view-vendas").classList.add("hidden");
+    } else {
+      document.getElementById("view-vendas").classList.add("hidden");
     }
     if (role !== "admin") document.getElementById("view-manutencao").classList.add("hidden");
     document.querySelectorAll(".nav").forEach(el => {
@@ -49,6 +62,16 @@
     $("authIdentity").textContent = (profile.display_name || profile.role) + " · " + profile.role;
     applyRole(profile);
     message("Acesso autenticado. Jornadas e entregas usam Supabase; combustível e manutenção ainda são locais. Confira a migração de segurança e os cadastros antes do uso operacional.", "warning");
+    if (profile.role === "sales") {
+      if (!window.salesPortalLoaded) {
+        window.salesPortalLoaded = true;
+        const salesScript = document.createElement("script");
+        salesScript.src = "sales-portal.js?v=2";
+        salesScript.onerror = () => message("Não foi possível carregar a área de vendas. Atualize a página e tente novamente.", "error");
+        document.body.appendChild(salesScript);
+      }
+      return;
+    }
     if (!appLoaded) {
       appLoaded = true;
       const script = document.createElement("script");
