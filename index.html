@@ -148,20 +148,38 @@
     </div>
     <div id="view-planilha-combustivel" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">CUSTOS DA FROTA</p><h1>Planilha de combustível</h1><p>Área de trabalho para estruturar e integrar a planilha de controle de abastecimentos da frota.</p></div></div>
-      <article class="panel fuel-sheet-intro">
-        <h2>Vamos trazer sua planilha para o sistema</h2>
-        <p>Esta subseção ficará dedicada ao modelo da sua planilha, com os mesmos campos, cálculos e relatórios que vocês já utilizam.</p>
-        <div class="fuel-sheet-steps">
-          <div><strong>1</strong><span>Conferir as colunas e fórmulas da planilha original.</span></div>
-          <div><strong>2</strong><span>Definir os campos, filtros e indicadores que serão exibidos aqui.</span></div>
-          <div><strong>3</strong><span>Implementar a gravação centralizada para que os dados não fiquem apenas neste navegador.</span></div>
-        </div>
-        <p class="hint">A planilha original não foi identificada entre os arquivos recuperados. Anexe-a novamente nesta conversa para que eu reproduza sua estrutura com precisão.</p>
-      </article>
-      <article class="panel">
-        <div class="panel-title"><div><h2>Estrutura inicial de dados</h2><p>Base de referência; será ajustada após conferir a planilha original.</p></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Data</th><th>Veículo / placa</th><th>Odômetro (km)</th><th>Litros</th><th>Valor total</th><th>Preço por litro</th><th>Posto / observação</th></tr></thead><tbody><tr><td colspan="7">Aguardando a planilha original para definir a estrutura final.</td></tr></tbody></table></div>
-      </article>
+      <div class="fuel-workspace">
+      <div class="fuel-tabs" role="tablist">
+        <button class="fuel-tab active" type="button" data-fuel-tab="lancamentos">Lançamentos</button>
+        <button class="fuel-tab" type="button" data-fuel-tab="semanal">Relatório semanal</button>
+        <button class="fuel-tab" type="button" data-fuel-tab="mensal">Relatório mensal</button>
+        <button class="fuel-tab" type="button" data-fuel-tab="veiculos">Resumo por veículo</button>
+        <button class="fuel-tab" type="button" data-fuel-tab="dashboard">Dashboard</button>
+      </div>
+      <section data-fuel-panel="lancamentos" class="fuel-tab-panel">
+        <article class="panel"><h2>Novo lançamento diário</h2><p class="hint">Baseado na aba LANÇAMENTOS da planilha enviada.</p>
+          <form id="odometerForm" class="form-grid">
+            <label>Data<input id="odoDate" type="date" required></label>
+            <label>Veículo<select id="odoVehicle" required><option value="">Selecione</option><option>C</option><option>MP</option><option>MV</option></select></label>
+            <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required></label>
+            <label>Odômetro final (km)<input id="odoEnd" type="number" min="0" step="0.1" required></label>
+            <label>Quantidade de entregas<input id="odoDeliveries" type="number" min="0" step="1" value="0" required></label>
+            <label>Ganhos (R$)<input id="odoRevenue" type="number" min="0" step="0.01" required></label>
+            <label>Combustível (R$)<input id="odoFuel" type="number" min="0" step="0.01" required></label>
+            <div id="odoLiveSummary" class="fuel-live-summary wide">Informe os odômetros para calcular KM rodado e lucro líquido.</div>
+            <div class="form-action wide"><button class="button primary" type="submit">Salvar lançamento</button></div>
+          </form>
+        </article>
+        <article class="panel"><div class="panel-title"><div><h2>Lançamentos registrados</h2></div><button class="button secondary" type="button" id="refreshOdometer">Atualizar</button></div><div id="odometerHistory" class="table-wrap"><p class="hint">Aguardando conexão com o banco de dados.</p></div></article>
+      </section>
+      <section data-fuel-panel="semanal" class="fuel-tab-panel hidden"><article class="panel"><h2>Relatório semanal</h2><div id="odometerWeeklyReport" class="table-wrap"></div></article></section>
+      <section data-fuel-panel="mensal" class="fuel-tab-panel hidden"><article class="panel"><h2>Relatório mensal</h2><div id="odometerMonthlyReport" class="table-wrap"></div></article></section>
+      <section data-fuel-panel="veiculos" class="fuel-tab-panel hidden"><article class="panel"><h2>Resumo por veículo</h2><div id="odometerVehicleReport" class="table-wrap"></div></article></section>
+      <section data-fuel-panel="dashboard" class="fuel-tab-panel hidden">
+        <div class="metrics"><article class="metric"><span>KM rodados</span><strong id="odoKpiKm">0 km</strong></article><article class="metric"><span>Entregas</span><strong id="odoKpiDeliveries">0</strong></article><article class="metric"><span>Ganhos</span><strong id="odoKpiRevenue">R$ 0,00</strong></article><article class="metric"><span>Combustível</span><strong id="odoKpiFuel">R$ 0,00</strong></article><article class="metric"><span>Lucro líquido</span><strong id="odoKpiProfit">R$ 0,00</strong></article></div>
+        <article class="panel"><h2>Indicadores de eficiência</h2><div id="odometerEfficiency" class="fuel-efficiency"></div></article>
+      </section>
+    </div>
     </div>
     <div id="view-manutencao" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">DISPONIBILIDADE DOS VEÍCULOS</p><h1>Manutenção e despesas</h1><p>Controle pneus, alinhamento, balanceamento, cabos, óleo e outros serviços.</p></div></div>
