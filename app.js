@@ -384,6 +384,13 @@ const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=time
   return '<article class="route-plan-card"><div class="route-plan-card-head"><div><span class="route-plan-eyebrow">'+stops.length+' parada(s)</span><h3>'+esc(plan.title)+'</h3><p>'+esc(driverName)+'</p></div><span class="route-plan-status '+(journey?.status==="open"?"is-active":journey?.status==="finished"?"is-done":"")+'">'+status+'</span></div><ol>'+stops.map(stop=>'<li><span>'+stop.sequence_no+'</span><div><strong>'+esc(stop.address)+'</strong><small>'+esc(stop.neighborhoods?.name||"Bairro não informado")+(stop.reference?" · "+esc(stop.reference):"")+'</small></div></li>').join("")+'</ol><p class="route-plan-date">Criada em '+fmtDate(plan.created_at)+'</p></article>';
  }).join("");
 }
+function uppercaseRouteTextInputs(root=$("routePlanForm")){
+ if(!root)return;
+ root.querySelectorAll('input:not([type="url"]):not([type="number"]):not([type="email"]):not([type="password"])').forEach(input=>{
+  input.addEventListener("input",()=>{const start=input.selectionStart,end=input.selectionEnd;const upper=input.value.toLocaleUpperCase("pt-BR");if(input.value!==upper){input.value=upper;try{input.setSelectionRange(start,end)}catch(_){}}});
+  if(input.value)input.value=input.value.toLocaleUpperCase("pt-BR");
+ });
+}
 function refreshRoutePlanStopControls(){
  const target=$("routePlanStopsEditor");if(!target)return;
  const cards=[...target.querySelectorAll(".route-stop-editor")];
@@ -782,6 +789,7 @@ function renderDriverExperience(){
 $("addRouteStop")?.addEventListener("click",appendRoutePlanStop);
 $("previewRoutePlan")?.addEventListener("click",previewRoutePlan);
 appendRoutePlanStop();
+uppercaseRouteTextInputs();
 $("routePlanForm")?.addEventListener("submit",async event=>{
  event.preventDefault();
  const form=event.currentTarget,button=$("saveRoutePlan"),message=$("routePlanMessage");
@@ -795,7 +803,7 @@ $("routePlanForm")?.addEventListener("submit",async event=>{
  if(!stops.length||stops.some(stop=>!stop.address)){message.textContent="Informe pelo menos uma parada e o endereço de cada uma.";return;}
  button.disabled=true;message.textContent="Salvando a rota e atribuindo ao entregador…";
  try{
-  await backend.createRoutePlan({title:form.elements.title.value.trim(),driverId:form.elements.driver.value,stops});
+  await backend.createRoutePlan({title:form.elements.title.value.trim().toLocaleUpperCase("pt-BR"),driverId:form.elements.driver.value,stops:stops.map(stop=>({...stop,address:stop.address.toLocaleUpperCase("pt-BR"),reference:stop.reference.toLocaleUpperCase("pt-BR")}))});
   await refresh();form.reset();$("routePlanStopsEditor").replaceChildren();appendRoutePlanStop();
   message.textContent="Rota salva e atribuída. Ela já estará disponível no aplicativo do entregador selecionado.";
  }catch(error){message.textContent="Não foi possível salvar a rota: "+(error?.message||"erro desconhecido");}
