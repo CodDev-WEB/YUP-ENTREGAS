@@ -80,7 +80,7 @@
       if (profile.role === "driver") {
         const styles = document.createElement("link");
         styles.rel = "stylesheet";
-        styles.href = "driver-mobile.css?v=3";
+        styles.href = "driver-mobile.css?v=4";
         styles.onerror = () => console.warn("YUP-ENTREGAS: estilos visuais adicionais indisponíveis; mantendo os estilos principais.");
         document.head.appendChild(styles);
       }
