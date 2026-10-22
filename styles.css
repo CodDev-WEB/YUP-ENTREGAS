@@ -2423,3 +2423,36 @@ body.sales-mode .topbar .brand{
   justify-content:flex-start!important;
 }
 body.sales-mode .topbar .header-actions{margin-left:auto!important}
+
+/* Logo do YUP em moldura quadrada com cantos arredondados, estilo ícone iOS.
+   Aplicado aos dois cabeçalhos: Vendas e Entregador. */
+.topbar .brand img,
+.driver-top .brand img,
+.driver-header .brand img,
+#driverHeader .brand img,
+.sales-brand-logo{
+  width:48px;
+  height:48px;
+  min-width:48px;
+  object-fit:contain;
+  padding:5px;
+  box-sizing:border-box;
+  border:1px solid rgba(20,75,49,.10);
+  border-radius:14px;
+  background:#f6d94b;
+  box-shadow:0 2px 5px rgba(20,45,30,.12), inset 0 1px 0 rgba(255,255,255,.28);
+}
+body.sales-mode .topbar .sales-brand-logo{
+  width:48px;
+  height:48px;
+  min-width:48px;
+  padding:5px;
+  border-radius:14px;
+}
+@media(max-width:480px){
+  body.sales-mode .topbar .sales-brand-logo{
+    width:48px;
+    height:48px;
+    min-width:48px;
+  }
+}
