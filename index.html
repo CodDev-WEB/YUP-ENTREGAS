@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=70">
+<link rel="stylesheet" href="styles.css?v=71">
 <title>YUP-ENTREGAS | Administração</title>
 </head>
 <body>
@@ -104,14 +104,25 @@
       <article class="panel">
         <div class="panel-title"><div><h2>Montar rota pronta</h2><p>O entregador receberá as paradas nesta ordem no aplicativo.</p></div></div>
         <form id="routePlanForm">
-          <div class="form-grid">
-            <label>Nome da rota<input name="title" required maxlength="100" placeholder="Ex.: Entregas Centro — manhã"></label>
-            <label>Entregador<select id="routePlanDriver" name="driver" required><option value="">Selecione o entregador</option></select></label>
+          <div class="route-plan-intro">
+            <span class="route-plan-step">1</span>
+            <div><strong>Identifique a rota</strong><p>Dê um nome fácil de reconhecer e escolha quem fará as entregas.</p></div>
           </div>
-          <div class="panel-title route-editor-title"><div><h3>Sequência de paradas</h3><p>Cadastre os endereços na ordem desejada.</p></div><button class="button secondary" type="button" id="addRouteStop">＋ Adicionar parada</button></div>
+          <div class="form-grid">
+            <label>Nome da rota<input name="title" required maxlength="100" placeholder="Ex.: Centro — manhã"></label>
+            <label>Entregador responsável<select id="routePlanDriver" name="driver" required><option value="">Selecione o entregador</option></select></label>
+          </div>
+          <div class="panel-title route-editor-title">
+            <div><h3>2. Organize as paradas</h3><p>Adicione os endereços e ajuste a sequência. A ordem será a mesma no PWA do entregador.</p></div>
+            <button class="button secondary" type="button" id="addRouteStop">＋ Adicionar parada</button>
+          </div>
           <div id="routePlanStopsEditor" class="route-plan-stops-editor"></div>
-          <div class="route-plan-actions"><button class="button" type="submit" id="saveRoutePlan">Salvar e atribuir rota</button></div>
-          <p id="routePlanMessage" class="hint" role="status">A rota ficará disponível somente para o entregador selecionado.</p>
+          <div class="route-plan-summary" aria-live="polite">
+            <div><strong id="routePlanStopCount">1 parada</strong><span>na rota</span></div>
+            <button class="button secondary" type="button" id="previewRoutePlan">Visualizar no Google Maps</button>
+          </div>
+          <div class="route-plan-actions"><button class="button primary" type="submit" id="saveRoutePlan">Salvar e atribuir rota</button></div>
+          <p id="routePlanMessage" class="hint" role="status">A rota ficará disponível para o entregador selecionado assim que for salva.</p>
         </form>
       </article>
       <article class="panel">
