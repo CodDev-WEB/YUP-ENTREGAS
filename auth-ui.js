@@ -54,6 +54,28 @@
       const script = document.createElement("script");
       script.src = "app.js";
       script.onerror = () => message("Não foi possível carregar o aplicativo. Atualize a página e tente novamente.", "error");
+      if (profile.role === "driver") {
+        const styles = document.createElement("link");
+        styles.rel = "stylesheet";
+        styles.href = "driver-mobile.css?v=1";
+        let appReady = false, stylesReady = false;
+        const fallback = () => {
+          styles.remove();
+          console.warn("YUP-ENTREGAS: atualização visual indisponível. Mantendo a interface existente.");
+        };
+        const loadMobile = () => {
+          if (!appReady || !stylesReady) return;
+          const mobile = document.createElement("script");
+          mobile.src = "driver-mobile.js?v=1";
+          mobile.onerror = fallback;
+          document.body.appendChild(mobile);
+        };
+        styles.onload = () => { stylesReady = true; loadMobile(); };
+        styles.onerror = fallback;
+        script.onload = () => { appReady = true; loadMobile(); };
+        script.addEventListener("error", () => styles.remove(), { once: true });
+        document.head.appendChild(styles);
+      }
       document.body.appendChild(script);
     }
   }
