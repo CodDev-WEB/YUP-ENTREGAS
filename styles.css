@@ -1978,3 +1978,15 @@ body.driver-mode #driverExperience #driverScreenContent{
 }
 body.driver-mode #driverExperience #driverScreenContent>*{max-height:none}
 body.driver-mode #driverExperience #driverBottom{flex:0 0 auto!important}
+
+
+/* Rolagem consistente em todas as telas do entregador: só o conteúdo rola */
+html,body{min-height:0}
+body.driver-mode{height:100%;min-height:0;overflow:hidden!important}
+body.driver-mode #appLayout,body.driver-mode #appLayout>.content,body.driver-mode #driverExperience{min-height:0!important;max-height:none}
+body.driver-mode #driverExperience{height:100vh!important;height:100dvh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important}
+body.driver-mode #driverExperience .driver-top{position:relative!important;flex:0 0 calc(54px + env(safe-area-inset-top))!important;z-index:20!important}
+body.driver-mode #driverExperience #driverScreenContent{display:block!important;flex:1 1 0!important;min-height:0!important;height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;contain:layout style}
+body.driver-mode #driverExperience #driverScreenContent>*{max-height:none!important;overflow:visible!important}
+body.driver-mode #driverExperience #driverBottom{position:relative!important;flex:0 0 auto!important;z-index:30!important;padding-bottom:env(safe-area-inset-bottom)!important}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent{height:0!important;min-height:0!important;overflow-y:auto!important}
