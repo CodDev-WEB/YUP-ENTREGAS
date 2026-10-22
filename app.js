@@ -853,6 +853,20 @@ function renderOdoReports(){
  const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
  $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+Number(r.deliveries_count||0)+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
  const weekly=odoGroup(rows,r=>String(odoWeek(r.entry_date)).padStart(2,"0"));
+ renderWeeklyChart(weekly);
+function renderWeeklyChart(data){
+ const el=$("odometerWeeklyChart");if(!el)return;
+ if(!data.length){el.innerHTML='<p class="hint">O gráfico aparecerá quando houver lançamentos no relatório semanal.</p>';return}
+ const series=[{key:"km",label:"KM",color:"#2563eb"},{key:"revenue",label:"GANHOS",color:"#16a34a"},{key:"profit",label:"LUCRO",color:"#0ea5e9"}];
+ const W=920,H=340,L=48,R=18,T=38,B=52,plotW=W-L-R,plotH=H-T-B,groups=data.slice().reverse();
+ const max=Math.max(1,...groups.flatMap(g=>series.map(s=>Math.max(0,Number(g[s.key])||0))));
+ const niceMax=Math.ceil(max/100)*100||100,step=niceMax/4,groupW=plotW/groups.length,barW=Math.max(4,Math.min(18,groupW/(series.length+1)));
+ let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Gráfico semanal de quilômetros, ganhos e lucro" style="width:100%;height:auto;display:block">';
+ for(let n=0;n<=4;n++){const y=T+plotH-(step*n/niceMax)*plotH;svg+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".15"/><text x="'+(L-8)+'" y="'+(y+4)+'" font-size="11" text-anchor="end" fill="currentColor">'+Math.round(step*n)+'</text>'}
+ series.forEach((s,si)=>{svg+='<rect x="'+(L+si*170)+'" y="10" width="10" height="10" rx="2" fill="'+s.color+'"/><text x="'+(L+si*170+16)+'" y="19" font-size="12" fill="currentColor">'+s.label+'</text>'});
+ groups.forEach((g,gi)=>{series.forEach((s,si)=>{const v=Math.max(0,Number(g[s.key])||0),h=v/niceMax*plotH,x=L+gi*groupW+(groupW-series.length*barW)/2+si*barW,y=T+plotH-h;svg+='<rect x="'+x+'" y="'+y+'" width="'+Math.max(2,barW-2)+'" height="'+h+'" rx="2" fill="'+s.color+'"><title>'+s.label+': '+v.toLocaleString("pt-BR",{maximumFractionDigits:2})+'</title></rect>'});svg+='<text x="'+(L+gi*groupW+groupW/2)+'" y="'+(H-25)+'" font-size="11" text-anchor="middle" fill="currentColor">'+String(g.key)+'</text>'});
+ svg+='</svg>';el.innerHTML=svg;
+}
  $("odometerWeeklyReport").innerHTML='<table><thead><tr><th>Semana</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM/entrega</th><th>Custo/entrega</th></tr></thead><tbody>'+weekly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
  const monthly=odoGroup(rows,r=>r.entry_date.slice(0,7));
  $("odometerMonthlyReport").innerHTML='<table><thead><tr><th>Mês</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th></tr></thead><tbody>'+monthly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td></tr>').join("")+'</tbody></table>';
