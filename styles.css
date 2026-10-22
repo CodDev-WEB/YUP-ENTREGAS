@@ -1959,3 +1959,22 @@ body.driver-mode #driverExperience.driver-home-mode #driverScreenContent{
 body.driver-mode #driverExperience .driver-home{min-height:0!important;height:auto!important;overflow:visible!important}
 body.driver-mode #driverExperience .driver-start-sheet{padding-bottom:24px!important}
 body.driver-mode #driverExperience #driverBottom{z-index:10000!important;flex-shrink:0!important;touch-action:manipulation!important}
+
+
+/* Correção definitiva da rolagem do entregador: viewport fixo e conteúdo rolável */
+body.driver-mode #driverExperience{
+  position:fixed!important;inset:0!important;z-index:100!important;
+  width:100%!important;height:100vh!important;height:100dvh!important;
+  min-height:0!important;max-height:100dvh!important;
+  display:flex!important;flex-direction:column!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+}
+body.driver-mode #driverExperience .driver-top{flex:0 0 calc(54px + env(safe-area-inset-top))!important}
+body.driver-mode #driverExperience #driverScreenContent{
+  flex:1 1 0px!important;height:0!important;min-height:0!important;max-height:none!important;
+  overflow-y:scroll!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;
+  overscroll-behavior-y:contain!important;
+}
+body.driver-mode #driverExperience #driverScreenContent>*{max-height:none}
+body.driver-mode #driverExperience #driverBottom{flex:0 0 auto!important}
