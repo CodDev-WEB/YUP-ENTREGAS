@@ -27,6 +27,26 @@ jobs:
           for file in app.js auth-ui.js driver-access.js supabase-client.js supabase-config.js sw.js _worker.js; do
             node --check "$file"
           done
+      - name: Verify driver action bar and form contracts
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const app = fs.readFileSync('app.js', 'utf8');
+          const checks = [
+            ['start action uses fixed dock', app.includes('form="driverStartForm"')],
+            ['new delivery submits from dock', app.includes('data-driver-submit="driverNewForm"')],
+            ['occurrence submits from dock', app.includes('data-driver-submit="driverOccurrenceForm"')],
+            ['journey finish submits from dock', app.includes('data-driver-submit="driverFinishForm"')],
+            ['inline start button removed', !app.includes('class="driver-primary driver-start-cta" type="submit"')],
+            ['duplicate inline end-journey button removed', !app.includes('data-driver-screen="summary">⚑　Encerrar jornada')],
+            ['duplicate inline map link removed', !app.includes('Abrir destino no Maps')],
+            ['logout action is available in driver header', app.includes('data-driver-logout')]
+          ];
+          for (const [label, passed] of checks) {
+            console.log((passed ? 'PASS' : 'FAIL') + ' ' + label);
+            if (!passed) process.exitCode = 1;
+          }
+          NODE
       - name: Validate Wrangler and PWA manifests
         run: |
           node -e "JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8'))"
