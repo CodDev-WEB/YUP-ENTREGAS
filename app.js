@@ -925,19 +925,36 @@ $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
   const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value),motoEff=Number($("dailyRatesMotoEfficiency").value),carEff=Number($("dailyRatesCarEfficiency").value);
   if(!day||fees<0||price<0||motoEff<=0||carEff<=0)throw new Error("Confira a data, o total das taxas, o preço do litro e os consumos médios da moto e do carro.");
   await refresh();
-  const {data:existingClosure,error:closureLookupError}=await client.from("daily_journey_rates").select("entry_date").eq("entry_date",day).maybeSingle();
+  const {data:existingClosure,error:closureLookupError}=await client.from("daily_journey_rates").select("*").eq("entry_date",day).maybeSingle();
   if(closureLookupError)throw closureLookupError;
-  if(existingClosure)throw new Error("Este dia já foi fechado. Para preservar os lançamentos anteriores, ajustes no preço do combustível ou no consumo não recalculam um fechamento existente.");
   const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
-  const rate=fees/list.length;
-  const {error:dailyError}=await client.from("daily_journey_rates").upsert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:Number((list.reduce((sum,j)=>sum+journeyEfficiency(j),0)/list.length).toFixed(2)),journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()},{onConflict:"entry_date"});
-  if(dailyError)throw dailyError;
-  for(const j of list){
-   const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),eff=journeyEfficiency(j);
-   const payload={journey_id:j.id,entry_date:day,vehicle_code:j.vehicles?.code||j.vehicles?.plate||"N/D",odometer_start:Number(j.odometer_start),odometer_end:Number(j.odometer_end),deliveries_count:(deliveries||[]).filter(d=>d.journey_id===j.id&&d.status==="completed").length,revenue:Number(rate.toFixed(2)),fuel_cost:Number(((price/eff)*km).toFixed(2)),daily_fees_total:fees,fuel_price_per_liter:price,average_km_per_liter:eff,created_by:backend.profile?.id};
-   const {error}=await client.from("odometer_entries").upsert(payload,{onConflict:"journey_id"});if(error)throw error;
+  const {data:alreadyRows,error:alreadyError}=await client.from("odometer_entries").select("journey_id,average_km_per_liter,fuel_price_per_liter,revenue").eq("entry_date",day);
+  if(alreadyError)throw alreadyError;
+  const alreadyIds=new Set((alreadyRows||[]).map(r=>r.journey_id).filter(Boolean));
+  const pending=list.filter(j=>!alreadyIds.has(j.id));
+  const skipped=list.length-pending.length;
+  if(!pending.length)throw new Error("Nenhuma jornada nova foi registrada: todas as "+list.length+" jornada(s) deste dia já constam no sistema. Nenhum dado foi alterado.");
+  let closure=existingClosure;
+  if(!closure){
+   const {data:createdClosure,error:dailyError}=await client.from("daily_journey_rates").insert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:Number((list.reduce((sum,j)=>sum+journeyEfficiency(j),0)/list.length).toFixed(2)),journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()}).select("*").single();
+   if(dailyError)throw dailyError;
+   closure=createdClosure;
   }
-  notify("Fechamento salvo: "+list.length+" jornada(s), "+money(fees)+" em taxas e "+money(rate)+" por jornada. Consumo calculado por tipo de veículo.");
+  const closureFeeTotal=Number(closure.total_delivery_fees??fees);
+  const originalJourneyCount=Math.max(1,Number(closure.journey_count||list.length));
+  const rate=closureFeeTotal/originalJourneyCount;
+  const storedPrice=Number(closure.fuel_price_per_liter??price);
+  const storedEffByType={};
+  (alreadyRows||[]).forEach(row=>{const j=list.find(item=>item.id===row.journey_id);if(j&&Number(row.average_km_per_liter)>0)storedEffByType[journeyVehicleType(j)]=Number(row.average_km_per_liter)});
+  let usedCurrentEfficiencyForUnseenType=false;
+  for(const j of pending){
+   const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),type=journeyVehicleType(j);
+   const eff=storedEffByType[type]||journeyEfficiency(j);
+   if(!storedEffByType[type])usedCurrentEfficiencyForUnseenType=true;
+   const payload={journey_id:j.id,entry_date:day,vehicle_code:j.vehicles?.code||j.vehicles?.plate||"N/D",odometer_start:Number(j.odometer_start),odometer_end:Number(j.odometer_end),deliveries_count:(deliveries||[]).filter(d=>d.journey_id===j.id&&d.status==="completed").length,revenue:Number(rate.toFixed(2)),fuel_cost:Number(((storedPrice/eff)*km).toFixed(2)),daily_fees_total:closureFeeTotal,fuel_price_per_liter:storedPrice,average_km_per_liter:eff,created_by:backend.profile?.id};
+   const {error}=await client.from("odometer_entries").insert(payload);if(error)throw error;
+  }
+  notify("Fechamento processado: "+pending.length+" jornada(s) nova(s) registrada(s)"+(skipped?", "+skipped+" já existente(s) ignorada(s)":"")+". Valor preservado do fechamento: "+money(closureFeeTotal)+" em taxas e "+money(rate)+" por jornada."+(usedCurrentEfficiencyForUnseenType?" Para um tipo de veículo sem histórico neste fechamento, foi usado o consumo informado agora.":""));
   await loadOdoEntries();renderDailyRatesPreview();
  }catch(err){notify("Não foi possível fechar o dia: "+(err.message||err))}finally{setBusy(form,false)}
 });
