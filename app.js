@@ -873,3 +873,39 @@ $("odometerForm")?.addEventListener("submit",async e=>{e.preventDefault();const 
 $("refreshOdometer")?.addEventListener("click",loadOdoEntries);
 $("odoDate")?.setAttribute("value",new Date().toISOString().slice(0,10));
 document.querySelector('[data-view="planilha-combustivel"]')?.addEventListener("click",loadOdoEntries);
+
+/* Fechamento manual das taxas diárias, distribuídas pelas jornadas concluídas. */
+const localDateKey = value => {const d=new Date(value);return Number.isNaN(d.getTime())?"":new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(d)};
+function completedJourneysForDay(day){return (journeys||[]).filter(j=>j.status==="finished"&&j.finished_at_server&&localDateKey(j.finished_at_server)===day)}
+function renderDailyRatesPreview(){
+ const day=$("dailyRatesDate")?.value,fees=Number($("dailyRatesFees")?.value||0),price=Number($("dailyRatesFuelPrice")?.value||0),eff=Number($("dailyRatesEfficiency")?.value||30);
+ const list=completedJourneysForDay(day||"");
+ const rate=list.length?fees/list.length:0;
+ $("dailyRatesPreview").textContent=list.length?list.length+" jornada(s) concluída(s) em "+new Date(day+"T12:00:00").toLocaleDateString("pt-BR")+". Ganho por jornada: "+money(rate)+". Consumo configurado: "+eff+" km/L.":"Nenhuma jornada concluída encontrada para esse dia.";
+ $("dailyRatesJourneys").innerHTML=list.length?'<table><thead><tr><th>Jornada</th><th>Entregador</th><th>Veículo</th><th>KM rodados</th><th>Ganhos estimados</th><th>Combustível estimado</th><th>Lucro estimado</th></tr></thead><tbody>'+list.map(j=>{const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),fuel=price/Math.max(1,eff)*km;return '<tr><td>#'+esc(j.order_number||j.id.slice(0,8))+'</td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+km.toLocaleString("pt-BR",{maximumFractionDigits:1})+'</td><td>'+money(rate)+'</td><td>'+money(fuel)+'</td><td>'+money(rate-fuel)+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint">As jornadas concluídas aparecerão aqui após selecionar a data e consultar os dados.</p>';
+}
+$("dailyRatesDate")?.addEventListener("change",renderDailyRatesPreview);
+["dailyRatesFees","dailyRatesFuelPrice","dailyRatesEfficiency"].forEach(id=>$(id)?.addEventListener("input",renderDailyRatesPreview));
+$("previewDailyRates")?.addEventListener("click",async()=>{try{await refresh();renderDailyRatesPreview()}catch(e){notify("Não foi possível atualizar as jornadas: "+(e.message||e))}});
+$("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const form=e.currentTarget;setBusy(form,true);
+ try{
+  const client=backend?.client;if(!client)throw new Error("Sessão do Supabase não está pronta. Entre novamente.");
+  const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value),eff=Number($("dailyRatesEfficiency").value);
+  if(!day||fees<0||price<0||eff<=0)throw new Error("Confira a data, o total das taxas, o preço do litro e o consumo médio.");
+  await refresh();
+  const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
+  const rate=fees/list.length;
+  const {error:dailyError}=await client.from("daily_journey_rates").upsert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:eff,journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()},{onConflict:"entry_date"});
+  if(dailyError)throw dailyError;
+  for(const j of list){
+   const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start));
+   const payload={journey_id:j.id,entry_date:day,vehicle_code:j.vehicles?.code||j.vehicles?.plate||"N/D",odometer_start:Number(j.odometer_start),odometer_end:Number(j.odometer_end),deliveries_count:(deliveries||[]).filter(d=>d.journey_id===j.id&&d.status==="completed").length,revenue:Number(rate.toFixed(2)),fuel_cost:Number(((price/eff)*km).toFixed(2)),daily_fees_total:fees,fuel_price_per_liter:price,average_km_per_liter:eff,created_by:backend.profile?.id};
+   const {error}=await client.from("odometer_entries").upsert(payload,{onConflict:"journey_id"});if(error)throw error;
+  }
+  notify("Fechamento salvo: "+list.length+" jornada(s), "+money(fees)+" em taxas e "+money(rate)+" por jornada.");
+  await loadOdoEntries();renderDailyRatesPreview();
+ }catch(err){notify("Não foi possível fechar o dia: "+(err.message||err))}finally{setBusy(form,false)}
+});
+if($("dailyRatesDate"))$("dailyRatesDate").value=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
+renderDailyRatesPreview();
