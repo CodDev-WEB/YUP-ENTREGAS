@@ -5,6 +5,7 @@ begin;
 alter table public.deliveries alter column journey_id drop not null;
 alter table public.deliveries
   add column if not exists created_by uuid references public.profiles(id),
+  add column if not exists customer_order_ref text,
   add column if not exists created_source text not null default 'driver'
     check (created_source in ('management','driver'));
 
