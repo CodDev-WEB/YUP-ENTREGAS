@@ -1,0 +1,35 @@
+-- Políticas do catálogo para o portal exclusivo de vendas.
+-- Requer: 20261022_delivery_catalog.sql e 20261022_sales_role.sql aplicadas.
+begin;
+
+drop policy if exists deliveries_read_owner_or_management on public.deliveries;
+create policy deliveries_read_owner_or_management on public.deliveries
+for select to authenticated
+using (
+ public.current_app_role() in ('admin','manager')
+ or (journey_id is not null and public.can_access_journey(journey_id))
+ or (journey_id is null and status='pending' and public.is_active_user())
+);
+
+drop policy if exists deliveries_insert_owner_or_management on public.deliveries;
+create policy deliveries_insert_owner_or_management on public.deliveries
+for insert to authenticated
+with check (
+ (journey_id is not null and public.can_access_journey(journey_id))
+ or (journey_id is null and public.current_app_role() in ('admin','manager','sales')
+     and public.is_active_user())
+);
+
+drop policy if exists deliveries_update_owner_or_management on public.deliveries;
+create policy deliveries_update_owner_or_management on public.deliveries
+for update to authenticated
+using (
+ (journey_id is not null and public.can_access_journey(journey_id))
+ or (journey_id is null and public.current_app_role() in ('admin','manager','sales'))
+)
+with check (
+ (journey_id is not null and public.can_access_journey(journey_id))
+ or (journey_id is null and public.current_app_role() in ('admin','manager','sales'))
+);
+
+commit;
