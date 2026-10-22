@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=72">
-<title>YUP-ENTREGAS | Administração</title>
+<title>YUP Entregas</title>
 </head>
 <body>
 <header class="topbar">
@@ -118,6 +118,21 @@
         <div class="panel-title"><div><h2>Pedidos pendentes</h2><p>Entregas cadastradas pela administração/vendas e ainda não adicionadas a uma jornada.</p></div><button class="button secondary" id="refreshDeliveryCatalog" type="button">Atualizar</button></div>
         <div id="deliveryCatalogList"><p class="hint">Carregando entregas…</p></div>
       </article>
+    </div>
+    <div id="view-vendas" class="view hidden" data-sales-view>
+      <div class="page-heading"><div><p class="eyebrow">ÁREA COMERCIAL</p><h1>Cadastro de entregas</h1><p>Registre os pedidos vendidos. Eles ficarão disponíveis para o entregador selecionar ao iniciar a jornada.</p></div></div>
+      <article class="panel"><div class="panel-title"><div><h2>Nova entrega</h2><p>Confira o endereço para facilitar a localização pelo entregador.</p></div></div>
+        <form id="salesDeliveryForm" class="form-grid">
+          <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
+          <label>Bairro<select name="neighborhood" required><option value="">Carregando bairros…</option></select></label>
+          <label class="wide">Endereço completo<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Rua, número, complemento"></label>
+          <label>Referência (opcional)<input name="reference" maxlength="250" placeholder="Casa azul, portão lateral…"></label>
+          <label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label>
+          <label class="wide">Link de localização do cliente (opcional)<input name="mapLink" type="url" placeholder="Link do Google Maps ou localização compartilhada"></label>
+          <div class="form-action wide"><button class="button primary" type="submit">＋ Cadastrar entrega</button></div>
+        </form><p id="salesDeliveryMessage" class="hint" role="status"></p>
+      </article>
+      <article class="panel"><div class="panel-title"><div><h2>Minhas entregas cadastradas</h2><p>Consulte os pedidos que você registrou recentemente.</p></div><button class="button secondary" id="salesRefresh" type="button">Atualizar</button></div><div id="salesRecentList"><p class="hint">Carregando cadastros…</p></div></article>
     </div>
     <div id="view-combustivel" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">CUSTOS DA FROTA</p><h1>Controle de combustível</h1><p>Registre abastecimentos e acompanhe custo por quilômetro quando houver odômetros válidos.</p></div></div>
