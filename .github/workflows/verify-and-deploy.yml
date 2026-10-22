@@ -38,6 +38,7 @@ jobs:
             ['sales area integrated into main application', html.includes('id="view-vendas"')],
             ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
             ['sales role is restricted to its view', html.includes('data-sales-view')],
+            ['driver starts without route selection', !app.includes('name="routeMode"') && !sales.includes('name="routeMode"')],
             ['start action uses fixed dock', app.includes('form="driverStartForm"')],
             ['new delivery submits from dock', app.includes('data-driver-submit="driverNewForm"')],
             ['occurrence submits from dock', app.includes('data-driver-submit="driverOccurrenceForm"')],
