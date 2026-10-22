@@ -38,19 +38,14 @@
   }catch(error){deliveryMessage("Não foi possível cadastrar. "+error.message,"error");}
   finally{button.disabled=false;}
  });
- $("salesLogout").addEventListener("click",async()=>{await backend.signOut();profile=null;showLogin();loginMessage("Você saiu do portal.");});
+ $("salesRefresh")?.addEventListener("click",loadRecent);
  async function init(){
-  if(!backend){loginMessage("O sistema de acesso não foi carregado. Atualize a página ou confira a configuração do Supabase.","error");return;}
+  if(!backend){deliveryMessage("O sistema de acesso não foi carregado. Atualize a página.", "error");return;}
   try{
    const result=await backend.getSessionProfile();
-   if(result.ok&&result.authenticated){
-    if(result.profile.role==="sales"){profile=result.profile;await loadPortal();return;}
-    await backend.signOut();
-    loginMessage("Esta página é exclusiva para o perfil de vendas. Entre com o usuário correto.");
-    return;
-   }
-   if(result.reason==="missing-config")loginMessage("A configuração do Supabase está pendente. Peça à administração para configurar o acesso.","error");
-  }catch(error){loginMessage("Não foi possível verificar a sessão: "+error.message,"error");}
+   if(result.ok&&result.authenticated&&result.profile.role==="sales"){profile=result.profile;await loadPortal();return;}
+   deliveryMessage("Esta área é exclusiva para o perfil de vendas. Saia e entre com uma conta autorizada.", "error");
+  }catch(error){deliveryMessage("Não foi possível verificar a sessão: "+error.message,"error");}
  }
  init();
 })();
