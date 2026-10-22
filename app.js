@@ -893,25 +893,25 @@ document.querySelector('[data-view="planilha-combustivel"]')?.addEventListener("
 /* Fechamento manual das taxas diárias, com consumo automático por tipo de veículo. */
 const localDateKey = value => {const d=new Date(value);if(Number.isNaN(d.getTime()))return "";const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);const v=Object.fromEntries(p.map(x=>[x.type,x.value]));return v.year+"-"+v.month+"-"+v.day};
 function completedJourneysForDay(day){return (journeys||[]).filter(j=>j.status==="finished"&&j.finished_at_server&&localDateKey(j.finished_at_server)===day)}
-function journeyEfficiency(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel/.test(type)?10:30}
-function journeyVehicleType(j){return journeyEfficiency(j)===10?"Carro":"Moto"}
+function journeyEfficiency(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel/.test(type)?Number($("dailyRatesCarEfficiency")?.value||10):Number($("dailyRatesMotoEfficiency")?.value||30)}
+function journeyVehicleType(j){return journeyEfficiency(j)===carEff?"Carro":"Moto"}
 function renderDailyRatesPreview(){
- const day=$("dailyRatesDate")?.value,fees=Number($("dailyRatesFees")?.value||0),price=Number($("dailyRatesFuelPrice")?.value||0);
+ const day=$("dailyRatesDate")?.value,fees=Number($("dailyRatesFees")?.value||0),price=Number($("dailyRatesFuelPrice")?.value||0),motoEff=Number($("dailyRatesMotoEfficiency")?.value||30),carEff=Number($("dailyRatesCarEfficiency")?.value||10);
  const list=completedJourneysForDay(day||"");
  const rate=list.length?fees/list.length:0;
- const motoCount=list.filter(j=>journeyEfficiency(j)===30).length,carCount=list.filter(j=>journeyEfficiency(j)===10).length;
- $("dailyRatesPreview").textContent=list.length?list.length+" jornada(s) concluída(s) em "+new Date(day+"T12:00:00").toLocaleDateString("pt-BR")+". Ganho por jornada: "+money(rate)+". Consumo automático: "+motoCount+" moto(s) a 30 km/L e "+carCount+" carro(s) a 10 km/L.":"Nenhuma jornada concluída encontrada para esse dia.";
+ const motoCount=list.filter(j=>journeyEfficiency(j)===motoEff).length,carCount=list.filter(j=>journeyEfficiency(j)===10).length;
+ $("dailyRatesPreview").textContent=list.length?list.length+" jornada(s) concluída(s) em "+new Date(day+"T12:00:00").toLocaleDateString("pt-BR")+". Ganho por jornada: "+money(rate)+". Consumo automático: "+motoCount+" moto(s) a "+motoEff+" km/L e "+carCount+" carro(s) a 10 km/L.":"Nenhuma jornada concluída encontrada para esse dia.";
  $("dailyRatesJourneys").innerHTML=list.length?'<table><thead><tr><th>Jornada</th><th>Entregador</th><th>Veículo</th><th>Tipo</th><th>KM rodados</th><th>Consumo (km/L)</th><th>Ganhos estimados</th><th>Combustível estimado</th><th>Lucro estimado</th></tr></thead><tbody>'+list.map(j=>{const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),eff=journeyEfficiency(j),fuel=price/eff*km;return '<tr><td>#'+esc(j.order_number||j.id.slice(0,8))+'</td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+journeyVehicleType(j)+'</td><td>'+km.toLocaleString("pt-BR",{maximumFractionDigits:1})+'</td><td>'+eff+'</td><td>'+money(rate)+'</td><td>'+money(fuel)+'</td><td>'+money(rate-fuel)+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint">As jornadas concluídas aparecerão aqui após selecionar a data e consultar os dados.</p>';
 }
 $("dailyRatesDate")?.addEventListener("change",renderDailyRatesPreview);
-["dailyRatesFees","dailyRatesFuelPrice"].forEach(id=>$(id)?.addEventListener("input",renderDailyRatesPreview));
+["dailyRatesFees","dailyRatesFuelPrice","dailyRatesMotoEfficiency","dailyRatesCarEfficiency"].forEach(id=>$(id)?.addEventListener("input",renderDailyRatesPreview));
 $("previewDailyRates")?.addEventListener("click",async()=>{try{await refresh();renderDailyRatesPreview()}catch(e){notify("Não foi possível atualizar as jornadas: "+(e.message||e))}});
 $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const form=e.currentTarget;setBusy(form,true);
  try{
   const client=backend?.client;if(!client)throw new Error("Sessão do Supabase não está pronta. Entre novamente.");
-  const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value);
-  if(!day||fees<0||price<0)throw new Error("Confira a data, o total das taxas e o preço do litro.");
+  const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value),motoEff=Number($("dailyRatesMotoEfficiency").value),carEff=Number($("dailyRatesCarEfficiency").value);
+  if(!day||fees<0||price<0||motoEff<=0||carEff<=0)throw new Error("Confira a data, o total das taxas, o preço do litro e os consumos médios da moto e do carro.");
   await refresh();
   const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
   const rate=fees/list.length;
