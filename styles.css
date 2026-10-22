@@ -2128,3 +2128,13 @@ body.sales-mode #salesDeliveryMessage{min-height:20px}
 
 body.sales-mode .header-actions>a{display:none!important}
 body.sales-mode .header-actions .status-pill{display:none}
+
+
+/* Perfil de vendas: experiência isolada, sem navegação administrativa ou do entregador. */
+body.sales-mode .layout{grid-template-columns:minmax(0,1fr)}
+body.sales-mode .sidebar{display:none!important}
+body.sales-mode .header-actions a[href="/entregador"]{display:none!important}
+body.sales-mode .content{max-width:1080px}
+body.sales-mode #view-vendas{display:block}
+body.sales-mode #view-vendas.hidden{display:none!important}
+body.sales-mode #view-vendas .page-heading{margin-bottom:22px}
