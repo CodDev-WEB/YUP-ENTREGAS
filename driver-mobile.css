@@ -348,3 +348,44 @@ body.driver-mode #driverExperience #driverBottom > button:active { transform: sc
   }
   body.driver-mode #driverExperience #driverBottom.driver-bottom > button { font-size: 13px !important; padding-inline: 8px !important; }
 }
+
+
+/* Catálogo central de pedidos pendentes e cadastro manual recolhível. */
+body.driver-mode #driverExperience .driver-pending-catalog{
+  display:grid;gap:12px;margin:18px 0 22px;padding:16px;
+  border:1px solid #dfe9e2;border-radius:18px;background:#fff;
+  box-shadow:0 5px 18px rgba(21,45,30,.035)
+}
+body.driver-mode #driverExperience .driver-pending-catalog>h2{
+  margin:0;font-size:15px;font-weight:850;letter-spacing:-.02em
+}
+body.driver-mode #driverExperience .driver-pending-order{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:12px;
+  padding:14px;border:1px solid #e4ebe6;border-radius:14px;background:#fbfdfb
+}
+body.driver-mode #driverExperience .driver-pending-order>div{min-width:0}
+body.driver-mode #driverExperience .driver-pending-order strong{
+  display:block;font-size:12px;font-weight:850;color:#176b43
+}
+body.driver-mode #driverExperience .driver-pending-order p{
+  margin:5px 0;font-size:13px;line-height:1.5;font-weight:750;overflow-wrap:anywhere
+}
+body.driver-mode #driverExperience .driver-pending-order small{
+  display:block;color:#68776e;font-size:11px;line-height:1.5;overflow-wrap:anywhere
+}
+body.driver-mode #driverExperience .driver-pending-order button{
+  width:100%;min-height:44px;border-radius:12px;font-size:12px;font-weight:850
+}
+body.driver-mode #driverExperience .driver-manual-entry{
+  margin:14px 0 20px;border:1px solid #dfe9e2;border-radius:16px;background:#fff;overflow:hidden
+}
+body.driver-mode #driverExperience .driver-manual-entry>summary{
+  padding:16px;cursor:pointer;list-style:none;font-size:13px;font-weight:850;color:#176b43
+}
+body.driver-mode #driverExperience .driver-manual-entry>summary::-webkit-details-marker{display:none}
+body.driver-mode #driverExperience .driver-manual-entry[open]>summary{border-bottom:1px solid #e4ebe6;background:#f7fbf8}
+body.driver-mode #driverExperience .driver-manual-entry .driver-form{padding:16px}
+@media(min-width:540px){
+  body.driver-mode #driverExperience .driver-pending-order{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+  body.driver-mode #driverExperience .driver-pending-order button{width:auto;max-width:210px}
+}
