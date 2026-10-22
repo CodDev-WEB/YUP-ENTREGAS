@@ -2456,3 +2456,12 @@ body.sales-mode .topbar .sales-brand-logo{
     min-width:48px;
   }
 }
+
+/* Tela de login: remover controles de navegação/status que só pertencem à área autenticada. */
+body.login-mode .topbar .sales-header-back,
+body.login-mode .topbar .header-actions>a,
+body.login-mode .topbar #authIdentity{display:none!important}
+body.login-mode .topbar .header-actions{margin-left:auto}
+.auth-brand-copy{display:flex;align-items:center;min-width:0}
+.auth-brand-copy strong{font-size:17px;font-weight:900;letter-spacing:.015em;line-height:1.2}
+.auth-brand-copy small{display:none!important}
