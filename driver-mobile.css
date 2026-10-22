@@ -199,3 +199,83 @@ body.driver-mode #driverExperience :is(input, select, textarea) { scroll-margin-
   body.driver-mode #driverExperience *::before,
   body.driver-mode #driverExperience *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+
+/* Correção de rolagem do PWA do entregador: somente cabeçalho e dock ficam fixos. */
+body.driver-mode,
+body.driver-mode #appLayout,
+body.driver-mode #appLayout > .content {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+body.driver-mode #driverExperience {
+  position: fixed !important;
+  inset: 0 auto 0 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  width: min(100%, 414px) !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}
+body.driver-mode #driverExperience .driver-top {
+  position: relative !important;
+  top: auto !important;
+  inset: auto !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  z-index: 30 !important;
+}
+body.driver-mode #driverExperience #driverScreenContent,
+body.driver-mode #driverExperience #driverScreenContent.driver-screen-content {
+  position: relative !important;
+  display: block !important;
+  flex: 1 1 0px !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 22px 20px 28px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  box-sizing: border-box !important;
+}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent {
+  flex: 1 1 0px !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 0 24px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+body.driver-mode #driverExperience .driver-home,
+body.driver-mode #driverExperience .driver-start-sheet {
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+body.driver-mode #driverExperience #driverBottom.driver-bottom,
+body.driver-mode #driverExperience #driverBottom {
+  position: relative !important;
+  inset: auto !important;
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  z-index: 40 !important;
+  overflow: visible !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+}
+@media (max-width: 414px) {
+  body.driver-mode #driverExperience { width: 100% !important; }
+}
