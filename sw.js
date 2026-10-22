@@ -5,6 +5,7 @@ const ASSETS = [
   "./entregador",
   "./entregador.html",
   "./sales-portal.js",
+  "./sales-portal.js?v=2",
   "./driver-access.js",
   "./styles.css",
   "./styles.css?v=72",
