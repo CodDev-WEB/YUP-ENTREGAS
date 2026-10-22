@@ -13,7 +13,8 @@ Criar o banco PostgreSQL central, autenticação por e-mail/senha, papéis e pol
 1. Abra SQL Editor no Supabase.
 2. Para um projeto novo, execute `supabase/schema.sql`.
 3. Para o projeto existente, execute individualmente as migrações ainda não aplicadas: `20261020_operations_hardening.sql`, `20261020_one_open_journey_per_vehicle.sql`, `20261020_journey_gps_timeline.sql`, `20261020_journey_order_numbers.sql` e `20261020_delivery_order_numbers.sql`.
-4. Confirme tabelas, colunas, gatilhos e políticas RLS. O GitHub não executa os SQLs automaticamente; não execute novamente o esquema inicial em um banco já existente.
+4. Se o banco existente ainda não tiver o recurso de rotas preparadas, execute também `supabase/route-plans-migration.sql` para criar `route_plans`, `route_plan_stops`, as políticas RLS e o vínculo com jornadas. Projetos novos que executaram `supabase/schema.sql` já incluem esse recurso.
+5. Confirme tabelas, colunas, gatilhos e políticas RLS. O GitHub não executa os SQLs automaticamente; não execute novamente o esquema inicial em um banco já existente.
 5. Em Authentication > Providers, habilite e-mail/senha. Se a empresa controlar os acessos, desabilite cadastro público e crie usuários pela administração.
 
 ## 3. Criar o primeiro administrador
