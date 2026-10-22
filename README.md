@@ -19,7 +19,7 @@ Sistema centralizado de gestão de entregas e monitoramento da frota da YUP Stor
 ## Estado atual
 O repositório contém uma aplicação PWA baseada em HTML/CSS/JavaScript, Worker do Cloudflare e integração parcial com Supabase. A publicação do frontend não garante que o banco esteja migrado nem que todos os módulos estejam prontos para produção.
 
-**Estado desta etapa:** jornadas e entregas foram migradas para leitura e gravação no Supabase, usando a sessão autenticada e as políticas RLS. Combustível e manutenção continuam em armazenamento local e não sincronizam. Antes de operar em um banco existente, aplique no SQL Editor do Supabase as migrações `20261020_operations_hardening.sql`, `20261020_one_open_journey_per_vehicle.sql`, `20261020_journey_gps_timeline.sql`, `20261020_journey_order_numbers.sql` e `20261020_delivery_order_numbers.sql`, caso ainda não tenham sido executadas. Para habilitar rotas preparadas pelo administrador/gerente em um banco que ainda não possui esse recurso, aplique também `supabase/route-plans-migration.sql`. O arquivo `supabase/schema.sql` já inclui as tabelas e políticas de rotas para projetos novos. Cadastre os perfis de entregadores vinculados a `drivers.profile_id`, os veículos e teste permissões com contas separadas. Commits no GitHub não executam migrações SQL. O portal por código ainda não autentica entregadores; eles precisam usar a sessão Supabase no painel até essa etapa ser implementada.
+**Estado desta etapa:** jornadas e entregas foram migradas para leitura e gravação no Supabase, usando a sessão autenticada e as políticas RLS. Combustível e manutenção continuam em armazenamento local e não sincronizam. Antes de operar em um banco existente, aplique no SQL Editor do Supabase as migrações `20261020_operations_hardening.sql`, `20261020_one_open_journey_per_vehicle.sql`, `20261020_journey_gps_timeline.sql`, `20261020_journey_order_numbers.sql` e `20261020_delivery_order_numbers.sql`, caso ainda não tenham sido executadas. Para habilitar rotas preparadas pelo administrador/gerente em um banco que ainda não possui esse recurso, aplique também `supabase/route-plans-migration.sql`. O arquivo `supabase/schema.sql` já inclui as tabelas e políticas de rotas para projetos novos. Cadastre os perfis de entregadores vinculados a `drivers.profile_id`, os veículos e teste permissões com contas separadas. Commits no GitHub não executam migrações SQL. O acesso de administração, vendas e entregadores utiliza a tela principal de login com sessão Supabase. A rota antiga `/entregador` redireciona para `/`; o PWA do entregador é carregado após a autenticação do perfil `driver`. Para pedidos comerciais, aplique também as migrações `20261022_delivery_catalog.sql`, `20261022_sales_role.sql`, `20261022_sales_delivery_policies.sql` e, por último, `20261022_sales_catalog_isolation.sql`, nesta ordem. Essas migrações não são executadas automaticamente pelo deploy do frontend.
 
 ## Documentação
 Consulte [docs/ARQUITETURA-MVP.md](docs/ARQUITETURA-MVP.md) para arquitetura, papéis, indicadores, modelo de dados, segurança e sequência de implementação.
@@ -39,7 +39,7 @@ O GitHub Actions valida a sintaxe JavaScript, os manifestos PWA/Wrangler, os arq
 Para testar localmente, sirva os arquivos por HTTP/HTTPS (por exemplo, localhost); abrir `index.html` via `file://` não testa corretamente autenticação, rotas do Worker ou service worker.
 
 ## Limitações conhecidas antes de produção
-- O portal por código em `/entregador` é apenas visual e não autentica usuários.
+- O endereço legado `/entregador` redireciona ao login principal; não há autenticação separada por código.
 - Combustível e manutenção ainda usam armazenamento local, sem sincronização entre dispositivos.
 - A fila offline durável não está implementada; não conte com gravação offline.
 - O rastreamento GPS depende das permissões e das regras do navegador; não há garantia de captura em segundo plano.
@@ -48,7 +48,7 @@ Para testar localmente, sirva os arquivos por HTTP/HTTPS (por exemplo, localhost
 ## Próximas etapas
 1. Aplicar e validar as migrações do Supabase.
 2. Testar contas administrativas e de entregadores, jornadas, veículos e numeração automática.
-3. Implementar autenticação segura do portal do entregador.
+3. Validar o fluxo integrado de login e as permissões de cada perfil.
 4. Migrar combustível/manutenção para o banco e implementar fila offline idempotente.
 5. Executar testes funcionais, de segurança, backup e recuperação antes de usar dados reais.
 
