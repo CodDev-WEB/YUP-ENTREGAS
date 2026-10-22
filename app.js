@@ -867,7 +867,6 @@ function renderOdoReports(){
  }
  const weekly=weekStarts.map(key=>{const found=weeklyAll.find(x=>x.key===key);return found?{...found,key:odoWeekLabel(key)}:{key:odoWeekLabel(key),km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
  renderWeeklyChart(weekly);
-$("weeklyRange")?.addEventListener("change",renderOdoReports);
 function renderWeeklyChart(data){
  const el=$("odometerWeeklyChart");if(!el)return;
  if(!data.length){el.innerHTML='<p class="hint">O gráfico aparecerá quando houver lançamentos no relatório semanal.</p>';return}
@@ -889,6 +888,7 @@ function renderWeeklyChart(data){
  const t=odoTotals(rows);$("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
  $("odometerEfficiency").innerHTML='<p><strong>Custo médio/KM</strong><br>'+odoMoney(t.km?t.fuel/t.km:0)+'</p><p><strong>Custo por entrega</strong><br>'+odoMoney(t.deliveries?t.fuel/t.deliveries:0)+'</p><p><strong>Ganho por entrega</strong><br>'+odoMoney(t.deliveries?t.revenue/t.deliveries:0)+'</p><p><strong>Ganho por KM</strong><br>'+odoMoney(t.km?t.revenue/t.km:0)+'</p>';
 }
+$("weeklyRange")?.addEventListener("change",renderOdoReports);
 async function loadOdoEntries(){
  const client=backend?.client;if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
  const {data,error}=await client.from("odometer_entries").select("*").order("entry_date",{ascending:false}).limit(5000);
