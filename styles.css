@@ -2465,3 +2465,8 @@ body.login-mode .topbar .header-actions{margin-left:auto}
 .auth-brand-copy{display:flex;align-items:center;min-width:0}
 .auth-brand-copy strong{font-size:17px;font-weight:900;letter-spacing:.015em;line-height:1.2}
 .auth-brand-copy small{display:none!important}
+
+/* A seta de voltar não faz parte do cabeçalho do Entregador nem de Vendas. */
+body.driver-mode .sales-header-back,
+body.sales-mode .sales-header-back,
+body.login-mode .sales-header-back{display:none!important}
