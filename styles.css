@@ -2480,3 +2480,21 @@ body.sales-mode .topbar .sales-brand-logo{
   background:#f6d94b!important;
   box-shadow:0 2px 5px rgba(20,45,30,.12),inset 0 1px 0 rgba(255,255,255,.28)!important;
 }
+
+/* Subsecção de combustível na navegação administrativa. */
+.sidebar .nav-subsection{
+  margin-left:12px;
+  width:calc(100% - 12px);
+  padding-left:14px;
+  font-size:13px;
+  color:var(--muted);
+  background:transparent;
+}
+.sidebar .nav-subsection .nav-submark{font-size:16px;color:var(--green);flex:0 0 auto}
+.sidebar .nav-subsection.active{color:var(--green-ink);background:var(--green-soft)}
+.fuel-sheet-intro>p{max-width:760px;color:var(--muted)}
+.fuel-sheet-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}
+.fuel-sheet-steps>div{display:flex;align-items:flex-start;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft)}
+.fuel-sheet-steps>div>strong{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:var(--green-soft);color:var(--green-ink)}
+.fuel-sheet-steps span{font-size:13px}
+@media(max-width:700px){.fuel-sheet-steps{grid-template-columns:1fr}}
