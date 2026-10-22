@@ -2125,3 +2125,6 @@ body.sales-mode #salesDeliveryMessage{min-height:20px}
  body.sales-mode .panel-title{align-items:flex-start}
  body.sales-mode .panel-title>.button{flex:0 0 auto}
 }
+
+body.sales-mode .header-actions>a{display:none!important}
+body.sales-mode .header-actions .status-pill{display:none}
