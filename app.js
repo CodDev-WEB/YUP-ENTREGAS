@@ -16,7 +16,7 @@ function setBusy(form,busy){form.querySelectorAll("button").forEach(b=>b.disable
 function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
 function fillSelect(el,items,value,label,placeholder){if(!el){console.warn("YUP-ENTREGAS: seletor opcional ausente no HTML; preenchimento ignorado.");return}el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.append(first);(items||[]).forEach(item=>{const o=document.createElement("option");o.value=item[value];o.textContent=label(item);el.append(o)})}
-function ensureSelect(id,placeholder){const old=$(id);if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
+function ensureSelect(id,placeholder){const old=$(id);if(!old){console.warn("YUP-ENTREGAS: campo obrigatório ausente no HTML:",id);return null}if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
 function openJourney(){const driverId=admin?$("driverId")?.value:currentDriver()?.id;return journeys.find(j=>j.status==="open"&&driverId&&j.driver_id===driverId)||null}
 function setGpsStatus(message){const el=$("gpsTrackingStatus");if(el)el.textContent=message}
@@ -138,19 +138,21 @@ async function refresh(){
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
   const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
-  vehicleSelect.replaceChildren();
-  const vehiclePlaceholder=document.createElement("option");
-  vehiclePlaceholder.value="";
-  vehiclePlaceholder.textContent=vehicles.length?"Selecione o veículo":"Nenhum veículo ativo encontrado no banco de dados";
-  vehicleSelect.append(vehiclePlaceholder);
-  vehicles.forEach(v=>{
-   const option=document.createElement("option");
-   option.value=v.id;
-   option.textContent=v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:"")+(!v.active?" (INATIVO)":"");
-   option.disabled=!v.active;
-   vehicleSelect.append(option);
-  });
-  vehicleSelect.disabled=vehicles.length===0;
+  if(vehicleSelect){
+   vehicleSelect.replaceChildren();
+   const vehiclePlaceholder=document.createElement("option");
+   vehiclePlaceholder.value="";
+   vehiclePlaceholder.textContent=vehicles.length?"Selecione o veículo":"Nenhum veículo ativo encontrado no banco de dados";
+   vehicleSelect.append(vehiclePlaceholder);
+   vehicles.forEach(v=>{
+    const option=document.createElement("option");
+    option.value=v.id;
+    option.textContent=v.code+(v.plate?" — "+v.plate:"")+(v.make_model?" · "+v.make_model:"")+(!v.active?" (INATIVO)":"");
+    option.disabled=!v.active;
+    vehicleSelect.append(option);
+   });
+   vehicleSelect.disabled=vehicles.length===0;
+  }
   if(!admin){
    const d=currentDriver();
    if(d){driverSelect.value=d.id;driverSelect.disabled=true;driverSelect.title="Preenchido automaticamente pelo usuário conectado";}
@@ -168,7 +170,7 @@ async function refresh(){
   $("routePlanStopsEditor")?.querySelectorAll('.route-stop-editor select[name="neighborhood"]').forEach(select=>{
    const selected=select.value;select.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("");select.value=selected;
   });
-  $("prototypeWarning").textContent = masterErrors.length
+  if($("prototypeWarning")) $("prototypeWarning").textContent = masterErrors.length
    ? "Alguns cadastros não foram carregados: " + masterErrors.join(" | ") + ". Verifique se as tabelas/colunas existem e se as políticas RLS permitem SELECT para este usuário."
    : "Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
   $("prototypeWarning").classList.remove("hidden");
@@ -185,15 +187,14 @@ async function refresh(){
   }catch(operationsError){
    console.error("YUP-ENTREGAS: falha ao carregar jornadas/entregas",operationsError);
    $("prototypeWarning").textContent="Cadastros de veículos, entregadores e bairros carregados. Falha ao carregar jornadas/entregas: "+(operationsError?.message||"erro desconhecido")+". Verifique as migrações SQL e as permissões RLS.";
-   $("prototypeWarning").classList.remove("hidden");
+   $("prototypeWarning")?.classList.remove("hidden");
   }
   render();
  }catch(error){
   console.error("YUP-ENTREGAS: falha ao carregar cadastros do Supabase",error);
   const vehicleSelect=$("vehicle");
   if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;}
-  $("prototypeWarning").textContent="Falha ao carregar os cadastros do Supabase: "+(error?.message||"erro desconhecido")+". Verifique a URL/chave pública, autenticação, tabelas e políticas RLS.";
-  $("prototypeWarning").classList.remove("hidden");
+  if($("prototypeWarning")){ $("prototypeWarning").textContent="Falha ao carregar os cadastros do Supabase: "+(error?.message||"erro desconhecido")+". Verifique a URL/chave pública, autenticação, tabelas e políticas RLS."; $("prototypeWarning").classList.remove("hidden"); }
  }finally{loading=false}
 }
 $("journeyForm").addEventListener("submit",async e=>{
