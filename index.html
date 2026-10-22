@@ -159,11 +159,13 @@
       <section data-fuel-panel="lancamentos" class="fuel-tab-panel">
         <article class="panel">
           <h2>Fechamento diário das taxas</h2>
-          <p class="hint">Informe o total recebido em taxas e o preço por litro. O sistema divide as taxas igualmente entre as jornadas concluídas no dia. O combustível é calculado automaticamente: motos a 30 km/L e carros a 10 km/L, conforme o tipo cadastrado no veículo.</p>
+          <p class="hint">Informe o total recebido em taxas e o preço por litro. O sistema divide as taxas igualmente entre as jornadas concluídas no dia. O combustível é calculado automaticamente: motos a 30 km/L e carros a 10 km/L, com possibilidade de ajustar as duas médias no fechamento, conforme o tipo cadastrado no veículo.</p>
           <form id="dailyJourneyRatesForm" class="form-grid">
             <label>Dia das jornadas<input id="dailyRatesDate" type="date" required></label>
             <label>Total de taxas de entrega do dia (R$)<input id="dailyRatesFees" type="number" min="0" step="0.01" placeholder="Ex.: 300,00" required></label>
             <label>Preço do combustível por litro (R$)<input id="dailyRatesFuelPrice" type="number" min="0" step="0.001" placeholder="Ex.: 6,00" required></label>
+            <label>Consumo médio da moto (km/L)<input id="dailyRatesMotoEfficiency" type="number" min="1" step="0.1" value="30" required></label>
+            <label>Consumo médio do carro (km/L)<input id="dailyRatesCarEfficiency" type="number" min="1" step="0.1" value="10" required></label>
             <div class="wide fuel-live-summary" id="dailyRatesPreview">Selecione um dia para consultar as jornadas concluídas.</div>
             <div class="form-action wide"><button class="button secondary" type="button" id="previewDailyRates">Consultar jornadas do dia</button><button class="button primary" type="submit">Calcular e salvar ganhos</button></div>
           </form>
