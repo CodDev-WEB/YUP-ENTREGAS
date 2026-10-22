@@ -2532,3 +2532,6 @@ body.sales-mode .topbar .sales-brand-logo{
 @media(max-width:600px){#dailyJourneyRatesForm{grid-template-columns:minmax(0,1fr);}#dailyJourneyRatesForm>label,#dailyJourneyRatesForm input{max-width:100%;}#dailyJourneyRatesForm .daily-efficiency-fields{grid-template-columns:minmax(0,1fr);}#dailyJourneyRatesForm .daily-efficiency-fields input{max-width:180px;}}
 
 .weekly-range-control{display:flex;flex-direction:column;gap:6px;max-width:260px;margin:12px 0 16px;font-size:12px;font-weight:750;color:#425348}.weekly-range-control select{width:100%;max-width:260px;box-sizing:border-box}
+
+/* Gráfico semanal compacto com valores legíveis e barras proporcionais. */
+.weekly-data-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.weekly-data-card{border:1px solid var(--border-color,#dbe3df);border-radius:12px;padding:12px;min-width:0}.weekly-data-card h4{font-size:13px;margin:0 0 12px}.weekly-bars{display:grid;gap:10px}.weekly-bar-row{min-width:0}.weekly-bar-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11px}.weekly-bar-heading strong{font-size:11px;text-align:right;overflow-wrap:anywhere}.weekly-bar-track{height:6px;background:rgba(120,130,125,.14);border-radius:8px;overflow:hidden;margin-top:4px}.weekly-bar-track span{display:block;height:100%;border-radius:8px;min-width:0}
