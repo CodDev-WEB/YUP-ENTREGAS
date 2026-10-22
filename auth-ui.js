@@ -87,6 +87,12 @@
         styles.href = "driver-mobile.css?v=4";
         styles.onerror = () => console.warn("YUP-ENTREGAS: estilos visuais adicionais indisponíveis; mantendo os estilos principais.");
         document.head.appendChild(styles);
+        script.addEventListener("load", () => {
+          const mobile = document.createElement("script");
+          mobile.src = "driver-mobile.js?v=1";
+          mobile.onerror = () => message("Não foi possível carregar a interface móvel do entregador. Atualize a página.", "error");
+          document.body.appendChild(mobile);
+        }, { once: true });
       }
       document.body.appendChild(script);
     }
