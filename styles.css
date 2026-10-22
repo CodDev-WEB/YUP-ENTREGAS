@@ -2093,3 +2093,10 @@ body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton:focus-visible {
  .route-stop-move{width:32px;height:34px}
  .route-stop-remove{padding:6px}
 }
+
+
+/* Rotas de entrega: padronização de entradas em caixa alta */
+#routePlanForm input:not([type="url"]):not([type="number"]),
+#routePlanForm textarea { text-transform: uppercase; }
+#routePlanForm input::placeholder,
+#routePlanForm textarea::placeholder { text-transform: uppercase; }
