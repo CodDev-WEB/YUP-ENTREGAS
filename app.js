@@ -854,8 +854,20 @@ function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r
 function renderOdoReports(){
  const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
  $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+Number(r.deliveries_count||0)+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
- const weekly=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date)).map(x=>({...x,key:odoWeekLabel(x.key)}));
+ const weeklyAll=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date));
+ const todayKey=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
+ const currentWeekStart=odoWeekStart(todayKey);
+ const range=$("weeklyRange")?.value||"5";
+ const weekStarts=[];
+ if(range==="all"){
+  if(weeklyAll.length){const earliest=weeklyAll.map(x=>x.key).sort()[0];let cursor=new Date(earliest+"T12:00:00");const end=new Date(currentWeekStart+"T12:00:00");while(cursor<=end){weekStarts.push(cursor.toISOString().slice(0,10));cursor.setDate(cursor.getDate()+7)}}
+  else weekStarts.push(currentWeekStart);
+ }else{
+  const count=Math.max(1,Number(range)||5);const cursor=new Date(currentWeekStart+"T12:00:00");cursor.setDate(cursor.getDate()-7*(count-1));for(let n=0;n<count;n++){weekStarts.push(cursor.toISOString().slice(0,10));cursor.setDate(cursor.getDate()+7)}
+ }
+ const weekly=weekStarts.map(key=>{const found=weeklyAll.find(x=>x.key===key);return found?{...found,key:odoWeekLabel(key)}:{key:odoWeekLabel(key),km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
  renderWeeklyChart(weekly);
+$("weeklyRange")?.addEventListener("change",renderOdoReports);
 function renderWeeklyChart(data){
  const el=$("odometerWeeklyChart");if(!el)return;
  if(!data.length){el.innerHTML='<p class="hint">O gráfico aparecerá quando houver lançamentos no relatório semanal.</p>';return}
