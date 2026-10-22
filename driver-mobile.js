@@ -57,16 +57,20 @@
         <div class="driver-inline-actions">${action("Abrir rota no Maps", "maps")}${screenLink("Encerrar jornada", "summary")}</div>`;
     }
     if (driverScreen === "new") {
-      return heading(journeyLabel, "Nova entrega") + `<div class="driver-sequence-note"><span><b>Ordem automática na rota</b><small>A parada será adicionada ao fim da sequência. O número oficial é atribuído pelo sistema.</small></span></div>
-        <form id="driverNewForm" class="driver-form">
-          ${action("Usar minha localização atual", "location")}
-          <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>${neighborhoods.map(item => `<option value="${escape(item.id)}">${escape(item.name)}</option>`).join("")}</select></label>
-          <label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label>
-          <label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Referência para encontrar o endereço"></label>
-          <fieldset class="driver-priority"><legend>Prioridade</legend>${["Normal", "Alta", "Agendada"].map(value => `<label class="${driverDraftPriority === value ? "selected" : ""}"><input type="radio" name="priority" value="${value}"${driverDraftPriority === value ? " checked" : ""}>${value}</label>`).join("")}</fieldset>
-          <label>Link de localização compartilhada <small>Opcional</small><input name="mapLink" type="url" placeholder="Cole o link do Maps ou WhatsApp"></label>
-          <div class="driver-info">Confira o endereço antes de adicionar. A localização atual exige permissão e não substitui a conferência.</div>${submit("Adicionar à sequência")}
-        </form>`;
+      const catalog=deliveries.filter(item=>!item.journey_id&&item.status==="pending");
+      return heading(journeyLabel, "Adicionar entrega", "Selecione os pedidos pendentes cadastrados pela equipe ou use o cadastro manual.") +
+        `<section class="driver-pending-catalog"><h2>Pedidos pendentes</h2>${catalog.length ? catalog.map(item=>`<article class="driver-pending-order"><div><strong>${escape(order(item))}</strong><p>${escape(item.neighborhoods?.name||"BAIRRO NÃO INFORMADO")} · ${escape(item.address)}</p><small>${escape(item.reference||"Sem referência")} · ${escape(({normal:"Normal",high:"Alta",scheduled:"Agendada"})[item.priority]||item.priority)}</small></div><button type="button" class="driver-dock-primary" data-driver-action="assignPending" data-id="${escape(item.id)}">Adicionar à sequência</button></article>`).join("") : '<p class="driver-empty">Nenhum pedido pendente cadastrado pela equipe.</p>'}</section>
+        <details class="driver-manual-entry"><summary>＋ Cadastrar entrega manualmente</summary>
+          <form id="driverNewForm" class="driver-form">
+            ${action("Usar minha localização atual", "location")}
+            <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>${neighborhoods.map(item => `<option value="${escape(item.id)}">${escape(item.name)}</option>`).join("")}</select></label>
+            <label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label>
+            <label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Referência para encontrar o endereço"></label>
+            <fieldset class="driver-priority"><legend>Prioridade</legend>${["Normal", "Alta", "Agendada"].map(value => `<label class="${driverDraftPriority === value ? "selected" : ""}"><input type="radio" name="priority" value="${value}"${driverDraftPriority === value ? " checked" : ""}>${value}</label>`).join("")}</fieldset>
+            <label>Link de localização compartilhada <small>Opcional</small><input name="mapLink" type="url" placeholder="Cole o link do Maps ou WhatsApp"></label>
+            <div class="driver-info">Confira o endereço antes de adicionar. A localização atual exige permissão e não substitui a conferência.</div>${submit("Adicionar à sequência")}
+          </form>
+        </details>`;
     }
     const selected = stops.find(item => item.id === window.driverSelectedDeliveryId) || next;
     if (["detail", "occurrence"].includes(driverScreen) && !selected) {
