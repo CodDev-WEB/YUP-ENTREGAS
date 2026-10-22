@@ -100,20 +100,20 @@
       <p class="warning">Aviso: os dados são locais e não são compartilhados com outros usuários ou dispositivos.</p>
     </div>
     <div id="view-rotas" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">PREPARAÇÃO DE PEDIDOS</p><h1>Rotas de entrega</h1><p>Monte a sequência de paradas e atribua a rota ao entregador antes da saída.</p></div></div>
+      <div class="page-heading"><div><p class="eyebrow">PLANEJAMENTO OPERACIONAL</p><h1>Rotas de entrega</h1><p>Rota e jornada são o mesmo fluxo operacional. A origem registra quem iniciou o cadastro: entregador ou administração/vendas.</p></div></div>
       <article class="panel">
-        <div class="panel-title"><div><h2>Montar rota pronta</h2><p>O entregador receberá as paradas nesta ordem no aplicativo.</p></div></div>
+        <div class="panel-title"><div><h2>Cadastrar rota/jornada</h2><p>Defina o responsável e organize as paradas que farão parte da jornada.</p></div></div>
         <form id="routePlanForm">
           <div class="route-plan-intro">
             <span class="route-plan-step">1</span>
-            <div><strong>Identifique a rota</strong><p>Dê um nome fácil de reconhecer e escolha quem fará as entregas.</p></div>
+            <div><strong>Identifique a jornada</strong><p>Dê um nome fácil de reconhecer e escolha o entregador responsável.</p></div>
           </div>
           <div class="form-grid">
-            <label>Nome da rota<input name="title" required maxlength="100" placeholder="Ex.: Centro — manhã"></label>
+            <label>Nome da rota/jornada<input name="title" required maxlength="100" placeholder="Ex.: Centro — manhã"></label>
             <label>Entregador responsável<select id="routePlanDriver" name="driver" required><option value="">Selecione o entregador</option></select></label>
           </div>
           <div class="panel-title route-editor-title">
-            <div><h3>2. Organize as paradas</h3><p>Adicione os endereços e ajuste a sequência. A ordem será a mesma no PWA do entregador.</p></div>
+            <div><h3>2. Organize as paradas</h3><p>Adicione os endereços e ajuste a sequência da jornada.</p></div>
             <button class="button secondary" type="button" id="addRouteStop">＋ Adicionar parada</button>
           </div>
           <div id="routePlanStopsEditor" class="route-plan-stops-editor"></div>
@@ -126,7 +126,7 @@
         </form>
       </article>
       <article class="panel">
-        <div class="panel-title"><div><h2>Rotas cadastradas</h2><p>Acompanhe as rotas atribuídas e seu andamento.</p></div></div>
+        <div class="panel-title"><div><h2>Rotas e jornadas cadastradas</h2><p>Acompanhe quem cadastrou, quem executa e o andamento operacional.</p></div></div>
         <div id="routePlansList" class="route-plans-list"><p class="hint">Carregando rotas…</p></div>
       </article>
     </div>
