@@ -120,9 +120,21 @@ async function refresh(){
  try{
   // Carrega e exibe os cadastros mestres antes das operações. Assim, uma migração
   // ausente em journeys/deliveries não apaga as opções de veículos, entregadores e bairros.
-  [drivers,vehicles,neighborhoods]=await Promise.all([
-   backend.listDrivers(),backend.listVehicles(),backend.listNeighborhoods()
+  const masterResults = await Promise.allSettled([
+   backend.listDrivers(), backend.listVehicles(), backend.listNeighborhoods()
   ]);
+  const masterNames = ["entregadores (drivers)", "veículos (vehicles)", "bairros (neighborhoods)"];
+  const masterErrors = [];
+  drivers = masterResults[0].status === "fulfilled" ? masterResults[0].value : [];
+  vehicles = masterResults[1].status === "fulfilled" ? masterResults[1].value : [];
+  neighborhoods = masterResults[2].status === "fulfilled" ? masterResults[2].value : [];
+  masterResults.forEach((result, index) => {
+   if (result.status === "rejected") {
+    const detail = result.reason?.message || String(result.reason || "erro desconhecido");
+    masterErrors.push(masterNames[index] + ": " + detail);
+    console.error("YUP-ENTREGAS: falha ao carregar " + masterNames[index], result.reason);
+   }
+  });
   const driverSelect=ensureSelect("driverId","Selecione o entregador");
   const vehicleSelect=ensureSelect("vehicle","Selecione o veículo");
   fillSelect(driverSelect,drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
@@ -156,7 +168,9 @@ async function refresh(){
   $("routePlanStopsEditor")?.querySelectorAll('.route-stop-editor select[name="neighborhood"]').forEach(select=>{
    const selected=select.value;select.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("");select.value=selected;
   });
-  $("prototypeWarning").textContent="Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
+  $("prototypeWarning").textContent = masterErrors.length
+   ? "Alguns cadastros não foram carregados: " + masterErrors.join(" | ") + ". Verifique se as tabelas/colunas existem e se as políticas RLS permitem SELECT para este usuário."
+   : "Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
   $("prototypeWarning").classList.remove("hidden");
 
   try{
