@@ -842,3 +842,34 @@ $("routePlanForm")?.addEventListener("submit",async event=>{
 });
 backend.subscribeToOperations(()=>{refresh();if($("timelineJourney")?.value)loadJourneyTimeline();});
 refresh();
+/* Relatórios da planilha de odômetro — fonte centralizada no Supabase. */
+let odometerEntries = [];
+const odoMoney = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
+function odoWeek(value){const d=new Date(value+"T12:00:00");const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+3);const first=new Date(d.getFullYear(),0,4);return Math.ceil((((d-first)/86400000)+1)/7)}
+function odoTotals(rows){return rows.reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
+function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m.entries()].map(([key,list])=>({key,...odoTotals(list)}))}
+function renderOdoReports(){
+ const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
+ $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+Number(r.deliveries_count||0)+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
+ const weekly=odoGroup(rows,r=>String(odoWeek(r.entry_date)).padStart(2,"0"));
+ $("odometerWeeklyReport").innerHTML='<table><thead><tr><th>Semana</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM/entrega</th><th>Custo/entrega</th></tr></thead><tbody>'+weekly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
+ const monthly=odoGroup(rows,r=>r.entry_date.slice(0,7));
+ $("odometerMonthlyReport").innerHTML='<table><thead><tr><th>Mês</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th></tr></thead><tbody>'+monthly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td></tr>').join("")+'</tbody></table>';
+ const vehicles=odoGroup(rows,r=>r.vehicle_code);
+ $("odometerVehicleReport").innerHTML='<table><thead><tr><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th><th>KM/entrega</th><th>Custo/KM</th></tr></thead><tbody>'+vehicles.map(x=>'<tr><td>'+esc(x.key)+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.km?x.fuel/x.km:0)+'</td></tr>').join("")+'</tbody></table>';
+ const t=odoTotals(rows);$("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
+ $("odometerEfficiency").innerHTML='<p><strong>Custo médio/KM</strong><br>'+odoMoney(t.km?t.fuel/t.km:0)+'</p><p><strong>Custo por entrega</strong><br>'+odoMoney(t.deliveries?t.fuel/t.deliveries:0)+'</p><p><strong>Ganho por entrega</strong><br>'+odoMoney(t.deliveries?t.revenue/t.deliveries:0)+'</p><p><strong>Ganho por KM</strong><br>'+odoMoney(t.km?t.revenue/t.km:0)+'</p>';
+}
+async function loadOdoEntries(){
+ const client=backend?.client;if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
+ const {data,error}=await client.from("odometer_entries").select("*").order("entry_date",{ascending:false}).limit(5000);
+ if(error){$("odometerHistory").innerHTML='<p class="hint">Tabela ainda não disponível. Aplique a migração SQL de odometer_entries no Supabase.</p>';console.error(error);return}
+ odometerEntries=data||[];renderOdoReports();
+}
+document.querySelectorAll("[data-fuel-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-fuel-tab]").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("[data-fuel-panel]").forEach(p=>p.classList.toggle("hidden",p.dataset.fuelPanel!==b.dataset.fuelTab))}));
+$("odometerForm")?.addEventListener("input",()=>{const start=Number($("odoStart").value),end=Number($("odoEnd").value);$("odoLiveSummary").textContent=end>=start?"KM rodado: "+odoNum(end-start)+" km · Lucro líquido: "+odoMoney(Number($("odoRevenue").value)-Number($("odoFuel").value)):"O odômetro final não pode ser menor que o inicial."});
+$("odometerForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget;setBusy(form,true);try{const start=Number($("odoStart").value),end=Number($("odoEnd").value);if(end<start)throw new Error("O odômetro final não pode ser menor que o inicial.");const client=backend?.client;if(!client)throw new Error("Sessão do Supabase não está pronta. Entre novamente.");const {error}=await client.from("odometer_entries").insert({entry_date:$("odoDate").value,vehicle_code:$("odoVehicle").value,odometer_start:start,odometer_end:end,deliveries_count:Number($("odoDeliveries").value),revenue:Number($("odoRevenue").value),fuel_cost:Number($("odoFuel").value),created_by:backend.profile?.id});if(error)throw error;form.reset();$("odoDate").value=new Date().toISOString().slice(0,10);$("odoDeliveries").value="0";notify("Lançamento salvo.");await loadOdoEntries()}catch(err){notify("Não foi possível salvar: "+(err.message||err))}finally{setBusy(form,false)}});
+$("refreshOdometer")?.addEventListener("click",loadOdoEntries);
+$("odoDate")?.setAttribute("value",new Date().toISOString().slice(0,10));
+document.querySelector('[data-view="planilha-combustivel"]')?.addEventListener("click",loadOdoEntries);
