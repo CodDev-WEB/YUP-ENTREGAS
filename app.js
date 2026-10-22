@@ -899,7 +899,7 @@ $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
   await refresh();
   const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
   const rate=fees/list.length;
-  const {error:dailyError}=await client.from("daily_journey_rates").upsert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:30,journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()},{onConflict:"entry_date"});
+  const {error:dailyError}=await client.from("daily_journey_rates").upsert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:Number((list.reduce((sum,j)=>sum+journeyEfficiency(j),0)/list.length).toFixed(2)),journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()},{onConflict:"entry_date"});
   if(dailyError)throw dailyError;
   for(const j of list){
    const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),eff=journeyEfficiency(j);
