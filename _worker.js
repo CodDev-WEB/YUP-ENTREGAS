@@ -11,7 +11,7 @@ export default {
       return Response.redirect(new URL("/", url), 302);
     }
     if (url.pathname === "/entregador.html") {
-      return Response.redirect(new URL("/entregador", url), 302);
+      return Response.redirect(new URL("/", url), 302);
     }
 
     // Serve the existing HTML files behind extensionless routes.
@@ -19,7 +19,7 @@ export default {
       return env.ASSETS.fetch(new Request(new URL("/index.html", url), { method: request.method, headers: request.headers }));
     }
     if (url.pathname === "/entregador") {
-      return env.ASSETS.fetch(new Request(new URL("/entregador.html", url), { method: request.method, headers: request.headers }));
+      return Response.redirect(new URL("/", url), 302);
     }
 
     return env.ASSETS.fetch(request);
