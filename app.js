@@ -196,6 +196,18 @@ $("finishJourney").addEventListener("click",async()=>{
  try{const finishedId=currentJourney.id;await backend.finishJourney({journeyId:finishedId,odometerEnd:end});stopGpsTracking();await refresh();notify("Jornada finalizada e salva no banco de dados.");}
  catch(error){console.error(error);notify("Não foi possível finalizar a jornada: "+error.message)}
 });
+$("deliveryCatalogForm")?.addEventListener("submit",async e=>{
+ e.preventDefault();const form=e.currentTarget,message=$("deliveryCatalogMessage"),button=form.querySelector('button[type="submit"]');
+ const values=new FormData(form),address=String(values.get("address")||"").trim();
+ if(!address){message.textContent="Informe o endereço completo.";return;}
+ button.disabled=true;message.textContent="Cadastrando pedido…";
+ try{
+  const created=await backend.createDelivery({journeyId:null,neighborhoodId:values.get("neighborhood")||null,address,reference:values.get("reference"),mapLink:values.get("mapLink"),priority:values.get("priority")||"normal"});
+  await refresh();form.reset();message.textContent="Entrega "+(created.order_no||"") +" cadastrada e disponível para o entregador.";
+ }catch(error){console.error(error);message.textContent="Não foi possível cadastrar a entrega. "+(error?.message||"Verifique a migração do Supabase.");}
+ finally{button.disabled=false;}
+});
+$("refreshDeliveryCatalog")?.addEventListener("click",refresh);
 $("deliveryForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!currentJourney)return notify("Inicie uma jornada antes de adicionar entregas.");
  const address=$("address").value.trim();
@@ -372,7 +384,13 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function renderRoutePlans(){
+const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function renderDeliveryCatalog(){
+ const target=$("deliveryCatalogList");if(!target)return;
+ const pending=deliveries.filter(d=>!d.journey_id&&d.status==="pending").sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ if(!pending.length){target.innerHTML='<p class="hint">Nenhuma entrega pendente no momento.</p>';return;}
+ target.innerHTML='<div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Endereço</th><th>Prioridade</th><th>Cadastrada por</th></tr></thead><tbody>'+pending.map(d=>'<tr><td><strong>'+esc(d.order_no||"PEDIDO")+'</strong></td><td>'+esc(d.address)+'<small style="display:block">'+esc(d.neighborhoods?.name||"BAIRRO NÃO INFORMADO")+(d.reference?' · '+esc(d.reference):"")+'</small></td><td>'+esc(({normal:"Normal",high:"Alta",scheduled:"Agendada"})[d.priority]||d.priority)+'</td><td>'+esc(d.created_source==="management"?"Administração/Vendas":"Entregador")+'</td></tr>').join("")+'</tbody></table></div>';
+}
+function renderRoutePlans(){
  const target=$("routePlansList");if(!target)return;
  if(routePlansError){target.innerHTML='<p class="warning">Não foi possível carregar rotas prontas: '+esc(routePlansError)+'. Confira se a migração supabase/route-plans-migration.sql foi aplicada no Supabase.</p>';return;}
  if(!routePlans.length){target.innerHTML='<p class="hint">Nenhuma rota pronta cadastrada. Monte uma rota acima para atribuí-la a um entregador.</p>';return;}
@@ -438,7 +456,7 @@ function previewRoutePlan(){
  window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
 }
 function render(){
- renderRoutePlans();
+ renderRoutePlans();renderDeliveryCatalog();
  renderDeliveries();
  renderDriverExperience();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
