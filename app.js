@@ -846,13 +846,15 @@ refresh();
 let odometerEntries = [];
 const odoMoney = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
-function odoWeek(value){const d=new Date(value+"T12:00:00");const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day+3);const first=new Date(d.getFullYear(),0,4);return Math.ceil((((d-first)/86400000)+1)/7)}
+function odoWeekStart(value){const d=new Date(value+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}
+function odoWeekLabel(value){const start=new Date(odoWeekStart(value)+"T12:00:00"),end=new Date(start);end.setDate(end.getDate()+5);return start.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+end.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
+function odoWeek(value){return odoWeekLabel(value)}
 function odoTotals(rows){return rows.reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
 function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m.entries()].map(([key,list])=>({key,...odoTotals(list)}))}
 function renderOdoReports(){
  const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
  $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+Number(r.deliveries_count||0)+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
- const weekly=odoGroup(rows,r=>String(odoWeek(r.entry_date)).padStart(2,"0"));
+ const weekly=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date)).map(x=>({...x,key:odoWeekLabel(x.key)}));
  renderWeeklyChart(weekly);
 function renderWeeklyChart(data){
  const el=$("odometerWeeklyChart");if(!el)return;
