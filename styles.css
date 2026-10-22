@@ -1998,3 +1998,53 @@ body.driver-mode #driverExperience .driver-status-row .driver-state{justify-self
 @media(max-width:414px){
  body.driver-mode #driverExperience{width:100%!important}
 }
+
+
+/* Login: fundo amarelo integral e cabeçalho de marca oculto, mantendo acesso e status. */
+body:not(.driver-mode):has(#authGate:not(.hidden)) {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  background: #fcde52 !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .topbar {
+  height: auto !important;
+  min-height: 64px !important;
+  padding: 10px clamp(16px, 3vw, 38px) !important;
+  background: #fcde52 !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .topbar > .brand {
+  display: none !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .topbar .header-actions {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .topbar .header-actions .button {
+  min-height: 40px !important;
+  border: 1px solid rgba(34,86,64,.25) !important;
+  border-radius: 11px !important;
+  background: #fffdf2 !important;
+  color: #225640 !important;
+  font-weight: 800 !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .topbar #authIdentity {
+  border-color: rgba(34,86,64,.22) !important;
+  background: rgba(255,255,255,.48) !important;
+  color: #225640 !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .auth-gate {
+  min-height: calc(100svh - 64px) !important;
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom)) !important;
+  background: #fcde52 !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) .auth-card {
+  border-color: rgba(34,86,64,.14) !important;
+  box-shadow: 0 16px 42px rgba(34,86,64,.14) !important;
+}
