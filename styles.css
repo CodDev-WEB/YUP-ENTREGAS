@@ -2519,3 +2519,14 @@ body.sales-mode .topbar .sales-brand-logo{
 /* Campos de consumo compactos: os valores normalmente têm até quatro dígitos. */
 .daily-efficiency-fields label{max-width:260px;}
 .daily-efficiency-fields input[type="number"]{width:100%;max-width:180px;min-width:0;box-sizing:border-box;padding:8px 10px;}
+
+/* Fechamento diário: largura dos campos proporcional ao tipo de informação preenchida. */
+#dailyJourneyRatesForm{grid-template-columns:minmax(150px,220px) minmax(180px,260px);align-items:start;}
+#dailyJourneyRatesForm>label{width:100%;max-width:260px;}
+#dailyJourneyRatesForm input{width:100%;max-width:260px;box-sizing:border-box;}
+#dailyJourneyRatesForm #dailyRatesDate{max-width:190px;}
+#dailyJourneyRatesForm #dailyRatesFees,#dailyJourneyRatesForm #dailyRatesFuelPrice{max-width:220px;}
+#dailyJourneyRatesForm .daily-efficiency-fields{grid-column:1/-1;display:grid;grid-template-columns:minmax(150px,220px);gap:12px;}
+#dailyJourneyRatesForm .daily-efficiency-fields label{max-width:220px;}
+#dailyJourneyRatesForm .daily-efficiency-fields input{max-width:180px;}
+@media(max-width:600px){#dailyJourneyRatesForm{grid-template-columns:minmax(0,1fr);}#dailyJourneyRatesForm>label,#dailyJourneyRatesForm input{max-width:100%;}#dailyJourneyRatesForm .daily-efficiency-fields{grid-template-columns:minmax(0,1fr);}#dailyJourneyRatesForm .daily-efficiency-fields input{max-width:180px;}}
