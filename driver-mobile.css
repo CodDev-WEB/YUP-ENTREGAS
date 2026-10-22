@@ -415,3 +415,29 @@ body.driver-mode #driverExperience.driver-home-mode #driverScreenContent :is(inp
     padding-right:15px !important;
   }
 }
+
+/* Cabeçalho do Entregador: logo compacta em tile arredondado, sem aparência de banner. */
+body.driver-mode #driverExperience .driver-top{
+  justify-content:flex-start!important;
+  gap:10px!important;
+}
+body.driver-mode #driverExperience .driver-top .brand{
+  flex:1 1 auto!important;
+  width:auto!important;
+  margin:0 auto 0 0!important;
+  justify-content:flex-start!important;
+}
+body.driver-mode #driverExperience .driver-brand-logo{
+  display:block!important;
+  width:48px!important;
+  min-width:48px!important;
+  height:48px!important;
+  padding:5px!important;
+  box-sizing:border-box!important;
+  object-fit:contain!important;
+  border:1px solid rgba(20,75,49,.10)!important;
+  border-radius:14px!important;
+  background:#f6d94b!important;
+  box-shadow:0 2px 5px rgba(20,45,30,.12),inset 0 1px 0 rgba(255,255,255,.28)!important;
+}
+body.driver-mode #driverExperience .driver-back{display:none!important}
