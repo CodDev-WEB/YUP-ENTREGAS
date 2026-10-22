@@ -279,3 +279,72 @@ body.driver-mode #driverExperience #driverBottom {
 @media (max-width: 414px) {
   body.driver-mode #driverExperience { width: 100% !important; }
 }
+
+
+/* Dock do entregador: ações legíveis, com rótulos completos e sem colunas estreitas. */
+body.driver-mode #driverExperience #driverBottom.driver-bottom {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 10px !important;
+  padding: 12px max(16px, calc((100% - 640px) / 2)) calc(12px + env(safe-area-inset-bottom)) !important;
+  max-height: min(34dvh, 260px) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+}
+body.driver-mode #driverExperience #driverBottom.driver-bottom > button,
+body.driver-mode #driverExperience #driverBottom.driver-bottom > button:is(.driver-dock-action, .driver-dock-primary) {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 54px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 12px 10px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  box-sizing: border-box !important;
+}
+body.driver-mode #driverExperience #driverBottom.driver-bottom > button > span:last-child {
+  display: block !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  font: inherit !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+body.driver-mode #driverExperience #driverBottom .driver-dock-icon { display: inline-flex !important; flex: 0 0 auto !important; font-size: 17px !important; }
+body.driver-mode #driverExperience #driverBottom > button.is-primary,
+body.driver-mode #driverExperience #driverBottom > button.driver-dock-primary {
+  background: var(--dm-primary) !important;
+  color: var(--dm-ink) !important;
+  border-color: var(--dm-primary) !important;
+}
+body.driver-mode #driverExperience #driverBottom > button.is-danger {
+  background: #fff3ee !important;
+  color: #943d2a !important;
+  border-color: #e7b7a8 !important;
+}
+body.driver-mode #driverExperience #driverBottom > button:active { transform: scale(.985) !important; }
+@media (max-width: 360px) {
+  body.driver-mode #driverExperience #driverBottom.driver-bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding-inline: 12px !important;
+  }
+  body.driver-mode #driverExperience #driverBottom.driver-bottom > button { font-size: 13px !important; padding-inline: 8px !important; }
+}
