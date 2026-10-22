@@ -25,11 +25,20 @@ create policy deliveries_update_owner_or_management on public.deliveries
 for update to authenticated
 using (
  (journey_id is not null and public.can_access_journey(journey_id))
- or (journey_id is null and public.current_app_role() in ('admin','manager','sales'))
+ or (journey_id is null and public.current_app_role() in ('admin','manager'))
 )
 with check (
  (journey_id is not null and public.can_access_journey(journey_id))
- or (journey_id is null and public.current_app_role() in ('admin','manager','sales'))
+ or (journey_id is null and public.current_app_role() in ('admin','manager'))
+ or (
+   journey_id is not null
+   and exists (
+    select 1 from public.journeys j
+    join public.drivers d on d.id=j.driver_id
+    where j.id=deliveries.journey_id and j.status='open'
+      and d.profile_id=(select auth.uid())
+   )
+ )
 );
 
 commit;
