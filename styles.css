@@ -2380,3 +2380,36 @@ body.sales-mode .sales-empty{
 @media(prefers-reduced-motion:reduce){
   body.sales-mode #view-vendas *{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
+
+
+/* Cabeçalho da área de Vendas: mesma identidade visual do PWA do entregador. */
+body.sales-mode .topbar{
+  min-height:calc(64px + env(safe-area-inset-top));
+  height:auto;
+  padding:calc(8px + env(safe-area-inset-top)) max(12px, calc((100% - 680px) / 2)) 8px;
+  gap:10px;
+  justify-content:flex-start;
+}
+body.sales-mode .sales-header-back{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;
+  width:44px;min-width:44px;height:44px;padding:0;
+  border:1px solid transparent;border-radius:12px;background:transparent;
+  color:#202a31;font-size:34px;font-weight:400;line-height:1;cursor:pointer;
+}
+body.sales-mode .topbar .brand{flex:1;min-width:0;gap:8px}
+body.sales-mode .topbar .sales-brand-logo{display:block;width:86px;height:40px;object-fit:contain;flex:0 0 auto}
+body.sales-mode .topbar .brand-divider{display:block;width:1px;height:30px;background:#e5e8e8;flex:0 0 1px}
+body.sales-mode .topbar .brand-context strong{font-size:10px;letter-spacing:.06em;color:#202a31}
+body.sales-mode .topbar .brand-context small{display:none}
+body.sales-mode .topbar .header-actions{margin-left:auto;flex:0 0 auto}
+body.sales-mode .topbar .header-actions>a,
+body.sales-mode .topbar #authIdentity{display:none!important}
+body.sales-mode .topbar .header-actions #logoutButton{
+  display:inline-flex;align-items:center;justify-content:center;min-width:72px;
+  min-height:44px;padding:8px 14px;border-radius:14px;font-size:14px;
+}
+@media(max-width:480px){
+  body.sales-mode .topbar{padding:calc(8px + env(safe-area-inset-top)) 12px 8px}
+  body.sales-mode .topbar .sales-brand-logo{width:86px;height:40px}
+  body.sales-mode .topbar .header-actions{gap:0}
+}
