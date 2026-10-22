@@ -207,7 +207,10 @@ $("journeyForm").addEventListener("submit",async e=>{
  finally{setBusy(e.target,false)}
 });
 $("finishJourney").addEventListener("click",async()=>{
- if(!currentJourney)return;const raw=prompt("Informe o odômetro final (km):");if(raw===null)return;
+ if(!currentJourney)return;
+ const journeyDeliveries=deliveries.filter(d=>d.journey_id===currentJourney.id);
+ if(!journeyDeliveries.length)return notify("Não é possível encerrar a jornada sem pelo menos uma entrega cadastrada. Adicione uma entrega e tente novamente.");
+ const raw=prompt("Informe o odômetro final (km):");if(raw===null)return;
  const end=Number(raw);if(!Number.isFinite(end)||end<Number(currentJourney.odometer_start))return notify("Odômetro inválido: deve ser igual ou superior ao inicial.");
  const pending=deliveries.filter(d=>d.journey_id===currentJourney.id&&!["completed","failed"].includes(d.status));
  if(pending.length)return notify("Finalize ou marque como não realizada cada entrega antes de encerrar a jornada.");
@@ -811,6 +814,8 @@ function renderDriverExperience(){
   e.preventDefault();const odometerEnd=Number(e.target.elements.odometer.value);
   if(!driverStops().every(d=>["completed","failed"].includes(d.status)))return notify("Registre o resultado de todas as entregas antes de encerrar.");
   if(!Number.isFinite(odometerEnd)||odometerEnd<Number(currentJourney.odometer_start))return notify("O hodômetro final deve ser igual ou superior ao inicial.");
+  const journeyDeliveries=deliveries.filter(d=>d.journey_id===currentJourney.id);
+  if(!journeyDeliveries.length)return notify("Não é possível encerrar a jornada sem pelo menos uma entrega cadastrada. Volte, adicione uma entrega e tente novamente.");
   const button=bottom.querySelector('[data-driver-submit="driverFinishForm"]')||e.target.querySelector('button[type="submit"]');if(button)button.disabled=true;
   try{stopGpsTracking();await backend.finishJourney({journeyId:currentJourney.id,odometerEnd});await refresh();driverScreen="start";renderDriverExperience()}
   catch(error){notify("Não foi possível encerrar a jornada: "+error.message);if(button)button.disabled=false}
