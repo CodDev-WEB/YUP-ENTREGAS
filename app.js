@@ -760,6 +760,10 @@ function renderDriverExperience(){
  root.querySelectorAll("[data-driver-screen]").forEach(b=>b.addEventListener("click",()=>{driverScreen=b.dataset.driverScreen;renderDriverExperience()}));
  root.querySelectorAll("[data-driver-action]").forEach(b=>b.addEventListener("click",async()=>{
   const action=b.dataset.driverAction,id=b.dataset.id;
+  if(action==="assignPending"){
+   try{await backend.assignDeliveriesToJourney({journeyId:currentJourney.id,deliveryIds:[id]});await refresh();driverScreen="route";renderDriverExperience();}
+   catch(error){notify("Não foi possível adicionar o pedido: "+error.message)}
+  }
   if(action==="detail"){window.driverSelectedDeliveryId=id;driverScreen="detail";renderDriverExperience()}
   if(["startDelivery","arriveDelivery","completeDelivery"].includes(action)){const status={startDelivery:"in_transit",arriveDelivery:"at_destination",completeDelivery:"completed"}[action];if(status==="completed"&&!confirm("Confirmar conclusão desta entrega?"))return;try{await backend.updateDeliveryStatus({deliveryId:id,status});await refresh();window.driverSelectedDeliveryId=id;driverScreen="detail";renderDriverExperience()}catch(error){notify("Não foi possível atualizar a entrega: "+error.message)}}
   if(action==="occurrence"){window.driverSelectedDeliveryId=id;driverOccurrenceReason="Destinatário ausente";driverOccurrenceNote="";driverScreen="occurrence";renderDriverExperience()}
