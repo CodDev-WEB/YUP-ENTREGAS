@@ -155,19 +155,14 @@
       plan=data;
       if(!plan.route_plan_stops?.length) throw new Error("Esta rota não possui paradas cadastradas.");
     }
-    const {data,error} = await client.from("journeys").insert({
-      driver_id:driverId,vehicle_id:vehicleId,odometer_start:Number(odometerStart),status:"open",route_plan_id:routePlanId||null
-    }).select("id,driver_id,vehicle_id,route_plan_id,status,odometer_start,started_at_server").single();
+    const {data,error} = await client.rpc("start_journey_with_route", {
+      p_driver_id: driverId,
+      p_vehicle_id: vehicleId,
+      p_odometer_start: Number(odometerStart),
+      p_route_plan_id: routePlanId || null
+    });
     if (error) throw error;
-    if(plan){
-      const stops=plan.route_plan_stops.slice().sort((a,b)=>a.sequence_no-b.sequence_no).map((stop,index)=>({
-        journey_id:data.id,neighborhood_id:stop.neighborhood_id,address:stop.address,reference:stop.reference,
-        map_link:stop.map_link,priority:stop.priority||"normal",status:"pending",sequence_no:index+1
-      }));
-      const {error:copyError}=await client.from("deliveries").insert(stops);
-      if(copyError) throw new Error("A jornada foi criada, mas as paradas da rota não foram copiadas: "+copyError.message);
-    }
-    return data;
+    return Array.isArray(data) ? data[0] : data;
   }
   async function finishJourney({journeyId,odometerEnd}) {
     const client = await requireReady();
@@ -215,20 +210,14 @@
   }
   async function updateDeliveryStatus({deliveryId,status,note}) {
     const client = await requireReady();
-    const {data:delivery,error:readError} = await client.from("deliveries").select("id,journey_id,status").eq("id",deliveryId).single();
-    if (readError) throw readError;
-    const transitions = {pending:["in_transit","failed"],in_transit:["at_destination","completed","failed"],at_destination:["completed","failed"]};
-    if (!(transitions[delivery.status] || []).includes(status)) throw new Error("Transição de status não permitida.");
-    const {data:{user},error:userError} = await client.auth.getUser();
-    if (userError || !user) throw new Error("Sessão expirada. Entre novamente.");
-    const {data:updated,error} = await client.from("deliveries").update({status,result_note:note || null}).eq("id",deliveryId).eq("status",delivery.status).select("id,status").single();
-    if (error) throw error;
-    const eventMap = {in_transit:"departure",at_destination:"arrival",completed:"completed",failed:"failed"};
-    const {error:eventError} = await client.from("delivery_events").insert({
-      delivery_id:deliveryId,event_type:eventMap[status],actor_profile_id:user.id,idempotency_key:crypto.randomUUID(),note:note || null
+    const {data,error} = await client.rpc("update_delivery_status_with_event", {
+      p_delivery_id: deliveryId,
+      p_status: status,
+      p_note: note || null,
+      p_idempotency_key: crypto.randomUUID()
     });
-    if (eventError) throw new Error("Status atualizado, mas não foi possível registrar o evento: " + eventError.message);
-    return updated;
+    if (error) throw error;
+    return data;
   }
   window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,assignDeliveriesToJourney,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
 })();
