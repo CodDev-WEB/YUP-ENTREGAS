@@ -877,7 +877,7 @@ document.querySelector('[data-view="planilha-combustivel"]')?.addEventListener("
 /* Fechamento manual das taxas diárias, com consumo automático por tipo de veículo. */
 const localDateKey = value => {const d=new Date(value);if(Number.isNaN(d.getTime()))return "";const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);const v=Object.fromEntries(p.map(x=>[x.type,x.value]));return v.year+"-"+v.month+"-"+v.day};
 function completedJourneysForDay(day){return (journeys||[]).filter(j=>j.status==="finished"&&j.finished_at_server&&localDateKey(j.finished_at_server)===day)}
-function journeyEfficiency(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel|vehicle/.test(type)?10:30}
+function journeyEfficiency(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel/.test(type)?10:30}
 function journeyVehicleType(j){return journeyEfficiency(j)===10?"Carro":"Moto"}
 function renderDailyRatesPreview(){
  const day=$("dailyRatesDate")?.value,fees=Number($("dailyRatesFees")?.value||0),price=Number($("dailyRatesFuelPrice")?.value||0);
