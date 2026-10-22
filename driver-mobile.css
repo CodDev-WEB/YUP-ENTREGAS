@@ -389,3 +389,29 @@ body.driver-mode #driverExperience .driver-manual-entry .driver-form{padding:16p
   body.driver-mode #driverExperience .driver-pending-order{grid-template-columns:minmax(0,1fr) auto;align-items:center}
   body.driver-mode #driverExperience .driver-pending-order button{width:auto;max-width:210px}
 }
+
+
+/* Corrige o conteúdo da jornada inicial: respiro lateral em textos, campos e cartões. */
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent{
+  padding:22px clamp(16px, 4.5vw, 24px) calc(28px + env(safe-area-inset-bottom)) !important;
+}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent > *{
+  width:100%;
+  max-width:680px;
+  margin-left:auto !important;
+  margin-right:auto !important;
+}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent .driver-home,
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent .driver-start-sheet{
+  min-width:0;
+  width:100%;
+}
+body.driver-mode #driverExperience.driver-home-mode #driverScreenContent :is(input,select,textarea,button){
+  max-width:100%;
+}
+@media(max-width:380px){
+  body.driver-mode #driverExperience.driver-home-mode #driverScreenContent{
+    padding-left:15px !important;
+    padding-right:15px !important;
+  }
+}
