@@ -184,6 +184,7 @@
     const {data,error}=await client.from("deliveries").insert({
       journey_id:input.journeyId||null,created_by:user.id,
       created_source:input.journeyId?"driver":"management",
+      order_no:String(input.orderReference||"").trim()||undefined,
       neighborhood_id:input.neighborhoodId||null,address,
       reference:String(input.reference||"").trim().toLocaleUpperCase("pt-BR")||null,
       map_link:String(input.mapLink||"").trim()||null,
