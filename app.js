@@ -152,6 +152,9 @@ async function refresh(){
   const catalogNeighborhood=$("deliveryCatalogForm")?.elements.neighborhood;
   if(catalogNeighborhood){const selected=catalogNeighborhood.value;fillSelect(catalogNeighborhood,neighborhoods,"id",n=>n.name,neighborhoods.length?"Selecione o bairro":"Nenhum bairro ativo encontrado");catalogNeighborhood.value=selected;}
 
+  const catalogNeighborhood=$("deliveryCatalogForm")?.elements.neighborhood;
+  if(catalogNeighborhood){const selected=catalogNeighborhood.value;fillSelect(catalogNeighborhood,neighborhoods,"id",n=>n.name,neighborhoods.length?"Selecione o bairro":"Nenhum bairro ativo encontrado");catalogNeighborhood.value=selected;}
+
   fillSelect($("routePlanDriver"),drivers,"id",d=>d.registration_no+" — "+d.full_name,drivers.length?"Selecione o entregador":"Nenhum entregador ativo vinculado");
   $("routePlanStopsEditor")?.querySelectorAll('.route-stop-editor select[name="neighborhood"]').forEach(select=>{
    const selected=select.value;select.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("");select.value=selected;
