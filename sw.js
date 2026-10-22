@@ -6,7 +6,7 @@ const ASSETS = [
   "./sales-portal.js?v=2",
   "./driver-access.js",
   "./styles.css",
-  "./styles.css?v=86",
+  "./styles.css?v=87",
   "./app.js?v=12",
   "./driver-mobile.css?v=7",
   "./driver-mobile.js?v=1",
