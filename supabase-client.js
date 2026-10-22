@@ -194,19 +194,21 @@
     const client=await requireReady();
     const ids=[...new Set((deliveryIds||[]).filter(Boolean))];
     if(!journeyId||!ids.length)throw new Error("Selecione pelo menos uma entrega pendente.");
-    const {data:journey,error:jError}=await client.from("journeys").select("id,status").eq("id",journeyId).eq("status","open").single();
-    if(jError)throw jError;
-    const {data:existing,error:eError}=await client.from("deliveries").select("id,sequence_no").eq("journey_id",journeyId).order("sequence_no",{ascending:false}).limit(1);
-    if(eError)throw eError;
-    let sequence=(existing?.[0]?.sequence_no||0)+1;
-    const assigned=[];
-    for(const id of ids){
-      const {data,error}=await client.from("deliveries").update({journey_id:journeyId,sequence_no:sequence,status:"pending"}).eq("id",id).is("journey_id",null).eq("status","pending").select("id,journey_id,sequence_no").maybeSingle();
-      if(error)throw error;
-      if(data){assigned.push(data);sequence++;}
+
+    // A atribuição é feita no PostgreSQL em uma única transação.
+    // Isso evita atualização parcial quando um pedido já foi atribuído em outro dispositivo.
+    const {data,error}=await client.rpc("assign_pending_deliveries_to_journey",{
+      p_journey_id:journeyId,
+      p_delivery_ids:ids
+    });
+    if(error){
+      const message=error.message||"Não foi possível atribuir as entregas.";
+      if(/já foram atribuídas|não estão pendentes|atualize a lista/i.test(message)){
+        throw new Error("Um ou mais pedidos já foram atribuídos ou não estão pendentes. Atualize a lista e tente novamente.");
+      }
+      throw new Error(message);
     }
-    if(!assigned.length)throw new Error("As entregas selecionadas já foram atribuídas ou não estão pendentes. Atualize a lista.");
-    return assigned;
+    return data;
   }
   async function updateDeliveryStatus({deliveryId,status,note}) {
     const client = await requireReady();
