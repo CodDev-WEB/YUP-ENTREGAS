@@ -1990,3 +1990,8 @@ body.driver-mode #driverExperience #driverScreenContent{display:block!important;
 body.driver-mode #driverExperience #driverScreenContent>*{max-height:none!important;overflow:visible!important}
 body.driver-mode #driverExperience #driverBottom{position:relative!important;flex:0 0 auto!important;z-index:30!important;padding-bottom:env(safe-area-inset-bottom)!important}
 body.driver-mode #driverExperience.driver-home-mode #driverScreenContent{height:0!important;min-height:0!important;overflow-y:auto!important}
+
+/* Ações principais ficam exclusivamente na barra fixa inferior do entregador */
+body.driver-mode #driverExperience .driver-screen-content form.driver-form > button[type="submit"],
+body.driver-mode #driverExperience .driver-screen-content form.driver-start-form > button[type="submit"],
+body.driver-mode #driverExperience .driver-screen-content form button.driver-form-submit{display:none!important}
