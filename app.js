@@ -913,6 +913,9 @@ $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
   const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value),motoEff=Number($("dailyRatesMotoEfficiency").value),carEff=Number($("dailyRatesCarEfficiency").value);
   if(!day||fees<0||price<0||motoEff<=0||carEff<=0)throw new Error("Confira a data, o total das taxas, o preço do litro e os consumos médios da moto e do carro.");
   await refresh();
+  const {data:existingClosure,error:closureLookupError}=await client.from("daily_journey_rates").select("entry_date").eq("entry_date",day).maybeSingle();
+  if(closureLookupError)throw closureLookupError;
+  if(existingClosure)throw new Error("Este dia já foi fechado. Para preservar os lançamentos anteriores, ajustes no preço do combustível ou no consumo não recalculam um fechamento existente.");
   const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
   const rate=fees/list.length;
   const {error:dailyError}=await client.from("daily_journey_rates").upsert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:Number((list.reduce((sum,j)=>sum+journeyEfficiency(j),0)/list.length).toFixed(2)),journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()},{onConflict:"entry_date"});
