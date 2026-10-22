@@ -24,7 +24,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           set -e
-          for file in app.js auth-ui.js driver-access.js supabase-client.js supabase-config.js sw.js _worker.js; do
+          for file in app.js auth-ui.js driver-access.js driver-mobile.js sales-portal.js supabase-client.js supabase-config.js sw.js _worker.js; do
             node --check "$file"
           done
       - name: Verify driver action bar and form contracts
@@ -32,7 +32,12 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const app = fs.readFileSync('app.js', 'utf8');
+          const sales = fs.readFileSync('sales-portal.js', 'utf8');
+          const html = fs.readFileSync('index.html', 'utf8');
           const checks = [
+            ['sales area integrated into main application', html.includes('id="view-vendas"')],
+            ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
+            ['sales role is restricted to its view', html.includes('data-sales-view')],
             ['start action uses fixed dock', app.includes('form="driverStartForm"')],
             ['new delivery submits from dock', app.includes('data-driver-submit="driverNewForm"')],
             ['occurrence submits from dock', app.includes('data-driver-submit="driverOccurrenceForm"')],
@@ -54,11 +59,11 @@ jobs:
       - name: Check required files, links and public configuration
         run: |
           set -e
-          for file in index.html app.js styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql supabase/route-plans-migration.sql; do
+          for file in index.html app.js auth-ui.js sales-portal.js vendas.html styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql supabase/route-plans-migration.sql; do
             test -s "$file"
           done
           grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
-          grep -q 'styles.css?v=66' index.html
+          grep -q 'styles.css?v=72' index.html
           grep -q 'yup-brand.svg' app.js
           ! grep -Eiq 'service_role|SUPABASE_SERVICE_ROLE_KEY' index.html app.js auth-ui.js supabase-client.js supabase-config.js
           ! grep -Fq '\\n\\n\\n' index.html
