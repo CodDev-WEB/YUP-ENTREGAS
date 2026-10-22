@@ -166,6 +166,9 @@
   }
   async function finishJourney({journeyId,odometerEnd}) {
     const client = await requireReady();
+    const {count:deliveryCount,error:deliveryCountError}=await client.from("deliveries").select("id",{count:"exact",head:true}).eq("journey_id",journeyId);
+    if(deliveryCountError)throw deliveryCountError;
+    if(!deliveryCount)throw new Error("A jornada precisa ter pelo menos uma entrega cadastrada antes de ser encerrada.");
     const {data,error} = await client.from("journeys").update({status:"finished",odometer_end:Number(odometerEnd)}).eq("id",journeyId).eq("status","open").select("id,status,odometer_end,finished_at_server").single();
     if (error) throw error;
     return data;
