@@ -2535,3 +2535,8 @@ body.sales-mode .topbar .sales-brand-logo{
 
 /* Gráfico semanal compacto com valores legíveis e barras proporcionais. */
 .weekly-data-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.weekly-data-card{border:1px solid var(--border-color,#dbe3df);border-radius:12px;padding:12px;min-width:0}.weekly-data-card h4{font-size:13px;margin:0 0 12px}.weekly-bars{display:grid;gap:10px}.weekly-bar-row{min-width:0}.weekly-bar-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11px}.weekly-bar-heading strong{font-size:11px;text-align:right;overflow-wrap:anywhere}.weekly-bar-track{height:6px;background:rgba(120,130,125,.14);border-radius:8px;overflow:hidden;margin-top:4px}.weekly-bar-track span{display:block;height:100%;border-radius:8px;min-width:0}
+
+/* Respiro visual entre o gráfico semanal e a tabela de resultados. */
+#odometerWeeklyReport{margin-top:24px;}
+#odometerWeeklyReport table{border-collapse:separate;border-spacing:0;}
+@media(max-width:700px){#odometerWeeklyReport{margin-top:18px;}}
