@@ -857,12 +857,12 @@ function renderOdoReports(){
  const weeklyAll=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date));
  const todayKey=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
  const currentWeekStart=odoWeekStart(todayKey);
- const range=$("weeklyRange")?.value||"5";
+ const range=$("weeklyRange")?.value||"current";
  const firstDataWeek=weeklyAll.map(x=>x.key).sort()[0]||currentWeekStart;
  const firstAllowed=range==="all"?new Date(firstDataWeek+"T12:00:00"):new Date(currentWeekStart+"T12:00:00");
- if(range!=="all")firstAllowed.setDate(firstAllowed.getDate()-7*(Math.max(1,Number(range)||5)-1));
+ if(range!=="all"&&range!=="current")firstAllowed.setDate(firstAllowed.getDate()-7*(Math.max(1,Number(range)||5)-1));
  const weekStarts=[],cursor=new Date(firstAllowed),current=new Date(currentWeekStart+"T12:00:00");
- while(cursor<=current){weekStarts.push(cursor.toISOString().slice(0,10));cursor.setDate(cursor.getDate()+7)}
+ while(cursor<=current){weekStarts.push(cursor.toISOString().slice(0,10));cursor.setDate(cursor.getDate()+7);if(range==="current")break}
  const weekly=weekStarts.map(key=>{const found=weeklyAll.find(x=>x.key===key);return found?{...found,key:odoWeekLabel(key)}:{key:odoWeekLabel(key),km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
  renderWeeklyChart(weekly);
  function renderWeeklyChart(data){
