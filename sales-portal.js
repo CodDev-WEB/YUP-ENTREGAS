@@ -19,7 +19,7 @@
   try{
    const {data:{user},error:userError}=await backend.client.auth.getUser();
    if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
-   const {data,error}=await backend.client.from("deliveries").select("id,order_no,customer_order_ref,address,priority,status,created_at,neighborhoods(name)").eq("created_by",user.id).is("journey_id",null).order("created_at",{ascending:false}).limit(30);
+   const {data,error}=await backend.client.from("deliveries").select("id,order_no,customer_order_ref,address,priority,status,created_at,neighborhoods(name)").eq("created_by",user.id).order("created_at",{ascending:false}).limit(30);
    if(error)throw error;
    if(!data?.length){target.innerHTML='<div class="sales-empty">Você ainda não cadastrou entregas.</div>';return;}
    target.innerHTML=data.map(item=>'<article class="sales-order"><strong>'+esc(item.customer_order_ref||("Entrega "+item.order_no))+' · '+esc(item.address)+'</strong><span>'+esc(item.neighborhoods?.name||"Bairro não informado")+' · '+esc(({pending:"Pendente",in_transit:"Em deslocamento",at_destination:"No endereço",completed:"Concluída",failed:"Não realizada"})[item.status]||item.status)+'</span><small>Cadastrada em '+new Date(item.created_at).toLocaleString("pt-BR")+'</small><span class="sales-pill">'+esc(({normal:"Prioridade normal",high:"Prioridade alta",scheduled:"Agendada"})[item.priority]||item.priority)+'</span></article>').join("");
