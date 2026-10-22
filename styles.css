@@ -2048,3 +2048,18 @@ body:not(.driver-mode):has(#authGate:not(.hidden)) .auth-card {
   border-color: rgba(34,86,64,.14) !important;
   box-shadow: 0 16px 42px rgba(34,86,64,.14) !important;
 }
+
+/* Botão principal do login: azul da paleta YUP. */
+body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton {
+  background: #55bbd1 !important;
+  border-color: #319db6 !important;
+  color: #173b45 !important;
+  box-shadow: 0 5px 14px rgba(49,157,182,.22) !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton:hover {
+  background: #42aec5 !important;
+  border-color: #258da6 !important;
+}
+body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton:focus-visible {
+  outline-color: rgba(49,157,182,.4) !important;
+}
