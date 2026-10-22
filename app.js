@@ -413,6 +413,10 @@ function appendRoutePlanStop(){
  card.querySelector(".route-stop-remove").addEventListener("click",()=>{card.remove();refreshRoutePlanStopControls();});
  card.querySelector('[data-stop-move="up"]').addEventListener("click",()=>{const previous=card.previousElementSibling;if(previous)target.insertBefore(card,previous);refreshRoutePlanStopControls();});
  card.querySelector('[data-stop-move="down"]').addEventListener("click",()=>{const next=card.nextElementSibling;if(next)target.insertBefore(next,card);refreshRoutePlanStopControls();});
+ card.querySelectorAll('input:not([type="url"])').forEach(input=>input.addEventListener("input",()=>{
+  const start=input.selectionStart,end=input.selectionEnd,upper=input.value.toLocaleUpperCase("pt-BR");
+  if(input.value!==upper){input.value=upper;try{input.setSelectionRange(start,end)}catch(_){}}
+ }));
  card.addEventListener("input",refreshRoutePlanStopControls);
  card.addEventListener("change",refreshRoutePlanStopControls);
  target.append(card);
