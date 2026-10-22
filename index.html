@@ -100,34 +100,23 @@
       <p class="warning">Aviso: os dados são locais e não são compartilhados com outros usuários ou dispositivos.</p>
     </div>
     <div id="view-rotas" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">PLANEJAMENTO OPERACIONAL</p><h1>Rotas de entrega</h1><p>Rota e jornada são o mesmo fluxo operacional. A origem registra quem iniciou o cadastro: entregador ou administração/vendas.</p></div></div>
+      <div class="page-heading"><div><p class="eyebrow">PEDIDOS E OPERAÇÃO</p><h1>Entregas</h1><p>Cadastre pedidos pendentes. O entregador seleciona quais levará depois de iniciar a jornada.</p></div></div>
       <article class="panel">
-        <div class="panel-title"><div><h2>Cadastrar rota/jornada</h2><p>Defina o responsável e organize as paradas que farão parte da jornada.</p></div></div>
-        <form id="routePlanForm">
-          <div class="route-plan-intro">
-            <span class="route-plan-step">1</span>
-            <div><strong>Identifique a jornada</strong><p>Dê um nome fácil de reconhecer e escolha o entregador responsável.</p></div>
-          </div>
-          <div class="form-grid">
-            <label>Nome da rota/jornada<input name="title" required maxlength="100" placeholder="Ex.: Centro — manhã"></label>
-            <label>Entregador responsável<select id="routePlanDriver" name="driver" required><option value="">Selecione o entregador</option></select></label>
-          </div>
-          <div class="panel-title route-editor-title">
-            <div><h3>2. Organize as paradas</h3><p>Adicione os endereços e ajuste a sequência da jornada.</p></div>
-            <button class="button secondary" type="button" id="addRouteStop">＋ Adicionar parada</button>
-          </div>
-          <div id="routePlanStopsEditor" class="route-plan-stops-editor"></div>
-          <div class="route-plan-summary" aria-live="polite">
-            <div><strong id="routePlanStopCount">1 parada</strong><span>na rota</span></div>
-            <button class="button secondary" type="button" id="previewRoutePlan">Visualizar no Google Maps</button>
-          </div>
-          <div class="route-plan-actions"><button class="button primary" type="submit" id="saveRoutePlan">Salvar e atribuir rota</button></div>
-          <p id="routePlanMessage" class="hint" role="status">A rota ficará disponível para o entregador selecionado assim que for salva.</p>
+        <div class="panel-title"><div><h2>Cadastrar entrega de pedido</h2><p>O pedido ficará disponível para os entregadores até ser adicionado a uma jornada.</p></div></div>
+        <form id="deliveryCatalogForm" class="form-grid">
+          <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
+          <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option></select></label>
+          <label class="wide">Endereço completo<input name="address" required maxlength="300" placeholder="Rua, número, complemento"></label>
+          <label>Referência (opcional)<input name="reference" maxlength="250" placeholder="Ponto de referência"></label>
+          <label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label>
+          <label class="wide">Link de localização do cliente (opcional)<input name="mapLink" type="url" placeholder="Cole o link do Google Maps ou WhatsApp"></label>
+          <div class="form-action wide"><button class="button primary" type="submit">＋ Cadastrar entrega pendente</button></div>
         </form>
+        <p id="deliveryCatalogMessage" class="hint" role="status"></p>
       </article>
       <article class="panel">
-        <div class="panel-title"><div><h2>Rotas e jornadas cadastradas</h2><p>Acompanhe quem cadastrou, quem executa e o andamento operacional.</p></div></div>
-        <div id="routePlansList" class="route-plans-list"><p class="hint">Carregando rotas…</p></div>
+        <div class="panel-title"><div><h2>Pedidos pendentes</h2><p>Entregas cadastradas pela administração/vendas e ainda não adicionadas a uma jornada.</p></div><button class="button secondary" id="refreshDeliveryCatalog" type="button">Atualizar</button></div>
+        <div id="deliveryCatalogList"><p class="hint">Carregando entregas…</p></div>
       </article>
     </div>
     <div id="view-combustivel" class="view hidden">
