@@ -2506,3 +2506,7 @@ body.sales-mode .topbar .sales-brand-logo{
 .fuel-efficiency{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .fuel-efficiency p{margin:0;padding:14px;border:1px solid var(--line);border-radius:10px}
 @media(max-width:700px){.fuel-efficiency{grid-template-columns:1fr}}
+
+#dailyJourneyRatesForm .form-action{display:flex;gap:10px;flex-wrap:wrap}
+#dailyRatesJourneys{margin-top:14px}
+#dailyRatesJourneys table{min-width:760px}
