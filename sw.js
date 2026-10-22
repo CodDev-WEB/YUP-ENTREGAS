@@ -1,4 +1,4 @@
-const CACHE = "yup-entregas-shell-v83";
+const CACHE = "yup-entregas-shell-v84";
 const ASSETS = [
   "./",
   "./index.html",
