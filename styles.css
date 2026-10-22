@@ -2063,3 +2063,33 @@ body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton:hover {
 body:not(.driver-mode):has(#authGate:not(.hidden)) #loginButton:focus-visible {
   outline-color: rgba(160,130,0,.4) !important;
 }
+
+
+/* Editor de rotas — fluxo de despacho mais claro e controles acessíveis. */
+.route-plan-intro{display:flex;align-items:flex-start;gap:12px;margin:4px 0 16px}
+.route-plan-intro>div{min-width:0}
+.route-plan-intro strong{display:block;font-size:14px}
+.route-plan-intro p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.route-plan-step{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:10px;background:#fcde52;color:#202a31;font-size:13px;font-weight:850}
+.route-stop-editor-title{display:flex;align-items:center;gap:9px;min-width:0}
+.route-stop-number{display:grid;place-items:center;flex:0 0 28px;height:28px;border-radius:9px;background:#fcde52;color:#202a31;font-size:12px;font-weight:850}
+.route-stop-editor-tools{display:flex;align-items:center;gap:5px}
+.route-stop-move{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line-strong);border-radius:9px;background:#fff;color:var(--text);font-size:17px;font-weight:800;cursor:pointer}
+.route-stop-move:hover:not(:disabled){background:#f3f8f5;border-color:#b8d6c2}
+.route-stop-move:disabled{opacity:.35;cursor:not-allowed}
+.route-stop-remove{min-height:34px;border-radius:9px}
+.route-plan-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:13px 14px;border:1px solid #e4eae6;border-radius:12px;background:#f8faf9}
+.route-plan-summary>div{display:flex;align-items:baseline;gap:5px;min-width:0}
+.route-plan-summary strong{font-size:14px}
+.route-plan-summary span{font-size:12px;color:var(--muted)}
+.route-plan-summary .button{min-height:40px}
+.route-plan-summary .button:disabled{opacity:.45;cursor:not-allowed}
+#routePlanForm>label{display:flex;flex-direction:column}
+@media(max-width:600px){
+ .route-plan-intro{margin-bottom:14px}
+ .route-plan-summary{align-items:stretch;flex-direction:column}
+ .route-plan-summary .button{width:100%}
+ .route-stop-editor-tools{gap:3px}
+ .route-stop-move{width:32px;height:34px}
+ .route-stop-remove{padding:6px}
+}
