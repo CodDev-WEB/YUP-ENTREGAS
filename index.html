@@ -170,19 +170,6 @@
           </form>
           <div id="dailyRatesJourneys" class="table-wrap"></div>
         </article>
-        <article class="panel"><h2>Novo lançamento diário</h2><p class="hint">Baseado na aba LANÇAMENTOS da planilha enviada.</p>
-          <form id="odometerForm" class="form-grid">
-            <label>Data<input id="odoDate" type="date" required></label>
-            <label>Veículo<select id="odoVehicle" required><option value="">Selecione</option><option>C</option><option>MP</option><option>MV</option></select></label>
-            <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required></label>
-            <label>Odômetro final (km)<input id="odoEnd" type="number" min="0" step="0.1" required></label>
-            <label>Quantidade de entregas<input id="odoDeliveries" type="number" min="0" step="1" value="0" required></label>
-            <label>Ganhos (R$)<input id="odoRevenue" type="number" min="0" step="0.01" required></label>
-            <label>Combustível (R$)<input id="odoFuel" type="number" min="0" step="0.01" required></label>
-            <div id="odoLiveSummary" class="fuel-live-summary wide">Informe os odômetros para calcular KM rodado e lucro líquido.</div>
-            <div class="form-action wide"><button class="button primary" type="submit">Salvar lançamento</button></div>
-          </form>
-        </article>
         <article class="panel"><div class="panel-title"><div><h2>Lançamentos registrados</h2></div><button class="button secondary" type="button" id="refreshOdometer">Atualizar</button></div><div id="odometerHistory" class="table-wrap"><p class="hint">Aguardando conexão com o banco de dados.</p></div></article>
       </section>
       <section data-fuel-panel="semanal" class="fuel-tab-panel hidden"><article class="panel"><h2>Relatório semanal</h2><div class="weekly-chart-panel"><h3>Desempenho por semana</h3><p class="hint">Semana considerada de segunda-feira a sábado; domingos ficam fora do relatório semanal. Comparativo de quilômetros rodados, ganhos e lucro com base nos lançamentos.</p><div id="odometerWeeklyChart" class="weekly-chart"></div></div><div id="odometerWeeklyReport" class="table-wrap"></div></article></section>
