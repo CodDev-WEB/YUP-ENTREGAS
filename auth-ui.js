@@ -139,11 +139,6 @@
       $("loginButton").disabled = false;
     }
   });
-  const salesHeaderBack = $("salesHeaderBack");
-  salesHeaderBack?.addEventListener("click", () => {
-    if (window.history.length > 1) window.history.back();
-    else salesHeaderBack.blur();
-  });
   $("logoutButton").addEventListener("click", async () => {
     await window.YupBackend.signOut();
     location.reload();
