@@ -2510,3 +2510,8 @@ body.sales-mode .topbar .sales-brand-logo{
 #dailyJourneyRatesForm .form-action{display:flex;gap:10px;flex-wrap:wrap}
 #dailyRatesJourneys{margin-top:14px}
 #dailyRatesJourneys table{min-width:760px}
+
+
+/* Fechamento diário: consumos em coluna para facilitar a leitura por tipo de veículo. */
+.daily-efficiency-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;}
+.daily-efficiency-fields label{display:flex;flex-direction:column;gap:6px;}
