@@ -384,13 +384,47 @@ const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=time
   return '<article class="route-plan-card"><div class="route-plan-card-head"><div><span class="route-plan-eyebrow">'+stops.length+' parada(s)</span><h3>'+esc(plan.title)+'</h3><p>'+esc(driverName)+'</p></div><span class="route-plan-status '+(journey?.status==="open"?"is-active":journey?.status==="finished"?"is-done":"")+'">'+status+'</span></div><ol>'+stops.map(stop=>'<li><span>'+stop.sequence_no+'</span><div><strong>'+esc(stop.address)+'</strong><small>'+esc(stop.neighborhoods?.name||"Bairro não informado")+(stop.reference?" · "+esc(stop.reference):"")+'</small></div></li>').join("")+'</ol><p class="route-plan-date">Criada em '+fmtDate(plan.created_at)+'</p></article>';
  }).join("");
 }
+function refreshRoutePlanStopControls(){
+ const target=$("routePlanStopsEditor");if(!target)return;
+ const cards=[...target.querySelectorAll(".route-stop-editor")];
+ cards.forEach((card,index)=>{
+  card.querySelector(".route-stop-editor-head strong").textContent="Parada "+(index+1);
+  const up=card.querySelector('[data-stop-move="up"]'),down=card.querySelector('[data-stop-move="down"]');
+  if(up)up.disabled=index===0;
+  if(down)down.disabled=index===cards.length-1;
+ });
+ const count=$("routePlanStopCount");
+ if(count)count.textContent=cards.length+" "+(cards.length===1?"parada":"paradas");
+ const preview=$("previewRoutePlan");
+ if(preview)preview.disabled=!cards.some(card=>card.querySelector('[name="address"]').value.trim());
+}
 function appendRoutePlanStop(){
  const target=$("routePlanStopsEditor");if(!target)return;
  const n=target.querySelectorAll(".route-stop-editor").length+1;
  const card=document.createElement("section");card.className="route-stop-editor";
- card.innerHTML='<div class="route-stop-editor-head"><strong>Parada '+n+'</strong><button type="button" class="route-stop-remove" aria-label="Remover parada">Remover</button></div><div class="form-grid"><label>Bairro<select name="neighborhood"><option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("")+'</select></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label></div><label>Endereço completo<input name="address" required maxlength="400" placeholder="Rua, número, complemento"></label><div class="form-grid"><label>Ponto de referência<input name="reference" maxlength="250" placeholder="Opcional"></label><label>Link de localização<input name="mapLink" type="url" placeholder="Link do Google Maps (opcional)"></label></div>';
- card.querySelector(".route-stop-remove").addEventListener("click",()=>{card.remove();[...target.querySelectorAll(".route-stop-editor")].forEach((item,index)=>item.querySelector(".route-stop-editor-head strong").textContent="Parada "+(index+1));});
+ card.innerHTML='<div class="route-stop-editor-head"><div class="route-stop-editor-title"><span class="route-stop-number">'+n+'</span><strong>Parada '+n+'</strong></div><div class="route-stop-editor-tools"><button type="button" class="route-stop-move" data-stop-move="up" aria-label="Mover parada para cima" title="Mover para cima">↑</button><button type="button" class="route-stop-move" data-stop-move="down" aria-label="Mover parada para baixo" title="Mover para baixo">↓</button><button type="button" class="route-stop-remove" aria-label="Remover parada">Remover</button></div></div><div class="form-grid"><label>Bairro<select name="neighborhood"><option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("")+'</select></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label></div><label>Endereço completo<input name="address" required maxlength="400" placeholder="Rua, número, complemento"></label><div class="form-grid"><label>Ponto de referência<input name="reference" maxlength="250" placeholder="Opcional"></label><label>Link de localização<input name="mapLink" type="url" placeholder="Link do Google Maps (opcional)"></label></div>';
+ card.querySelector(".route-stop-remove").addEventListener("click",()=>{card.remove();refreshRoutePlanStopControls();});
+ card.querySelector('[data-stop-move="up"]').addEventListener("click",()=>{const previous=card.previousElementSibling;if(previous)target.insertBefore(card,previous);refreshRoutePlanStopControls();});
+ card.querySelector('[data-stop-move="down"]').addEventListener("click",()=>{const next=card.nextElementSibling;if(next)target.insertBefore(next,card);refreshRoutePlanStopControls();});
+ card.addEventListener("input",refreshRoutePlanStopControls);
+ card.addEventListener("change",refreshRoutePlanStopControls);
  target.append(card);
+ refreshRoutePlanStopControls();
+}
+function previewRoutePlan(){
+ const cards=[...$("routePlanStopsEditor").querySelectorAll(".route-stop-editor")];
+ const addressFor=card=>{
+  const address=card.querySelector('[name="address"]').value.trim();
+  const neighborhood=card.querySelector('[name="neighborhood"]');
+  const neighborhoodName=neighborhood.selectedOptions[0]?.textContent||"";
+  return [address,neighborhood.value?neighborhoodName:"", "Santarém, Pará, Brasil"].filter(Boolean).join(", ");
+ };
+ const stops=cards.map(addressFor).filter((address,index)=>cards[index].querySelector('[name="address"]').value.trim());
+ if(!stops.length){$("routePlanMessage").textContent="Adicione pelo menos um endereço antes de visualizar a rota.";return;}
+ const origin=stops[0],destination=stops[stops.length-1],waypoints=stops.slice(1,-1);
+ const params=new URLSearchParams({api:"1",origin,destination,travelmode:"driving"});
+ if(waypoints.length)params.set("waypoints",waypoints.join("|"));
+ window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
 }
 function render(){
  renderRoutePlans();
@@ -746,6 +780,7 @@ function renderDriverExperience(){
 }
 
 $("addRouteStop")?.addEventListener("click",appendRoutePlanStop);
+$("previewRoutePlan")?.addEventListener("click",previewRoutePlan);
 appendRoutePlanStop();
 $("routePlanForm")?.addEventListener("submit",async event=>{
  event.preventDefault();
