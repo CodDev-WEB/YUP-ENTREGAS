@@ -983,34 +983,32 @@ renderDailyRatesPreview();
 
 
 function parseHistoricalCsv(text){
- const lines=text.replace(/^\\uFEFF/,"").split(/\\r?\\n/).filter(x=>x.trim());
- if(lines.length<2)throw new Error("O arquivo não contém linhas de dados.");
+ const lines=String(text).replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
+ if(lines.length<2)throw new Error("O arquivo não contém linhas de dados. Exporte a planilha como CSV e tente novamente.");
  const delimiter=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?";":",";
  const parseLine=line=>{const out=[];let cur="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===delimiter&&!quoted){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out};
- const head=parseLine(lines[0]).map(x=>x.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,""));
- const aliases=[
-  ["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquidor","lucroliquido","lucro"]
- ];
+ const head=parseLine(lines[0]).map(x=>x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,""));
+ const aliases=[["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas","qtdentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquidor","lucroliquido","lucro"]];
  const indexes=aliases.map(group=>head.findIndex(h=>group.includes(h)));
- if(indexes.some(x=>x<0))throw new Error("Cabeçalho incompatível. Exporte a planilha com as 11 colunas originais.");
+ if(indexes.some(x=>x<0))throw new Error("Cabeçalho incompatível. São necessárias 11 colunas: Data, Semana, Mês, Km Inicial, Km Final, Km Rodado, Qtd de Entregas, Ganhos (R$), Combustível (R$), Veículo e Lucro Líquido (R$).");
  const out=[],seen=new Set(),issues=[];
- const number=v=>{const n=Number(String(v??"").replace(/R\\$/gi,"").replace(/\\s/g,"").replace(/\\.(?=\\d{3}(?:\\D|$))/g,"").replace(",", "."));return Number.isFinite(n)?n:NaN};
+ const number=v=>{let s=String(v??"").trim().replace(/R\$/gi,"").replace(/\s/g,"");if(s==="-"||s==="")return NaN;if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");const n=Number(s);return Number.isFinite(n)?n:NaN};
  lines.slice(1).forEach((line,ix)=>{
   const cells=parseLine(line);if(!cells.some(Boolean))return;
-  const rawDate=cells[indexes[0]]||"";
-  let date="";
-  if(/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDate))date=rawDate;
-  else {const m=rawDate.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})$/);if(m)date=m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+  const rawDate=(cells[indexes[0]]||"").replace(/^['"]|['"]$/g,"").trim();let date="";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(rawDate))date=rawDate;
+  else {const m=rawDate.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)date=m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
   const vals=indexes.map((j,k)=>k===0?date:cells[j]);
-  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]).trim(),deliveries=deliveriesRaw==="-"||deliveriesRaw===""?0:number(deliveriesRaw),revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
+  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),deliveries=deliveriesRaw==="-"||deliveriesRaw===""?0:number(deliveriesRaw),revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
   if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
-  if(!/^2026-06-01$/.includes(date)&&date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
+  if(date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
-  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(3),Number(fuel).toFixed(2)].join("|");
+  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
   if(seen.has(key))return;seen.add(key);
   out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
  });
  if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+(issues.length-8)+" problema(s).":""));
+ if(!out.length)throw new Error("Nenhum registro válido foi encontrado. Verifique o cabeçalho e o separador do CSV.");
  return out;
 }
 $("historicalImportFile")?.addEventListener("change",async e=>{
