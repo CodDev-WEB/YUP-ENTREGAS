@@ -989,7 +989,7 @@ function parseHistoricalCsv(text){
  const parseLine=line=>{const out=[];let cur="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===delimiter&&!quoted){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out};
  const head=parseLine(lines[0]).map(x=>x.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,""));
  const aliases=[
-  ["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquid or","lucroliquido","lucro"]
+  ["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquidor","lucroliquido","lucro"]
  ];
  const indexes=aliases.map(group=>head.findIndex(h=>group.includes(h)));
  if(indexes.some(x=>x<0))throw new Error("Cabeçalho incompatível. Exporte a planilha com as 11 colunas originais.");
