@@ -880,14 +880,33 @@ function renderOdoReports(){
   el.innerHTML='<div class="weekly-data-cards">'+data.map(g=>'<section class="weekly-data-card"><h4>'+esc(g.key)+'</h4><div class="weekly-bars">'+series.map(s=>{const v=Math.max(0,Number(g[s.key])||0),pct=Math.max(v>0?3:0,v/max*100);return '<div class="weekly-bar-row"><div class="weekly-bar-heading"><span>'+s.label+'</span><strong>'+s.fmt(v)+'</strong></div><div class="weekly-bar-track"><span style="width:'+pct+'%;background:'+colors[s.key]+'"></span></div></div>'}).join("")+'</div></section>').join("")+'</div>';
  }
  $("odometerWeeklyReport").innerHTML='<table><thead><tr><th>Semana</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM médio/entrega</th><th>Custo médio/entrega</th></tr></thead><tbody>'+weekly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
- const monthly=odoGroup(rows,r=>r.entry_date.slice(0,7));
- $("odometerMonthlyReport").innerHTML='<table><thead><tr><th>Mês</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th></tr></thead><tbody>'+monthly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td></tr>').join("")+'</tbody></table>';
+ const monthlyAll=odoGroup(rows,r=>r.entry_date.slice(0,7));
+ const todayMonth=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"}).slice(0,7);
+ const monthRange=$("monthlyRange")?.value||"current";
+ const firstMonth=monthlyAll.map(x=>x.key).sort()[0]||todayMonth;
+ const startMonth=new Date((monthRange==="all"?firstMonth:todayMonth)+"-01T12:00:00");
+ if(monthRange!=="all"&&monthRange!=="current")startMonth.setMonth(startMonth.getMonth()-(Math.max(1,Number(monthRange)||5)-1));
+ const monthKeys=[],monthCursor=new Date(startMonth),currentMonthDate=new Date(todayMonth+"-01T12:00:00");
+ while(monthCursor<=currentMonthDate){monthKeys.push(monthCursor.getFullYear()+"-"+String(monthCursor.getMonth()+1).padStart(2,"0"));monthCursor.setMonth(monthCursor.getMonth()+1);if(monthRange==="current")break}
+ const monthly=monthKeys.map(key=>{const found=monthlyAll.find(x=>x.key===key);return found?{...found,key}: {key,km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
+ renderMonthlyChart(monthly);
+ $("odometerMonthlyReport").innerHTML='<table><thead><tr><th>Mês</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM médio/entrega</th><th>Custo médio/entrega</th></tr></thead><tbody>'+monthly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
+ function renderMonthlyChart(data){
+  const el=$("odometerMonthlyChart");if(!el)return;
+  if(!data.length){el.innerHTML='<p class="hint">Ainda não há meses para exibir.</p>';return}
+  const fmt=v=>Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
+  const series=[{key:"km",label:"KM rodados",fmt:v=>fmt(v)+" km"},{key:"deliveries",label:"Entregas",fmt:v=>fmt(v)},{key:"revenue",label:"Ganhos",fmt:odoMoney},{key:"fuel",label:"Combustível",fmt:odoMoney},{key:"profit",label:"Lucro",fmt:odoMoney}];
+  const max=Math.max(1,...data.flatMap(g=>series.map(s=>Math.max(0,Number(g[s.key])||0))));
+  const colors={km:"#2563eb",deliveries:"#8b5cf6",revenue:"#16a34a",fuel:"#f59e0b",profit:"#0ea5e9"};
+  el.innerHTML='<div class="weekly-data-cards">'+data.map(g=>'<section class="weekly-data-card"><h4>'+esc(g.key)+'</h4><div class="weekly-bars">'+series.map(s=>{const v=Math.max(0,Number(g[s.key])||0),pct=Math.max(v>0?3:0,v/max*100);return '<div class="weekly-bar-row"><div class="weekly-bar-heading"><span>'+s.label+'</span><strong>'+s.fmt(v)+'</strong></div><div class="weekly-bar-track"><span style="width:'+pct+'%;background:'+colors[s.key]+'"></span></div></div>'}).join("")+'</div></section>').join("")+'</div>';
+ }
  const vehicles=odoGroup(rows,r=>r.vehicle_code);
  $("odometerVehicleReport").innerHTML='<table><thead><tr><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th><th>KM/entrega</th><th>Custo/KM</th></tr></thead><tbody>'+vehicles.map(x=>'<tr><td>'+esc(x.key)+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.km?x.fuel/x.km:0)+'</td></tr>').join("")+'</tbody></table>';
  const t=odoTotals(rows);$("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
  $("odometerEfficiency").innerHTML='<p><strong>Custo médio/KM</strong><br>'+odoMoney(t.km?t.fuel/t.km:0)+'</p><p><strong>Custo por entrega</strong><br>'+odoMoney(t.deliveries?t.fuel/t.deliveries:0)+'</p><p><strong>Ganho por entrega</strong><br>'+odoMoney(t.deliveries?t.revenue/t.deliveries:0)+'</p><p><strong>Ganho por KM</strong><br>'+odoMoney(t.km?t.revenue/t.km:0)+'</p>';
 }
 $("weeklyRange")?.addEventListener("change",renderOdoReports);
+$("monthlyRange")?.addEventListener("change",renderOdoReports);
 async function loadOdoEntries(){
  const client=backend?.client;if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
  const {data,error}=await client.from("odometer_entries").select("*").order("entry_date",{ascending:false}).limit(5000);
