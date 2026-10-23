@@ -2545,3 +2545,5 @@ body.sales-mode .topbar .sales-brand-logo{
 #odometerMonthlyChart,#odometerWeeklyChart{margin-bottom:22px;}
 #odometerMonthlyReport,#odometerWeeklyReport{margin-top:18px;}
 #odometerMonthlyReport table,#odometerWeeklyReport table{margin-top:0;}
+
+.historical-import-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 18px}.historical-import-summary>div{border:1px solid var(--border-color,#dbe3df);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}.historical-import-summary span{font-size:11px;color:var(--muted,#65736b)}.historical-import-summary strong{font-size:15px;overflow-wrap:anywhere}
