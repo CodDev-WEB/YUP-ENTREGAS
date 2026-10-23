@@ -6,6 +6,7 @@ alter table public.odometer_entries add column if not exists historical_driver t
 alter table public.odometer_entries add column if not exists historical_week integer;
 alter table public.odometer_entries add column if not exists historical_month integer;
 alter table public.odometer_entries add column if not exists historical_profit numeric(12,2);
-create unique index if not exists odometer_entries_historical_key_unique on public.odometer_entries(historical_import_key) where historical_import_key is not null;
+drop index if exists public.odometer_entries_historical_key_unique;
+create unique index odometer_entries_historical_key_unique on public.odometer_entries(historical_import_key);
 grant select,insert,update on public.odometer_entries to authenticated;
 notify pgrst, 'reload schema';
