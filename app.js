@@ -856,7 +856,7 @@ const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1
 function odoWeekStart(value){const d=new Date(value+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}
 function odoWeekLabel(value){const start=new Date(odoWeekStart(value)+"T12:00:00"),end=new Date(start);end.setDate(end.getDate()+5);return start.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+end.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
 function odoWeek(value){return odoWeekLabel(value)}
-function odoTotals(rows){return rows.reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
+function odoTotals(rows){return rows.reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=r.historical_profit!=null?Number(r.historical_profit):Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
 function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m.entries()].map(([key,list])=>({key,...odoTotals(list)}))}
 function renderOdoReports(){
  const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
@@ -1022,9 +1022,19 @@ $("historicalImportButton")?.addEventListener("click",async()=>{
  if(!confirm("Confirmar importação de "+historicalImportRows.length+" registros históricos?\\nGanhos: "+odoMoney(totalRevenue)+"\\nCombustível: "+odoMoney(totalFuel)+"\\nLucro líquido informado: "+odoMoney(totalProfit)+"\\nRegistros já importados serão ignorados.") )return;
  const button=$("historicalImportButton");button.disabled=true;
  try{const client=backend?.client;if(!client)throw new Error("Supabase não conectado.");
-  const {error}=await client.from("odometer_entries").upsert(historicalImportRows,{onConflict:"historical_import_key",ignoreDuplicates:true});
-  if(error)throw error;
-  $("historicalImportStatus").textContent="Importação processada: "+historicalImportRows.length+" registros analisados. Registros com a mesma chave histórica foram ignorados para evitar duplicação.";
-  await loadOdoEntries();notify("Importação histórica concluída. Confira os relatórios semanal e mensal.");
+  let inserted=0;
+  for(let offset=0;offset<historicalImportRows.length;offset+=250){
+   const batch=historicalImportRows.slice(offset,offset+250);
+   const {data,error}=await client.from("odometer_entries").upsert(batch,{onConflict:"historical_import_key",ignoreDuplicates:true}).select("id");
+   if(error)throw error;
+   inserted+=(data||[]).length;
+   $("historicalImportStatus").textContent="Enviando ao Supabase… "+Math.min(offset+batch.length,historicalImportRows.length)+" de "+historicalImportRows.length+" registros verificados.";
+  }
+  await loadOdoEntries();
+  const verifiedKeys=new Set((odometerEntries||[]).map(r=>r.historical_import_key).filter(Boolean));
+  const verified=historicalImportRows.filter(r=>verifiedKeys.has(r.historical_import_key)).length;
+  if(verified<historicalImportRows.length)throw new Error("O Supabase respondeu, mas apenas "+verified+" de "+historicalImportRows.length+" chaves importadas foram encontradas ao recarregar. Verifique as permissões RLS e a migração.");
+  $("historicalImportStatus").textContent="Sincronização confirmada no Supabase: "+verified+" de "+historicalImportRows.length+" registros históricos encontrados. "+inserted+" inserido(s) agora; os demais já existiam e foram mantidos sem duplicação.";
+  notify("Histórico registrado e verificado no Supabase. "+inserted+" registro(s) novo(s); "+(verified-inserted)+" já existiam. Relatórios atualizados.");
  }catch(err){$("historicalImportStatus").textContent="Não foi possível importar: "+(err.message||err);button.disabled=false}
 });
