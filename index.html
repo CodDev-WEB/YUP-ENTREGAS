@@ -35,6 +35,7 @@
     <button class="nav" data-view="combustivel">◉ <span>Combustível</span></button>
     <button class="nav nav-subsection" data-view="planilha-combustivel"><span class="nav-submark">↳</span><span>Planilha de combustível</span></button>
     <button class="nav" data-view="manutencao">⚙ <span>Manutenção</span></button>
+    <button class="nav" data-view="importacao-historico">⇧ <span>Importação histórica</span></button>
     <div class="side-note"><strong>YUP Store</strong><p>Santarém — Pará</p><small>Jornadas e entregas sincronizadas pelo banco de dados.</small></div>
   </aside>
   <section class="content">
@@ -191,6 +192,17 @@
         <div class="form-action wide"><button class="button primary" type="submit">Registrar manutenção</button></div>
       </form></article>
       <article class="panel"><h2>Histórico de manutenção</h2><div id="maintenanceHistory" class="table-wrap"></div></article>
+    </div>
+    <div id="view-importacao-historico" class="view hidden">
+      <div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>Importação histórica</h1><p>Importe registros antigos de odômetro, entregas, ganhos e combustível para os relatórios, sem criar jornadas fictícias.</p></div></div>
+      <article class="panel">
+        <h2>Importar histórico de combustível</h2>
+        <p class="hint">Use um arquivo CSV exportado do Excel. As colunas devem seguir a planilha histórica: Data, Semana, Mês, Km Inicial, Km Final, Km Rodado, Quantidade de Entregas, Ganhos (R$), Combustível (R$), Veículo e Lucro Líquido (R$). O entregador será identificado como “Genérico (Histórico)” e bairro/jornada ficarão sem informação.</p>
+        <label>Arquivo CSV<input id="historicalImportFile" type="file" accept=".csv,text/csv"></label>
+        <p id="historicalImportStatus" class="hint">Selecione o CSV para validar os registros antes de importar.</p>
+        <div id="historicalImportPreview" class="table-wrap"></div>
+        <div class="form-action"><button id="historicalImportButton" class="button primary" type="button" disabled>Importar histórico validado</button></div>
+      </article>
     </div>
     <footer>YUP-ENTREGAS · MVP inicial · Não utilize dados reais de clientes antes da implantação segura.</footer>
   </section>
