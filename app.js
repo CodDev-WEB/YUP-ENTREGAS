@@ -1030,11 +1030,18 @@ $("historicalImportButton")?.addEventListener("click",async()=>{
    inserted+=(data||[]).length;
    $("historicalImportStatus").textContent="Enviando ao Supabase… "+Math.min(offset+batch.length,historicalImportRows.length)+" de "+historicalImportRows.length+" registros verificados.";
   }
-  await loadOdoEntries();
-  const verifiedKeys=new Set((odometerEntries||[]).map(r=>r.historical_import_key).filter(Boolean));
+  const verifiedKeys=new Set();
+  for(let offset=0;offset<historicalImportRows.length;offset+=250){
+   const keys=historicalImportRows.slice(offset,offset+250).map(r=>r.historical_import_key);
+   const {data,error}=await client.from("odometer_entries").select("historical_import_key").in("historical_import_key",keys);
+   if(error)throw error;
+   (data||[]).forEach(r=>{if(r.historical_import_key)verifiedKeys.add(r.historical_import_key)});
+   $("historicalImportStatus").textContent="Conferindo gravação no Supabase… "+Math.min(offset+keys.length,historicalImportRows.length)+" de "+historicalImportRows.length+" chaves verificadas.";
+  }
   const verified=historicalImportRows.filter(r=>verifiedKeys.has(r.historical_import_key)).length;
-  if(verified<historicalImportRows.length)throw new Error("O Supabase respondeu, mas apenas "+verified+" de "+historicalImportRows.length+" chaves importadas foram encontradas ao recarregar. Verifique as permissões RLS e a migração.");
-  $("historicalImportStatus").textContent="Sincronização confirmada no Supabase: "+verified+" de "+historicalImportRows.length+" registros históricos encontrados. "+inserted+" inserido(s) agora; os demais já existiam e foram mantidos sem duplicação.";
-  notify("Histórico registrado e verificado no Supabase. "+inserted+" registro(s) novo(s); "+(verified-inserted)+" já existiam. Relatórios atualizados.");
+  if(verified<historicalImportRows.length)throw new Error("O Supabase confirmou apenas "+verified+" de "+historicalImportRows.length+" registros. A importação não será marcada como concluída; confira as permissões RLS e a migração.");
+  await loadOdoEntries();
+  $("historicalImportStatus").textContent="GRAVAÇÃO CONFIRMADA NO SUPABASE: "+verified+" de "+historicalImportRows.length+" registros históricos localizados. "+inserted+" inserido(s) nesta operação; "+(verified-inserted)+" já existiam.";
+  notify("Gravação confirmada no Supabase: "+verified+" registros localizados. "+inserted+" novo(s); "+(verified-inserted)+" já existente(s). Relatórios atualizados.");
  }catch(err){$("historicalImportStatus").textContent="Não foi possível importar: "+(err.message||err);button.disabled=false}
 });
