@@ -985,7 +985,8 @@ renderDailyRatesPreview();
 function parseHistoricalCsv(text){
  const lines=text.replace(/^\\uFEFF/,"").split(/\\r?\\n/).filter(x=>x.trim());
  if(lines.length<2)throw new Error("O arquivo não contém linhas de dados.");
- const parseLine=line=>{const out=[];let cur="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out};
+ const delimiter=(lines[0].match(/;/g)||[]).length>(lines[0].match(/,/g)||[]).length?";":",";
+ const parseLine=line=>{const out=[];let cur="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===delimiter&&!quoted){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out};
  const head=parseLine(lines[0]).map(x=>x.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,""));
  const aliases=[
   ["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquid or","lucroliquido","lucro"]
