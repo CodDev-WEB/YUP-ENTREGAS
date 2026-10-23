@@ -15,6 +15,7 @@ function notify(text){alert(text)}
 function setBusy(form,busy){form.querySelectorAll("button").forEach(b=>b.disabled=busy)}
 function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+if(!admin){document.querySelector('[data-view="importacao-historico"]')?.classList.add("hidden");}
 function fillSelect(el,items,value,label,placeholder){if(!el){console.warn("YUP-ENTREGAS: seletor opcional ausente no HTML; preenchimento ignorado.");return}el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.append(first);(items||[]).forEach(item=>{const o=document.createElement("option");o.value=item[value];o.textContent=label(item);el.append(o)})}
 function ensureSelect(id,placeholder){const old=$(id);if(!old){console.warn("YUP-ENTREGAS: campo obrigatório ausente no HTML:",id);return null}if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
@@ -849,6 +850,7 @@ backend.subscribeToOperations(()=>{refresh();if($("timelineJourney")?.value)load
 refresh();
 /* Relatórios da planilha de odômetro — fonte centralizada no Supabase. */
 let odometerEntries = [];
+let historicalImportRows = [];
 const odoMoney = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
 function odoWeekStart(value){const d=new Date(value+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}
@@ -978,3 +980,50 @@ $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
 });
 if($("dailyRatesDate"))$("dailyRatesDate").value=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
 renderDailyRatesPreview();
+
+
+function parseHistoricalCsv(text){
+ const lines=text.replace(/^\\uFEFF/,"").split(/\\r?\\n/).filter(x=>x.trim());
+ if(lines.length<2)throw new Error("O arquivo não contém linhas de dados.");
+ const parseLine=line=>{const out=[];let cur="",quoted=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'&&line[i+1]==='"'&&quoted){cur+='"';i++}else if(ch==='"')quoted=!quoted;else if(ch===","&&!quoted){out.push(cur.trim());cur=""}else cur+=ch}out.push(cur.trim());return out};
+ const head=parseLine(lines[0]).map(x=>x.toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,""));
+ const aliases=[
+  ["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas"],["ganhosr","ganhos"],["combustivelr","combustivel"],["veiculo"],["lucroliquid or","lucroliquido","lucro"]
+ ];
+ const indexes=aliases.map(group=>head.findIndex(h=>group.includes(h)));
+ if(indexes.some(x=>x<0))throw new Error("Cabeçalho incompatível. Exporte a planilha com as 11 colunas originais.");
+ const out=[],seen=new Set(),issues=[];
+ const number=v=>{const n=Number(String(v??"").replace(/R\\$/gi,"").replace(/\\s/g,"").replace(/\\.(?=\\d{3}(?:\\D|$))/g,"").replace(",", "."));return Number.isFinite(n)?n:NaN};
+ lines.slice(1).forEach((line,ix)=>{
+  const cells=parseLine(line);if(!cells.some(Boolean))return;
+  const rawDate=cells[indexes[0]]||"";
+  let date="";
+  if(/^\\d{4}-\\d{2}-\\d{2}$/.test(rawDate))date=rawDate;
+  else {const m=rawDate.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})$/);if(m)date=m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+  const vals=indexes.map((j,k)=>k===0?date:cells[j]);
+  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]).trim(),deliveries=deliveriesRaw==="-"||deliveriesRaw===""?0:number(deliveriesRaw),revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
+  if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
+  if(!/^2026-06-01$/.includes(date)&&date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
+  if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
+  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(3),Number(fuel).toFixed(2)].join("|");
+  if(seen.has(key))return;seen.add(key);
+  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
+ });
+ if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+(issues.length-8)+" problema(s).":""));
+ return out;
+}
+$("historicalImportFile")?.addEventListener("change",async e=>{
+ const file=e.target.files?.[0];historicalImportRows=[];$("historicalImportButton").disabled=true;$("historicalImportPreview").innerHTML="";
+ if(!file)return;
+ try{const text=await file.text();historicalImportRows=parseHistoricalCsv(text);$("historicalImportStatus").textContent=historicalImportRows.length+" registro(s) válido(s). Duplicatas idênticas dentro do arquivo foram ignoradas. Confirme para gravar.";const rows=historicalImportRows.slice(0,8);$("historicalImportPreview").innerHTML='<table><thead><tr><th>Data</th><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.entry_date+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_end-r.odometer_start)+'</td><td>'+r.deliveries_count+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td></tr>').join("")+'</tbody></table>'+(historicalImportRows.length>8?'<p class="hint">Prévia das primeiras 8 linhas de '+historicalImportRows.length+'.</p>':"");$("historicalImportButton").disabled=!admin||!historicalImportRows.length}catch(err){$("historicalImportStatus").textContent="Falha na validação: "+err.message;historicalImportRows=[]}
+});
+$("historicalImportButton")?.addEventListener("click",async()=>{
+ if(!admin||!historicalImportRows.length)return;
+ const button=$("historicalImportButton");button.disabled=true;
+ try{const client=backend?.client;if(!client)throw new Error("Supabase não conectado.");
+  const {error}=await client.from("odometer_entries").upsert(historicalImportRows,{onConflict:"historical_import_key",ignoreDuplicates:true});
+  if(error)throw error;
+  $("historicalImportStatus").textContent="Importação concluída. "+historicalImportRows.length+" registro(s) enviados; chaves históricas impedem duplicação em reimportações.";
+  await loadOdoEntries();notify("Importação histórica concluída. Confira os relatórios semanal e mensal.");
+ }catch(err){$("historicalImportStatus").textContent="Não foi possível importar: "+(err.message||err);button.disabled=false}
+});
