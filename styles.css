@@ -2540,3 +2540,8 @@ body.sales-mode .topbar .sales-brand-logo{
 #odometerWeeklyReport{margin-top:24px;}
 #odometerWeeklyReport table{border-collapse:separate;border-spacing:0;}
 @media(max-width:700px){#odometerWeeklyReport{margin-top:18px;}}
+
+/* Espaçamento entre o resumo visual e a tabela no relatório mensal/semanal. */
+#odometerMonthlyChart,#odometerWeeklyChart{margin-bottom:22px;}
+#odometerMonthlyReport,#odometerWeeklyReport{margin-top:18px;}
+#odometerMonthlyReport table,#odometerWeeklyReport table{margin-top:0;}
