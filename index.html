@@ -198,7 +198,7 @@
       <article class="panel">
         <h2>Importar histórico de combustível</h2>
         <p class="hint">Use um arquivo CSV exportado do Excel. As colunas devem seguir a planilha histórica: Data, Semana, Mês, Km Inicial, Km Final, Km Rodado, Quantidade de Entregas, Ganhos (R$), Combustível (R$), Veículo e Lucro Líquido (R$). O entregador será identificado como “Genérico (Histórico)” e bairro/jornada ficarão sem informação.</p>
-        <label>Arquivo CSV<input id="historicalImportFile" type="file" accept=".csv,text/csv"></label>
+        <label>Arquivo Excel ou CSV<input id="historicalImportFile" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></label>
         <p id="historicalImportStatus" class="hint">Selecione o CSV para validar os registros antes de importar.</p>
         <div id="historicalImportPreview" class="table-wrap"></div>
         <div class="form-action"><button id="historicalImportButton" class="button primary" type="button" disabled>Importar histórico validado</button></div>
@@ -211,6 +211,7 @@
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="supabase-config.js"></script>
 <script src="supabase-client.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="auth-ui.js"></script>
 </body>
 </html>
