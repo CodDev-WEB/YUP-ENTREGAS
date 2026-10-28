@@ -42,7 +42,7 @@ jobs:
           const checks = [
             ['sales area integrated into main application', html.includes('id="view-vendas"')],
             ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
-            ['driver mobile interface loads after authentication', fs.readFileSync('auth-ui.js', 'utf8').includes('driver-mobile.js?v=1')],
+            ['driver mobile interface loads after authentication', fs.readFileSync('auth-ui.js', 'utf8').includes('driver-mobile.js?v=2')],
             ['sales role is restricted to its view', html.includes('data-sales-view')],
             ['sales profile hides administrative sidebar', fs.readFileSync('styles.css', 'utf8').includes('body.sales-mode .sidebar{display:none!important}')],
             ['driver starts without route selection', !app.includes('name="routeMode"') && !driverMobile.includes('name="routeMode"')],
@@ -71,8 +71,23 @@ jobs:
             test -s "$file"
           done
           grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
-          grep -q 'styles.css?v=72' index.html
-          grep -q 'yup-entregas-shell-v89' sw.js
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const html=fs.readFileSync('index.html','utf8');
+          const auth=fs.readFileSync('auth-ui.js','utf8');
+          const sw=fs.readFileSync('sw.js','utf8');
+          const pairs=[
+            ['styles.css',html.match(/styles\.css\?v=\d+/)?.[0],sw.match(/styles\.css\?v=\d+/)?.[0]],
+            ['app.js',auth.match(/app\.js\?v=\d+/)?.[0],sw.match(/app\.js\?v=\d+/)?.[0]],
+            ['driver-mobile.css',auth.match(/driver-mobile\.css\?v=\d+/)?.[0],sw.match(/driver-mobile\.css\?v=\d+/)?.[0]],
+            ['driver-mobile.js',auth.match(/driver-mobile\.js\?v=\d+/)?.[0],sw.match(/driver-mobile\.js\?v=\d+/)?.[0]],
+            ['sales-portal.js',auth.match(/sales-portal\.js\?v=\d+/)?.[0],sw.match(/sales-portal\.js\?v=\d+/)?.[0]]
+          ];
+          for(const [name,a,b] of pairs){if(!a||!b||a!==b)throw new Error(name+' version mismatch: '+a+' vs '+b);console.log('PASS '+name+' version '+a);}
+          if(/\\\\n/.test(html)||/\\\\n/.test(auth))throw new Error('Literal \\n sequence found in HTML/auth UI');
+          if(html.includes('Aviso: os dados são locais')||html.includes('prototypeWarning')||auth.includes('prototypeWarning'))throw new Error('Obsolete prototype/local-data warning still exists');
+          const cache=sw.match(/yup-entregas-shell-v\d+/)?.[0];if(!cache)throw new Error('Service worker cache version missing');console.log('PASS cache '+cache);
+          NODE
           grep -q 'if(!old){console.warn' app.js
           grep -q 'if(vehicleSelect){' app.js
           grep -q 'yup-brand.svg' app.js
