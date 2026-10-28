@@ -930,10 +930,33 @@ function renderOdoReports(){
 $("weeklyRange")?.addEventListener("change",renderOdoReports);
 $("monthlyRange")?.addEventListener("change",renderOdoReports);
 async function loadOdoEntries(){
- const client=backend?.client;if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
- const {data,error}=await client.from("odometer_entries").select("*").order("entry_date",{ascending:false}).limit(5000);
- if(error){$("odometerHistory").innerHTML='<p class="hint">Tabela ainda não disponível. Aplique a migração SQL de odometer_entries no Supabase.</p>';console.error(error);return}
- odometerEntries=data||[];renderOdoReports();
+ const client=backend?.client;
+ if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
+ $("odometerHistory").innerHTML='<p class="hint">Carregando todos os lançamentos do Supabase…</p>';
+ try{
+  const pageSize=1000,maxRows=100000;
+  const allRows=[];
+  for(let offset=0;offset<maxRows;offset+=pageSize){
+   const {data,error}=await client.from("odometer_entries")
+    .select("*")
+    .order("entry_date",{ascending:false})
+    .order("created_at",{ascending:false})
+    .range(offset,offset+pageSize-1);
+   if(error)throw error;
+   const batch=data||[];
+   allRows.push(...batch);
+   if(batch.length<pageSize)break;
+  }
+  odometerEntries=allRows;
+  renderOdoReports();
+  const countNote=document.createElement("p");
+  countNote.className="hint";
+  countNote.textContent=odometerEntries.length.toLocaleString("pt-BR")+" lançamento(s) carregado(s) do Supabase.";
+  $("odometerHistory").prepend(countNote);
+ }catch(error){
+  console.error("Falha ao carregar histórico completo de odômetros:",error);
+  $("odometerHistory").innerHTML='<p class="hint">Não foi possível carregar todo o histórico de odômetros. Verifique sua conexão, as permissões de leitura no Supabase e tente atualizar. Detalhe: '+esc(error.message||String(error))+'</p>';
+ }
 }
 document.querySelectorAll("[data-fuel-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-fuel-tab]").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("[data-fuel-panel]").forEach(p=>p.classList.toggle("hidden",p.dataset.fuelPanel!==b.dataset.fuelTab))}));
 $("odometerForm")?.addEventListener("input",()=>{const start=Number($("odoStart").value),end=Number($("odoEnd").value);$("odoLiveSummary").textContent=end>=start?"KM rodado: "+odoNum(end-start)+" km · Lucro líquido: "+odoMoney(Number($("odoRevenue").value)-Number($("odoFuel").value)):"O odômetro final não pode ser menor que o inicial."});
