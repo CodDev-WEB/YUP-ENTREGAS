@@ -144,7 +144,10 @@
     }
     return results;
   }
-  async function startJourney({driverId,vehicleId,odometerStart,routePlanId=null}) {
+  async function startJourney({driverId,vehicleId,odometerStart,routePlanId=null,journeyType="delivery",purposeNote=""}) {
+    const type=journeyType==="store_use"?"store_use":"delivery";
+    const note=String(purposeNote||"").trim().slice(0,160);
+    if(type==="store_use"&&!note)throw new Error("Informe a finalidade do deslocamento da loja.");
     const client = await requireReady();
     let plan=null;
     if(routePlanId){
@@ -162,13 +165,18 @@
       p_route_plan_id: routePlanId || null
     });
     if (error) throw error;
-    return Array.isArray(data) ? data[0] : data;
+    const journey=Array.isArray(data) ? data[0] : data;
+    const {data:updated,error:updateError}=await client.from("journeys").update({journey_type:type,purpose_note:type==="store_use"?note:null}).eq("id",journey.id).select("id,journey_type,purpose_note").single();
+    if(updateError)throw updateError;
+    return {...journey,...updated};
   }
   async function finishJourney({journeyId,odometerEnd}) {
     const client = await requireReady();
+    const {data:journey,error:journeyError}=await client.from("journeys").select("journey_type").eq("id",journeyId).single();
+    if(journeyError)throw journeyError;
     const {count:deliveryCount,error:deliveryCountError}=await client.from("deliveries").select("id",{count:"exact",head:true}).eq("journey_id",journeyId);
     if(deliveryCountError)throw deliveryCountError;
-    if(!deliveryCount)throw new Error("A jornada precisa ter pelo menos uma entrega cadastrada antes de ser encerrada.");
+    if(journey?.journey_type!=="store_use"&&!deliveryCount)throw new Error("A jornada precisa ter pelo menos uma entrega cadastrada antes de ser encerrada.");
     const {data,error} = await client.from("journeys").update({status:"finished",odometer_end:Number(odometerEnd)}).eq("id",journeyId).eq("status","open").select("id,status,odometer_end,finished_at_server").single();
     if (error) throw error;
     return data;
