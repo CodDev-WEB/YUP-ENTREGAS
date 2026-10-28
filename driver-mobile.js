@@ -41,6 +41,8 @@
         `<section class="driver-profile" aria-label="Perfil do entregador"><div class="driver-initials" aria-hidden="true">${escape(initials)}</div><div><strong>${escape(name)}</strong><p>Entregador</p></div><div class="driver-profile-meta">${escape(driverDate())}</div></section>
         <h2 class="driver-section-title">Sua jornada começa aqui</h2>
         <form id="driverStartForm" class="driver-form">
+          <label>Tipo de jornada<select name="journeyType" required><option value="delivery">Entrega para cliente</option><option value="store_use">Outros — benefício da loja</option></select></label>
+          <label class="hidden" id="driverPurposeNoteWrap">Observação / finalidade<input name="purposeNote" maxlength="160" placeholder="Ex.: compras, AMAVIE, jogar lixo"></label>
           <label>Veículo<select name="vehicle" required${activeVehicles.length ? "" : " disabled"}><option value="">Selecione seu veículo</option>${activeVehicles.map(item => `<option value="${escape(item.id)}">${escape([item.make_model || item.code, item.plate].filter(Boolean).join(" · "))}</option>`).join("")}</select></label>
           ${activeVehicles.length ? "" : '<p class="driver-warning" role="status">Nenhum veículo ativo disponível. Peça à equipe para verificar o cadastro antes de iniciar.</p>'}
           <label>Odômetro inicial (km)<input name="odometer" type="number" min="0" step="0.1" inputmode="decimal" required placeholder="Informe a quilometragem"></label>
