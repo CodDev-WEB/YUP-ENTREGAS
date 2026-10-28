@@ -1044,7 +1044,7 @@ function parseHistoricalCsv(text){
   const vals=indexes.map((j,k)=>k===0?date:cells[j]);
   const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),deliveries=deliveriesRaw==="-"||deliveriesRaw===""?0:number(deliveriesRaw),revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
   if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
-  if(date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
+  if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
   const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
   if(seen.has(key))return;seen.add(key);
@@ -1090,14 +1090,14 @@ function parseHistoricalXlsxRows(sheet){
   const dr=String(vals[6]??"").trim(),deliveries=dr===""||dr==="-"?0:number(vals[6]);
   const revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]??"").trim(),profit=number(vals[10]);
   if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
-  if(date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
+  if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
   const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
   if(seen.has(key))return;seen.add(key);
   out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
  });
  if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+issues.length+" problema(s).":""));
- if(!out.length)throw new Error("Nenhum registro válido encontrado no período de 01/06/2026 a 15/10/2026.");
+ if(!out.length)throw new Error("Nenhum registro válido encontrado no período de 01/06/2026 até hoje.");
  return out;
 }
 $("historicalImportFile")?.addEventListener("change",async e=>{
