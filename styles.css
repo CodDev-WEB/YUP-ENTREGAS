@@ -2567,3 +2567,6 @@ body.sales-mode .topbar .sales-brand-logo{
 .sales-order-actions .button.danger{background:#fcde52;border-color:#e7c93b;color:#3f3510}
 .sales-order-actions .button.danger:hover{background:#f4d238;border-color:#d9b91f}
 @media(max-width:600px){.sales-modal-backdrop{padding:10px;align-items:end}.sales-modal{max-height:94vh;border-radius:18px 18px 10px 10px}.sales-modal-actions{flex-direction:column-reverse}.sales-modal-actions .button{width:100%}}
+
+.sales-cep-priority{padding:12px;border:2px solid #e7c93b;border-radius:12px;background:#fff6bf;color:#4c3b00!important}
+.sales-cep-priority input{border-color:#d2ad17!important;background:#fffdf0!important;font-weight:800!important;letter-spacing:.04em}
