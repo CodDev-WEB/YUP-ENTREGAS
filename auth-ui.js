@@ -65,9 +65,9 @@
     $("authGate").classList.add("hidden");
     $("appLayout").classList.remove("hidden");
     $("logoutButton").classList.remove("hidden");
-    $("authIdentity").textContent = (profile.display_name || profile.role) + " · " + profile.role;
+    $("authIdentity").textContent = (profile.display_name && profile.display_name.toLowerCase() !== profile.role.toLowerCase()) ? (profile.display_name + " · " + profile.role) : profile.role;\n    const driverAreaLink = $("driverAreaLink");\n    if (driverAreaLink) driverAreaLink.classList.toggle("hidden", ["admin","manager"].includes(profile.role));
     applyRole(profile);
-    message("Acesso autenticado. Jornadas e entregas usam Supabase; combustível e manutenção ainda são locais. Confira a migração de segurança e os cadastros antes do uso operacional.", "warning");
+    message("", "");
     if (profile.role === "sales") {
       if (!window.salesPortalLoaded) {
         window.salesPortalLoaded = true;
