@@ -2570,3 +2570,9 @@ body.sales-mode .topbar .sales-brand-logo{
 
 .sales-cep-priority{padding:12px;border:2px solid #e7c93b;border-radius:12px;background:#fff6bf;color:#4c3b00!important}
 .sales-cep-priority input{border-color:#d2ad17!important;background:#fffdf0!important;font-weight:800!important;letter-spacing:.04em}
+
+
+/* Vendas: separação clara entre ações da entrega. */
+.sales-order-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:12px;}
+.sales-order-actions .button{margin:0;flex:0 0 auto;}
+@media(max-width:480px){.sales-order-actions{gap:10px}.sales-order-actions .button{min-width:120px}}
