@@ -81,7 +81,7 @@
     if (!appLoaded) {
       appLoaded = true;
       const script = document.createElement("script");
-      script.src = "app.js?v=26";
+      script.src = "app.js?v=27";
       script.onerror = () => message("Não foi possível carregar o aplicativo. Atualize a página e tente novamente.", "error");
       if (profile.role === "driver") {
         const styles = document.createElement("link");
