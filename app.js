@@ -1054,10 +1054,56 @@ function parseHistoricalCsv(text){
  if(!out.length)throw new Error("Nenhum registro válido foi encontrado. Verifique o cabeçalho e o separador do CSV.");
  return out;
 }
+function parseHistoricalXlsxRows(sheet){
+ const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:"",blankrows:false});
+ if(matrix.length<2)throw new Error("A planilha não contém linhas de dados.");
+ const normalize=value=>String(value??"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+ const headers=matrix[0].map(normalize);
+ const aliases=[["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas","qtdentregas"],["ganhosr","ganhosrs","ganhos"],["combustivelr","combustivelrs","combustivel"],["veiculo"],["lucroliquidor","lucroliquidors","lucroliquido","lucro"]];
+ const indexes=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
+ if(indexes.some(i=>i<0))throw new Error("Cabeçalho incompatível. Confira as 11 colunas obrigatórias da planilha histórica.");
+ const number=value=>{
+  if(typeof value==="number")return Number.isFinite(value)?value:NaN;
+  let s=String(value??"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");
+  if(!s||s==="-")return NaN;
+  if(s.includes(",")&&s.includes("."))s=s.replace(/\\./g,"").replace(",",".");
+  else if(s.includes(","))s=s.replace(",",".");
+  const n=Number(s);return Number.isFinite(n)?n:NaN;
+ };
+ const dateValue=value=>{
+  if(value instanceof Date&&!Number.isNaN(value.getTime()))return value.getFullYear()+"-"+String(value.getMonth()+1).padStart(2,"0")+"-"+String(value.getDate()).padStart(2,"0");
+  if(typeof value==="number"&&Number.isFinite(value)){
+   const d=new Date(Date.UTC(1899,11,30)+Math.floor(value)*86400000);
+   return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");
+  }
+  const s=String(value??"").trim();
+  if(/^\\d{4}-\\d{2}-\\d{2}$/.test(s))return s;
+  const m=s.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{2}|\\d{4})$/);
+  if(m){let y=Number(m[3]);if(y<100)y+=y>=70?1900:2000;return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+  return "";
+ };
+ const out=[],seen=new Set(),issues=[];
+ matrix.slice(1).forEach((row,ix)=>{
+  if(!row.some(v=>v!==""&&v!==null&&v!==undefined))return;
+  const vals=indexes.map(i=>row[i]);
+  const date=dateValue(vals[0]),start=number(vals[3]),end=number(vals[4]),km=number(vals[5]);
+  const dr=String(vals[6]??"").trim(),deliveries=dr===""||dr==="-"?0:number(vals[6]);
+  const revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]??"").trim(),profit=number(vals[10]);
+  if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
+  if(date<"2026-06-01"||date>"2026-10-15"){issues.push("Linha "+(ix+2)+": data fora do período 01/06/2026 a 15/10/2026.");return}
+  if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
+  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
+  if(seen.has(key))return;seen.add(key);
+  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
+ });
+ if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+issues.length+" problema(s).":""));
+ if(!out.length)throw new Error("Nenhum registro válido encontrado no período de 01/06/2026 a 15/10/2026.");
+ return out;
+}
 $("historicalImportFile")?.addEventListener("change",async e=>{
  const file=e.target.files?.[0];historicalImportRows=[];$("historicalImportButton").disabled=true;$("historicalImportPreview").innerHTML="";
  if(!file)return;
- try{let text;if(/\.xlsx?$/i.test(file.name)){if(!window.XLSX)throw new Error("Biblioteca Excel não carregou. Atualize a página e tente novamente.");const workbook=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});const firstSheet=workbook.Sheets[workbook.SheetNames[0]];if(!firstSheet)throw new Error("O arquivo Excel não contém nenhuma aba.");text=XLSX.utils.sheet_to_csv(firstSheet,{FS:";",dateNF:"yyyy-mm-dd"});}else{text=await file.text();}historicalImportRows=parseHistoricalCsv(text);const totalKm=historicalImportRows.reduce((sum,r)=>sum+Number(r.odometer_end-r.odometer_start),0),totalDeliveries=historicalImportRows.reduce((sum,r)=>sum+Number(r.deliveries_count),0),totalRevenue=historicalImportRows.reduce((sum,r)=>sum+Number(r.revenue),0),totalFuel=historicalImportRows.reduce((sum,r)=>sum+Number(r.fuel_cost),0),totalProfit=historicalImportRows.reduce((sum,r)=>sum+Number(r.historical_profit),0),vehicles=[...new Set(historicalImportRows.map(r=>r.vehicle_code))];$("historicalImportStatus").textContent=historicalImportRows.length+" registro(s) válido(s). Revise o resumo e confirme para gravar no banco.";const rows=historicalImportRows.slice(0,8);$("historicalImportPreview").innerHTML='<div class="historical-import-summary"><div><span>Registros</span><strong>'+historicalImportRows.length+'</strong></div><div><span>KM rodados</span><strong>'+odoNum(totalKm)+' km</strong></div><div><span>Entregas</span><strong>'+totalDeliveries+'</strong></div><div><span>Ganhos</span><strong>'+odoMoney(totalRevenue)+'</strong></div><div><span>Combustível</span><strong>'+odoMoney(totalFuel)+'</strong></div><div><span>Lucro líquido da planilha</span><strong>'+odoMoney(totalProfit)+'</strong></div><div><span>Veículos</span><strong>'+vehicles.map(esc).join(", ")+'</strong></div></div>'+'<table><thead><tr><th>Data</th><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.entry_date+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_end-r.odometer_start)+'</td><td>'+r.deliveries_count+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td></tr>').join("")+'</tbody></table>'+(historicalImportRows.length>8?'<p class="hint">Prévia das primeiras 8 linhas de '+historicalImportRows.length+'.</p>':"");$("historicalImportButton").disabled=!admin||!historicalImportRows.length}catch(err){$("historicalImportStatus").textContent="Falha na validação: "+err.message;historicalImportRows=[]}
+ try{let text;if(/\.xlsx?$/i.test(file.name)){if(!window.XLSX)throw new Error("Biblioteca Excel não carregou. Atualize a página e tente novamente.");const workbook=XLSX.read(await file.arrayBuffer(),{type:"array",cellDates:true});const firstSheet=workbook.Sheets[workbook.SheetNames[0]];if(!firstSheet)throw new Error("O arquivo Excel não contém nenhuma aba.");historicalImportRows=parseHistoricalXlsxRows(firstSheet);}else{text=await file.text();}if(!/\\.xlsx?$/i.test(file.name))historicalImportRows=parseHistoricalCsv(text);const totalKm=historicalImportRows.reduce((sum,r)=>sum+Number(r.odometer_end-r.odometer_start),0),totalDeliveries=historicalImportRows.reduce((sum,r)=>sum+Number(r.deliveries_count),0),totalRevenue=historicalImportRows.reduce((sum,r)=>sum+Number(r.revenue),0),totalFuel=historicalImportRows.reduce((sum,r)=>sum+Number(r.fuel_cost),0),totalProfit=historicalImportRows.reduce((sum,r)=>sum+Number(r.historical_profit),0),vehicles=[...new Set(historicalImportRows.map(r=>r.vehicle_code))];$("historicalImportStatus").textContent=historicalImportRows.length+" registro(s) válido(s). Revise o resumo e confirme para gravar no banco.";const rows=historicalImportRows.slice(0,8);$("historicalImportPreview").innerHTML='<div class="historical-import-summary"><div><span>Registros</span><strong>'+historicalImportRows.length+'</strong></div><div><span>KM rodados</span><strong>'+odoNum(totalKm)+' km</strong></div><div><span>Entregas</span><strong>'+totalDeliveries+'</strong></div><div><span>Ganhos</span><strong>'+odoMoney(totalRevenue)+'</strong></div><div><span>Combustível</span><strong>'+odoMoney(totalFuel)+'</strong></div><div><span>Lucro líquido da planilha</span><strong>'+odoMoney(totalProfit)+'</strong></div><div><span>Veículos</span><strong>'+vehicles.map(esc).join(", ")+'</strong></div></div>'+'<table><thead><tr><th>Data</th><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r.entry_date+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_end-r.odometer_start)+'</td><td>'+r.deliveries_count+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td></tr>').join("")+'</tbody></table>'+(historicalImportRows.length>8?'<p class="hint">Prévia das primeiras 8 linhas de '+historicalImportRows.length+'.</p>':"");$("historicalImportButton").disabled=!admin||!historicalImportRows.length}catch(err){$("historicalImportStatus").textContent="Falha na validação: "+err.message;historicalImportRows=[]}
 });
 $("historicalImportButton")?.addEventListener("click",async()=>{
  if(!admin||!historicalImportRows.length)return;
