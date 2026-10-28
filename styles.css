@@ -2589,3 +2589,11 @@ body.sales-mode .topbar .sales-brand-logo{
 .delivery-delete-actions [data-delete-cancel]{background:var(--surface,#fff);color:var(--text,#17202a);border:1px solid var(--line,#d0d5dd)}
 @keyframes deliveryDeleteIn{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){.delivery-delete-backdrop{padding:16px}.delivery-delete-modal{padding:22px;border-radius:18px}.delivery-delete-actions{flex-direction:column-reverse}.delivery-delete-actions .button{width:100%}}
+
+/* Garantia de visibilidade das ações do modal de exclusão */
+.delivery-delete-modal .delivery-delete-actions{display:flex!important;visibility:visible!important;opacity:1!important;position:relative;z-index:1;min-height:44px}
+.delivery-delete-modal .delivery-delete-actions button[data-delete-cancel],
+.delivery-delete-modal .delivery-delete-actions button[data-delete-confirm]{display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center;justify-content:center;flex:0 1 auto;min-width:112px;min-height:44px;padding:11px 16px;font-size:13px;font-weight:800;line-height:1.4;cursor:pointer}
+.delivery-delete-modal .delivery-delete-actions button[data-delete-cancel]{background:#fff!important;color:#24352b!important;border:1px solid #cbd5ce!important}
+.delivery-delete-modal .delivery-delete-actions button[data-delete-confirm]{background:#b42318!important;color:#fff!important;border:1px solid #b42318!important}
+@media(max-width:520px){.delivery-delete-modal .delivery-delete-actions{display:flex!important;flex-direction:column-reverse!important}.delivery-delete-modal .delivery-delete-actions button[data-delete-cancel],.delivery-delete-modal .delivery-delete-actions button[data-delete-confirm]{width:100%;flex:1 1 auto}}
