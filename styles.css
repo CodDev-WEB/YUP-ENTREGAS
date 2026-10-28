@@ -2597,3 +2597,55 @@ body.sales-mode .topbar .sales-brand-logo{
 .delivery-delete-modal .delivery-delete-actions button[data-delete-cancel]{background:#fff!important;color:#24352b!important;border:1px solid #cbd5ce!important}
 .delivery-delete-modal .delivery-delete-actions button[data-delete-confirm]{background:#b42318!important;color:#fff!important;border:1px solid #b42318!important}
 @media(max-width:520px){.delivery-delete-modal .delivery-delete-actions{display:flex!important;flex-direction:column-reverse!important}.delivery-delete-modal .delivery-delete-actions button[data-delete-cancel],.delivery-delete-modal .delivery-delete-actions button[data-delete-confirm]{width:100%;flex:1 1 auto}}
+
+/* Corrige regra global body.sales-mode footer{display:none}: os botões do modal precisam ficar visíveis */
+body.sales-mode .sales-modal .sales-modal-actions,
+body.sales-mode .sales-modal footer.sales-modal-actions,
+body.sales-mode .sales-modal .sales-modal-actions[role],
+.sales-modal .sales-modal-actions{
+ display:flex!important;
+ visibility:visible!important;
+ opacity:1!important;
+ position:relative!important;
+ width:100%;
+ min-height:48px;
+ align-items:stretch;
+ justify-content:flex-end;
+ gap:12px;
+ padding-top:18px;
+ margin-top:18px;
+ border-top:1px solid var(--line,#e5e7eb);
+}
+body.sales-mode .sales-modal .sales-modal-actions button,
+.sales-modal .sales-modal-actions button{
+ display:inline-flex!important;
+ visibility:visible!important;
+ opacity:1!important;
+ flex:0 1 auto;
+ min-width:124px;
+ min-height:44px;
+ align-items:center;
+ justify-content:center;
+ padding:11px 16px;
+ font-size:13px;
+ font-weight:800;
+ line-height:1.4;
+}
+body.sales-mode .sales-modal .sales-modal-actions [data-cancel],
+.sales-modal .sales-modal-actions [data-cancel]{
+ background:#fff!important;
+ color:#24352b!important;
+ border:1px solid #cbd5ce!important;
+}
+body.sales-mode .sales-modal .sales-modal-actions [data-confirm-delete],
+.sales-modal .sales-modal-actions [data-confirm-delete]{
+ background:#b42318!important;
+ color:#fff!important;
+ border:1px solid #b42318!important;
+}
+@media(max-width:600px){
+ body.sales-mode .sales-modal .sales-modal-actions,
+ .sales-modal .sales-modal-actions{flex-direction:column-reverse!important}
+ body.sales-mode .sales-modal .sales-modal-actions button,
+ .sales-modal .sales-modal-actions button{width:100%;flex:1 1 auto}
+}
