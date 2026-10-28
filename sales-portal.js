@@ -14,6 +14,40 @@
   }catch(error){deliveryMessage("Não foi possível carregar os bairros: "+error.message,"error");}
   await loadRecent();
  }
+ const onlyDigits=value=>String(value||"").replace(/\D/g,"");
+ function formatCep(value){const digits=onlyDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;}
+ const salesForm=$("salesDeliveryForm");
+ const cepField=salesForm.elements.postalCode,numberField=salesForm.elements.houseNumber,addressField=salesForm.elements.address,complementField=salesForm.elements.complement,neighborhoodField=salesForm.elements.neighborhood;
+ let cepLookupToken=0;
+ cepField.addEventListener("input",()=>{cepField.value=formatCep(cepField.value);});
+ async function lookupCep(){
+  const cep=onlyDigits(cepField.value);
+  if(cep.length!==8){deliveryMessage("Digite um CEP válido com 8 números ou preencha o endereço manualmente.");return;}
+  const token=++cepLookupToken;
+  deliveryMessage("Consultando CEP…");
+  try{
+   const response=await fetch("https://viacep.com.br/ws/"+cep+"/json/");
+   if(!response.ok)throw new Error("Serviço de CEP indisponível.");
+   const result=await response.json();
+   if(token!==cepLookupToken)return;
+   if(result.erro)throw new Error("CEP não encontrado. Você pode preencher o endereço manualmente.");
+   if(result.logradouro)addressField.value=result.logradouro;
+   if(result.bairro){
+    const match=[...neighborhoodField.options].find(option=>option.value&&option.textContent.trim().toLocaleLowerCase("pt-BR")===result.bairro.trim().toLocaleLowerCase("pt-BR"));
+    if(match)neighborhoodField.value=match.value;
+    else deliveryMessage("CEP localizado. Bairro retornado: "+result.bairro+". Selecione um bairro cadastrado; se necessário, peça à administração para cadastrá-lo.");
+   }
+   if(result.localidade||result.uf){
+    const cityState=[result.localidade,result.uf].filter(Boolean).join("/");
+    const current=addressField.value.trim();
+    if(current&&!current.toLocaleLowerCase("pt-BR").includes(cityState.toLocaleLowerCase("pt-BR")))addressField.value=current+" - "+cityState;
+   }
+   if(!result.bairro||[...neighborhoodField.options].some(option=>option.value===neighborhoodField.value&&option.textContent.trim().toLocaleLowerCase("pt-BR")===String(result.bairro||"").trim().toLocaleLowerCase("pt-BR")))deliveryMessage("Endereço localizado pelo CEP. Informe o número do imóvel e confira os dados antes de cadastrar.","success");
+   numberField.focus();
+  }catch(error){if(token===cepLookupToken)deliveryMessage(error.message+" O preenchimento manual continua disponível.","error");}
+ }
+ cepField.addEventListener("change",lookupCep);
+ cepField.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();lookupCep();}});
  async function loadRecent(){
   const target=$("salesRecentList");
   try{
@@ -27,9 +61,15 @@
  }
  $("salesDeliveryForm").addEventListener("submit",async event=>{
   event.preventDefault();const form=event.currentTarget,button=form.querySelector('button[type="submit"]');
-  const data=new FormData(form),address=String(data.get("address")||"").trim();
-  if(!address){deliveryMessage("Informe o endereço completo.","error");return;}
-  if(!data.get("neighborhood")){deliveryMessage("Selecione o bairro.","error");return;}
+  const data=new FormData(form);
+  const street=String(data.get("address")||"").trim();
+  const houseNumber=String(data.get("houseNumber")||"").trim();
+  const complement=String(data.get("complement")||"").trim();
+  const cep=String(data.get("postalCode")||"").trim();
+  const address=[street,houseNumber?"Nº "+houseNumber:"",complement].filter(Boolean).join(", ");
+  if(!street){deliveryMessage("Informe o logradouro/endereço ou preencha manualmente.","error");return;}
+  if(!data.get("neighborhood")){deliveryMessage("Selecione o bairro. O CEP pode sugerir o bairro, mas você também pode selecioná-lo manualmente.","error");return;}
+  if(cep&&onlyDigits(cep).length!==8){deliveryMessage("O CEP deve conter 8 números ou ficar vazio para preenchimento manual.","error");return;}
   button.disabled=true;deliveryMessage("Cadastrando entrega…");
   try{
    const result=await backend.createDelivery({journeyId:null,orderReference:data.get("orderReference"),neighborhoodId:data.get("neighborhood"),address,reference:data.get("reference"),mapLink:data.get("mapLink"),priority:data.get("priority")||"normal"});
