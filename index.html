@@ -127,7 +127,10 @@
         <form id="salesDeliveryForm" class="form-grid">
           <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
           <label>Bairro<select name="neighborhood" required><option value="">Carregando bairros…</option></select></label>
-          <label class="wide">Endereço completo<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Rua, número, complemento"></label>
+          <label>CEP<input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
+          <label>Número do imóvel<input name="houseNumber" maxlength="20" autocomplete="address-line2" placeholder="Nº da casa/loja"></label>
+          <label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Rua, avenida ou endereço completo"></label>
+          <label>Complemento (opcional)<input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento…"></label>
           <label>Referência (opcional)<input name="reference" maxlength="250" placeholder="Casa azul, portão lateral…"></label>
           <label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label>
           <label class="wide">Link de localização do cliente (opcional)<input name="mapLink" type="url" placeholder="Link do Google Maps ou localização compartilhada"></label>
