@@ -882,11 +882,12 @@ const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1
 function odoWeekStart(value){const d=new Date(value+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}
 function odoWeekLabel(value){const start=new Date(odoWeekStart(value)+"T12:00:00"),end=new Date(start);end.setDate(end.getDate()+5);return start.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+end.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
 function odoWeek(value){return odoWeekLabel(value)}
-function odoTotals(rows){return rows.reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=r.historical_profit!=null?Number(r.historical_profit):Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
+function odoIsStoreUse(r){return Boolean(String(r.historical_purpose||"").trim())}
+function odoTotals(rows){return rows.filter(r=>!odoIsStoreUse(r)).reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=r.historical_profit!=null?Number(r.historical_profit):Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
 function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m.entries()].map(([key,list])=>({key,...odoTotals(list)}))}
 function renderOdoReports(){
  const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
- $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+Number(r.deliveries_count||0)+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
+ $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+(odoIsStoreUse(r)?esc(r.historical_purpose):Number(r.deliveries_count||0))+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
  const weeklyAll=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date));
  const todayKey=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
  const currentWeekStart=odoWeekStart(todayKey);
@@ -1048,13 +1049,13 @@ function parseHistoricalCsv(text){
   if(/^\d{4}-\d{2}-\d{2}$/.test(rawDate))date=rawDate;
   else {const m=rawDate.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)date=m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
   const vals=indexes.map((j,k)=>k===0?date:cells[j]);
-  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),deliveries=deliveriesRaw==="-"||deliveriesRaw===""?0:number(deliveriesRaw),revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
-  if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
+  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),quantityNumber=deliveriesRaw===""||deliveriesRaw==="-"?0:number(deliveriesRaw),historicalPurpose=deliveriesRaw!==""&&deliveriesRaw!=="-"&&!Number.isFinite(quantityNumber)?deliveriesRaw:"",deliveries=historicalPurpose?0:quantityNumber,revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
+  if(!date||![start,end,km,revenue,fuel,profit].every(Number.isFinite)||(!historicalPurpose&&!Number.isFinite(deliveries))||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
   if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
-  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
+  const key=[date,vehicle,start,end,historicalPurpose||deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
   if(seen.has(key))return;seen.add(key);
-  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
+  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,historical_purpose:historicalPurpose||null,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
  });
  if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+(issues.length-8)+" problema(s).":""));
  if(!out.length)throw new Error("Nenhum registro válido foi encontrado. Verifique o cabeçalho e o separador do CSV.");
@@ -1093,14 +1094,14 @@ function parseHistoricalXlsxRows(sheet){
   if(!row.some(v=>v!==""&&v!==null&&v!==undefined))return;
   const vals=indexes.map(i=>row[i]);
   const date=dateValue(vals[0]),start=number(vals[3]),end=number(vals[4]),km=number(vals[5]);
-  const dr=String(vals[6]??"").trim(),deliveries=dr===""||dr==="-"?0:number(vals[6]);
+  const dr=String(vals[6]??"").trim(),quantityNumber=dr===""||dr==="-"?0:number(vals[6]),historicalPurpose=dr!==""&&dr!=="-"&&!Number.isFinite(quantityNumber)?dr:"",deliveries=historicalPurpose?0:quantityNumber;
   const revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]??"").trim(),profit=number(vals[10]);
-  if(!date||![start,end,km,deliveries,revenue,fuel,profit].every(Number.isFinite)||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
+  if(!date||![start,end,km,revenue,fuel,profit].every(Number.isFinite)||(!historicalPurpose&&!Number.isFinite(deliveries))||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
   if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
-  const key=[date,vehicle,start,end,deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
+  const key=[date,vehicle,start,end,historicalPurpose||deliveries,Number(revenue).toFixed(2),Number(fuel).toFixed(2)].join("|");
   if(seen.has(key))return;seen.add(key);
-  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
+  out.push({entry_date:date,vehicle_code:vehicle,odometer_start:start,odometer_end:end,deliveries_count:deliveries,historical_purpose:historicalPurpose||null,revenue:Number(revenue.toFixed(2)),fuel_cost:Number(fuel.toFixed(2)),created_by:backend.profile.id,historical_import_key:key,source_type:"historical",historical_driver:"Genérico (Histórico)",historical_week:Number(vals[1])||null,historical_month:Number(vals[2])||Number(date.slice(5,7)),historical_profit:Number(profit.toFixed(2))});
  });
  if(issues.length)throw new Error(issues.slice(0,8).join(" ")+(issues.length>8?" E mais "+issues.length+" problema(s).":""));
  if(!out.length)throw new Error("Nenhum registro válido encontrado no período de 01/06/2026 até hoje.");
