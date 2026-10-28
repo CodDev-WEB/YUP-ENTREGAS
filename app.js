@@ -171,10 +171,6 @@ async function refresh(){
   $("routePlanStopsEditor")?.querySelectorAll('.route-stop-editor select[name="neighborhood"]').forEach(select=>{
    const selected=select.value;select.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(item=>'<option value="'+esc(item.id)+'">'+esc(item.name)+'</option>').join("");select.value=selected;
   });
-  if($("prototypeWarning")) $("prototypeWarning").textContent = masterErrors.length
-   ? "Alguns cadastros não foram carregados: " + masterErrors.join(" | ") + ". Verifique se as tabelas/colunas existem e se as políticas RLS permitem SELECT para este usuário."
-   : "Cadastros carregados do Supabase. Jornadas e entregas são sincronizadas; combustível e manutenção ainda são locais neste navegador.";
-  $("prototypeWarning").classList.remove("hidden");
 
   try{
    const result=await backend.listOperations();
@@ -187,15 +183,12 @@ async function refresh(){
    else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
   }catch(operationsError){
    console.error("YUP-ENTREGAS: falha ao carregar jornadas/entregas",operationsError);
-   $("prototypeWarning").textContent="Cadastros de veículos, entregadores e bairros carregados. Falha ao carregar jornadas/entregas: "+(operationsError?.message||"erro desconhecido")+". Verifique as migrações SQL e as permissões RLS.";
-   $("prototypeWarning")?.classList.remove("hidden");
   }
   render();
  }catch(error){
   console.error("YUP-ENTREGAS: falha ao carregar cadastros do Supabase",error);
   const vehicleSelect=$("vehicle");
   if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;}
-  if($("prototypeWarning")){ $("prototypeWarning").textContent="Falha ao carregar os cadastros do Supabase: "+(error?.message||"erro desconhecido")+". Verifique a URL/chave pública, autenticação, tabelas e políticas RLS."; $("prototypeWarning").classList.remove("hidden"); }
  }finally{loading=false}
 }
 const journeyTypeField=$("journeyType"),journeyNoteWrap=$("journeyPurposeNoteWrap"),journeyNoteField=$("journeyPurposeNote");
