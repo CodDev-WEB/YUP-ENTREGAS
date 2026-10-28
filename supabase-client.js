@@ -193,6 +193,19 @@
     if(error)throw error;
     return data;
   }
+  async function deletePendingDelivery({deliveryId}) {
+    const client = await requireReady();
+    const {data,error}=await client.from("deliveries")
+      .delete()
+      .eq("id",deliveryId)
+      .is("journey_id",null)
+      .eq("status","pending")
+      .select("id")
+      .maybeSingle();
+    if(error)throw error;
+    if(!data)throw new Error("A entrega não foi excluída. Ela pode estar vinculada a uma jornada, já ter sido atualizada ou sua conta não ter permissão para excluí-la.");
+    return data;
+  }
   async function assignDeliveriesToJourney({journeyId,deliveryIds}) {
     const client=await requireReady();
     const ids=[...new Set((deliveryIds||[]).filter(Boolean))];
@@ -222,5 +235,5 @@
     if (error) throw error;
     return data;
   }
-  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,assignDeliveriesToJourney,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
+  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,deletePendingDelivery,assignDeliveriesToJourney,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
 })();
