@@ -931,7 +931,18 @@ function renderOdoReports(){
  }
  const vehicles=odoGroup(rows,r=>r.vehicle_code);
  $("odometerVehicleReport").innerHTML='<table><thead><tr><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th><th>KM/entrega</th><th>Custo/KM</th></tr></thead><tbody>'+vehicles.map(x=>'<tr><td>'+esc(x.key)+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.km?x.fuel/x.km:0)+'</td></tr>').join("")+'</tbody></table>';
- const t=odoTotals(rows);$("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
+ const currentYear=new Date().getFullYear();
+ const yearStart=currentYear+"-01-01";
+ const todayLocal=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
+ const annualRows=rows.filter(r=>r.entry_date>=yearStart&&r.entry_date<=todayLocal);
+ const t=odoTotals(annualRows);
+ $("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
+ const annualYearLabel=$("odometerAnnualYear");if(annualYearLabel)annualYearLabel.textContent=String(currentYear);
+ const annualChart=$("odometerAnnualChart");
+ if(annualChart){
+  const metrics=[{key:"km",label:"KM rodados",value:t.km,display:odoNum(t.km)+" km",color:"#2563eb"},{key:"deliveries",label:"Entregas",value:t.deliveries,display:t.deliveries.toLocaleString("pt-BR"),color:"#8b5cf6"},{key:"revenue",label:"Ganhos",value:t.revenue,display:odoMoney(t.revenue),color:"#16a34a"},{key:"fuel",label:"Combustível",value:t.fuel,display:odoMoney(t.fuel),color:"#f59e0b"},{key:"profit",label:"Lucro líquido",value:t.profit,display:odoMoney(t.profit),color:"#0ea5e9"}];
+  annualChart.innerHTML='<div class="annual-chart-grid">'+metrics.map(m=>'<article class="annual-chart-item"><div class="annual-chart-label"><span>'+m.label+'</span><strong>'+m.display+'</strong></div><div class="annual-chart-track" role="img" aria-label="'+m.label+': '+m.display+' acumulados no ano"><span style="width:'+(m.value>0?100:0)+'%;background:'+m.color+'"></span></div></article>').join("")+'</div><p class="hint annual-chart-note">Acumulado de 1º de janeiro até '+new Date(todayLocal+"T12:00:00").toLocaleDateString("pt-BR")+'. Valores calculados com os lançamentos já registrados no sistema; atividades de uso interno não entram nos indicadores comerciais.</p>';
+ }
  $("odometerEfficiency").innerHTML='<p><strong>Custo médio/KM</strong><br>'+odoMoney(t.km?t.fuel/t.km:0)+'</p><p><strong>Custo por entrega</strong><br>'+odoMoney(t.deliveries?t.fuel/t.deliveries:0)+'</p><p><strong>Ganho por entrega</strong><br>'+odoMoney(t.deliveries?t.revenue/t.deliveries:0)+'</p><p><strong>Ganho por KM</strong><br>'+odoMoney(t.km?t.revenue/t.km:0)+'</p>';
 }
 $("weeklyRange")?.addEventListener("change",renderOdoReports);
