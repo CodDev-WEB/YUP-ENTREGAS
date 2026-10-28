@@ -96,25 +96,46 @@
   if(!item)return;
   closeSalesEditModal();
   const modal=document.createElement("div");
-  modal.id="salesEditModal";modal.className="sales-modal-backdrop";modal.innerHTML='<section class="sales-modal" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sales-modal-head"><div><p class="eyebrow">CORREÇÃO DE PEDIDO</p><h2 id="salesEditTitle">Alterar / corrigir entrega</h2><p>Revise os dados e salve as alterações.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><form id="salesEditForm" class="form-grid"><label>Número do pedido (opcional)<input name="orderReference" maxlength="80"></label><label>Bairro<select name="neighborhood" required></select></label><label class="wide">Endereço completo<input name="address" required maxlength="300"></label><label>Referência (opcional)<input name="reference" maxlength="250"></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label><label class="wide">Link de localização (opcional)<input name="mapLink" type="url"></label><footer class="sales-modal-actions"><button type="button" class="button secondary" data-sales-cancel>Cancelar</button><button type="submit" class="button primary">Salvar correções</button></footer><p class="sales-message" id="salesEditMessage" role="status"></p></form></section>';
+  modal.id="salesEditModal";modal.className="sales-modal-backdrop";modal.innerHTML='<section class="sales-modal" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sales-modal-head"><div><p class="eyebrow">CORREÇÃO DE PEDIDO</p><h2 id="salesEditTitle">Alterar / corrigir entrega</h2><p>Revise os dados e salve as alterações.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><form id="salesEditForm" class="form-grid"><label>Número do pedido (opcional)<input name="orderReference" maxlength="80"></label><label class="sales-cep-priority">CEP<input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label><label>Número do imóvel<input name="houseNumber" maxlength="20" placeholder="Nº da casa/loja"></label><label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address"></label><label>Complemento (opcional)<input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento…"></label><label>Bairro<select name="neighborhood" required></select></label><label>Referência (opcional)<input name="reference" maxlength="250"></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label><label class="wide">Link de localização (opcional)<input name="mapLink" type="url"></label><footer class="sales-modal-actions"><button type="button" class="button secondary" data-sales-cancel>Cancelar</button><button type="submit" class="button primary">Salvar correções</button></footer><p class="sales-message" id="salesEditMessage" role="status"></p></form></section>';
   document.body.append(modal);
   const form=modal.querySelector("#salesEditForm"),msg=modal.querySelector("#salesEditMessage"),close=()=>modal.remove();
   const show=(text,type="")=>{msg.textContent=text;msg.className="sales-message"+(type?" "+type:"");};
   form.elements.orderReference.value=item.customer_order_ref||"";
   form.elements.address.value=item.address||"";
+  form.elements.houseNumber.value="";
+  form.elements.complement.value="";
+  form.elements.postalCode.value="";
   form.elements.reference.value=item.reference||"";
   form.elements.mapLink.value=item.map_link||"";
   form.elements.priority.value=item.priority||"normal";
   form.elements.neighborhood.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(n=>'<option value="'+esc(n.id)+'">'+esc(n.name)+'</option>').join("");
   form.elements.neighborhood.value=item.neighborhood_id||"";
   form.addEventListener("input",event=>{const field=event.target;if(!(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)||["url","email","password","number"].includes(field.type))return;const a=field.selectionStart,b=field.selectionEnd,upper=field.value.toLocaleUpperCase("pt-BR");if(upper!==field.value){field.value=upper;if(typeof a==="number"&&typeof b==="number")field.setSelectionRange(a,b);}});
+  const modalCep=form.elements.postalCode;
+  let modalCepToken=0,lastModalCep="";
+  modalCep.addEventListener("input",()=>{modalCep.value=formatCep(modalCep.value);const digits=onlyDigits(modalCep.value);if(digits.length===8&&digits!==lastModalCep){lastModalCep=digits;lookupModalCep();}else if(digits.length<8)lastModalCep="";});
+  async function lookupModalCep(){
+   const cep=onlyDigits(modalCep.value);if(cep.length!==8){show("Digite um CEP válido ou preencha o endereço manualmente.");return;}
+   const token=++modalCepToken;lastModalCep=cep;show("Consultando CEP…");
+   try{
+    const response=await fetch("https://viacep.com.br/ws/"+cep+"/json/");if(!response.ok)throw new Error("Serviço de CEP indisponível.");
+    const result=await response.json();if(token!==modalCepToken)return;if(result.erro)throw new Error("CEP não encontrado; preencha o endereço manualmente.");
+    if(result.logradouro)form.elements.address.value=result.logradouro.toLocaleUpperCase("pt-BR");
+    if(result.bairro){const match=[...form.elements.neighborhood.options].find(option=>option.value&&option.textContent.trim().toLocaleLowerCase("pt-BR")===result.bairro.trim().toLocaleLowerCase("pt-BR"));if(match)form.elements.neighborhood.value=match.value;}
+    show("Endereço localizado. Confira o bairro e informe o número do imóvel.","success");form.elements.houseNumber.focus();
+   }catch(error){if(token===modalCepToken)show(error.message+" O preenchimento manual continua disponível.","error");}
+  }
+  modalCep.addEventListener("change",lookupModalCep);
+  modalCep.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();lookupModalCep();}});
   modal.querySelector(".sales-modal-close").addEventListener("click",close);
   modal.querySelector("[data-sales-cancel]").addEventListener("click",close);
   modal.addEventListener("click",event=>{if(event.target===modal)close();});
   form.addEventListener("submit",async event=>{
    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;
-   const data=new FormData(form),address=String(data.get("address")||"").trim(),neighborhoodId=String(data.get("neighborhood")||"");
-   if(!address||!neighborhoodId){show("Preencha o endereço e selecione o bairro.","error");button.disabled=false;return;}
+   const data=new FormData(form),street=String(data.get("address")||"").trim(),houseNumber=String(data.get("houseNumber")||"").trim(),complement=String(data.get("complement")||"").trim(),cep=String(data.get("postalCode")||"").trim(),neighborhoodId=String(data.get("neighborhood")||"");
+   const address=[street,houseNumber?"Nº "+houseNumber:"",complement].filter(Boolean).join(", ");
+   if(!street||!neighborhoodId){show("Preencha o endereço e selecione o bairro.","error");button.disabled=false;return;}
+   if(cep&&onlyDigits(cep).length!==8){show("O CEP deve conter 8 números ou ficar vazio para preenchimento manual.","error");button.disabled=false;return;}
    try{
     show("Salvando correções…");
     const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
