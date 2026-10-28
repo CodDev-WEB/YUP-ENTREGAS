@@ -50,6 +50,8 @@
       <article class="panel">
         <div class="panel-title"><div><h2>1. Identificação da jornada</h2><p>Preencha antes de sair para a primeira entrega.</p></div></div>
         <form id="journeyForm" class="form-grid">
+          <label>Tipo de jornada<select id="journeyType" required><option value="delivery">Entrega para cliente</option><option value="store_use">Outros — benefício da loja</option></select></label>
+          <label id="journeyPurposeNoteWrap" class="hidden">Observação / finalidade<input id="journeyPurposeNote" maxlength="160" placeholder="Ex.: compras, AMAVIE, jogar lixo"></label>
           <label>Entregador<input id="driverId" required placeholder="Preenchido pelo cadastro do usuário"></label>
           <label>Veículo cadastrado<select id="vehicle" required><option value="">Selecione o veículo</option></select></label>
           <label>Odômetro inicial (km)<input id="odoStart" type="number" min="0" step="0.1" required placeholder="Ex.: 24580"></label>
