@@ -4,6 +4,7 @@
  let profile=null, neighborhoods=[];
  const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  function deliveryMessage(text,type=""){const el=$("salesDeliveryMessage");el.textContent=text;el.className="sales-message"+(type?" "+type:"");}
+ const salesForm=$("salesDeliveryForm");
  async function loadPortal(){
   if(!profile||profile.role!=="sales")return;
   const form=$("salesDeliveryForm"),select=form.elements.neighborhood;
@@ -23,14 +24,13 @@
  });
  const onlyDigits=value=>String(value||"").replace(/\D/g,"");
  function formatCep(value){const digits=onlyDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;}
- const salesForm=$("salesDeliveryForm");
  const cepField=salesForm.elements.postalCode,numberField=salesForm.elements.houseNumber,addressField=salesForm.elements.address,complementField=salesForm.elements.complement,neighborhoodField=salesForm.elements.neighborhood;
- let cepLookupToken=0;
- cepField.addEventListener("input",()=>{cepField.value=formatCep(cepField.value);});
+ let cepLookupToken=0,lastLookedUpCep="";
+ cepField.addEventListener("input",()=>{cepField.value=formatCep(cepField.value);const digits=onlyDigits(cepField.value);if(digits.length===8&&digits!==lastLookedUpCep){lastLookedUpCep=digits;lookupCep();}else if(digits.length<8){lastLookedUpCep="";}});
  async function lookupCep(){
   const cep=onlyDigits(cepField.value);
   if(cep.length!==8){deliveryMessage("Digite um CEP válido com 8 números ou preencha o endereço manualmente.");return;}
-  const token=++cepLookupToken;
+  const token=++cepLookupToken;lastLookedUpCep=cep;
   deliveryMessage("Consultando CEP…");
   try{
    const response=await fetch("https://viacep.com.br/ws/"+cep+"/json/");
