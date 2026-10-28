@@ -2554,3 +2554,16 @@ body.sales-mode .topbar .sales-brand-logo{
 #salesDeliveryForm .sales-cep-priority input:focus{border-color:#a67e00;box-shadow:0 0 0 4px rgba(212,169,0,.2);}
 .sales-priority-tag{display:inline-flex;align-items:center;width:max-content;margin-left:7px;padding:3px 7px;border-radius:6px;background:#e2b500;color:#382d00;font-size:9px;font-weight:900;letter-spacing:.06em;}
 #salesDeliveryForm input:not([type="url"]):not([type="email"]):not([type="password"]):not([type="number"]),#salesDeliveryForm textarea{text-transform:uppercase;}
+
+
+/* Modal próprio para corrigir entregas de vendas */
+.sales-modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:20px;background:rgba(16,31,22,.58);backdrop-filter:blur(4px)}
+.sales-modal{width:min(760px,100%);max-height:min(90vh,900px);overflow:auto;padding:clamp(18px,3vw,28px);border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 24px 90px rgba(0,0,0,.24)}
+.sales-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+.sales-modal-head h2{margin:0 0 6px;font-size:22px;letter-spacing:-.03em}
+.sales-modal-head p:not(.eyebrow){margin:0;color:var(--muted);font-size:12px}
+.sales-modal-close{width:38px;height:38px;flex:0 0 auto;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:25px;cursor:pointer}
+.sales-modal-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;padding-top:8px}
+.sales-order-actions .button.danger{background:#fcde52;border-color:#e7c93b;color:#3f3510}
+.sales-order-actions .button.danger:hover{background:#f4d238;border-color:#d9b91f}
+@media(max-width:600px){.sales-modal-backdrop{padding:10px;align-items:end}.sales-modal{max-height:94vh;border-radius:18px 18px 10px 10px}.sales-modal-actions{flex-direction:column-reverse}.sales-modal-actions .button{width:100%}}
