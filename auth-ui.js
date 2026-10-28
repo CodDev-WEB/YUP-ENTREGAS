@@ -65,7 +65,9 @@
     $("authGate").classList.add("hidden");
     $("appLayout").classList.remove("hidden");
     $("logoutButton").classList.remove("hidden");
-    $("authIdentity").textContent = (profile.display_name && profile.display_name.toLowerCase() !== profile.role.toLowerCase()) ? (profile.display_name + " · " + profile.role) : profile.role;\n    const driverAreaLink = $("driverAreaLink");\n    if (driverAreaLink) driverAreaLink.classList.toggle("hidden", ["admin","manager"].includes(profile.role));
+    $("authIdentity").textContent = (profile.display_name && profile.display_name.toLowerCase() !== profile.role.toLowerCase()) ? (profile.display_name + " · " + profile.role) : profile.role;
+    const driverAreaLink = $("driverAreaLink");
+    if (driverAreaLink) driverAreaLink.classList.toggle("hidden", ["admin","manager"].includes(profile.role));
     applyRole(profile);
     message("", "");
     if (profile.role === "sales") {
