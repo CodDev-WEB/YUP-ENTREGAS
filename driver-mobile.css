@@ -441,3 +441,14 @@ body.driver-mode #driverExperience .driver-brand-logo{
   box-shadow:0 2px 5px rgba(20,45,30,.12),inset 0 1px 0 rgba(255,255,255,.28)!important;
 }
 body.driver-mode #driverExperience .driver-back{display:none!important}
+
+/* Destaque de segurança: ação de encerrar jornada */
+body.driver-mode #driverExperience.driver-screen-route #driverScreenContent .driver-inline-actions .driver-quiet[data-driver-screen="summary"]{
+  color:#f00018!important;
+  -webkit-text-fill-color:#f00018!important;
+  font-weight:850!important;
+}
+body.driver-mode #driverExperience.driver-screen-route #driverScreenContent .driver-quiet[data-driver-screen="summary"]:active{
+  color:#c90015!important;
+  -webkit-text-fill-color:#c90015!important;
+}
