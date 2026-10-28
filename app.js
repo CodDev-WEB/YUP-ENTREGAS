@@ -1057,7 +1057,7 @@ function parseHistoricalCsv(text){
 function parseHistoricalXlsxRows(sheet){
  const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:"",blankrows:false});
  if(matrix.length<2)throw new Error("A planilha não contém linhas de dados.");
- const normalize=value=>String(value??"").toLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+ const normalize=value=>String(value??"").toLowerCase().normalize("NFD").replace(/\p{M}/gu,"").replace(/[^a-z0-9]/g,"");
  const headers=matrix[0].map(normalize);
  const aliases=[["data"],["semana"],["mes"],["kminicial"],["kmfinal"],["kmrodado"],["quantidadedeentregas","qtddeentregas","qtdentregas"],["ganhosr","ganhosrs","ganhos"],["combustivelr","combustivelrs","combustivel"],["veiculo"],["lucroliquidor","lucroliquidors","lucroliquido","lucro"]];
  const indexes=aliases.map(group=>headers.findIndex(h=>group.includes(h)));
