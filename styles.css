@@ -2547,3 +2547,10 @@ body.sales-mode .topbar .sales-brand-logo{
 #odometerMonthlyReport table,#odometerWeeklyReport table{margin-top:0;}
 
 .historical-import-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 18px}.historical-import-summary>div{border:1px solid var(--border-color,#dbe3df);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0}.historical-import-summary span{font-size:11px;color:var(--muted,#65736b)}.historical-import-summary strong{font-size:15px;overflow-wrap:anywhere}
+
+/* Vendas: CEP destacado como primeiro passo e textos em caixa alta. */
+#salesDeliveryForm .sales-cep-priority{grid-column:1/-1;max-width:420px;padding:14px 16px;border:2px solid #e5b900;border-radius:14px;background:#fff4b8;color:#584600;box-shadow:0 4px 14px rgba(169,130,0,.12);font-size:13px;font-weight:850;}
+#salesDeliveryForm .sales-cep-priority input{min-height:49px;border:2px solid #d4a900;background:#fffdf2;font-size:18px;font-weight:850;letter-spacing:.08em;}
+#salesDeliveryForm .sales-cep-priority input:focus{border-color:#a67e00;box-shadow:0 0 0 4px rgba(212,169,0,.2);}
+.sales-priority-tag{display:inline-flex;align-items:center;width:max-content;margin-left:7px;padding:3px 7px;border-radius:6px;background:#e2b500;color:#382d00;font-size:9px;font-weight:900;letter-spacing:.06em;}
+#salesDeliveryForm input:not([type="url"]):not([type="email"]):not([type="password"]):not([type="number"]),#salesDeliveryForm textarea{text-transform:uppercase;}
