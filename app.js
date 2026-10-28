@@ -406,12 +406,31 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}function renderDeliveryCatalog(){
+const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}
+function confirmDeletePendingDelivery(delivery){
+ return new Promise(resolve=>{
+  const overlay=document.createElement("div");
+  overlay.className="delivery-delete-backdrop";
+  overlay.innerHTML='<section class="delivery-delete-modal" role="dialog" aria-modal="true" aria-labelledby="deliveryDeleteTitle" aria-describedby="deliveryDeleteDescription"><div class="delivery-delete-eyebrow">CONFIRMAR EXCLUSÃO</div><h2 id="deliveryDeleteTitle">Excluir entrega?</h2><p id="deliveryDeleteDescription">Você está prestes a excluir a entrega <strong></strong>. Esta ação não pode ser desfeita.</p><div class="delivery-delete-actions"><button type="button" class="button secondary" data-delete-cancel>Cancelar</button><button type="button" class="button danger" data-delete-confirm>Excluir entrega</button></div></section>';
+  overlay.querySelector("strong").textContent=delivery.order_no||"selecionada";
+  document.body.append(overlay);
+  const cancel=overlay.querySelector("[data-delete-cancel]"), confirm=overlay.querySelector("[data-delete-confirm]");
+  let finished=false;
+  const close=value=>{if(finished)return;finished=true;document.removeEventListener("keydown",onKeyDown);overlay.remove();resolve(value);};
+  const onKeyDown=event=>{if(event.key==="Escape"){event.preventDefault();close(false);}if(event.key==="Tab"){if(event.shiftKey&&document.activeElement===cancel){event.preventDefault();confirm.focus();}else if(!event.shiftKey&&document.activeElement===confirm){event.preventDefault();cancel.focus();}}};
+  cancel.addEventListener("click",()=>close(false));
+  confirm.addEventListener("click",()=>close(true));
+  overlay.addEventListener("click",event=>{if(event.target===overlay)close(false);});
+  document.addEventListener("keydown",onKeyDown);
+  cancel.focus();
+ });
+}
+function renderDeliveryCatalog(){
  const target=$("deliveryCatalogList");if(!target)return;
  const pending=deliveries.filter(d=>!d.journey_id&&d.status==="pending").sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
  if(!pending.length){target.innerHTML='<p class="hint">Nenhuma entrega pendente no momento.</p>';return;}
  target.innerHTML='<div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Endereço</th><th>Prioridade</th><th>Cadastrada por</th><th>Ação</th></tr></thead><tbody>'+pending.map(d=>'<tr><td><strong>'+esc(d.order_no||"PEDIDO")+'</strong></td><td>'+esc(d.address)+'<small style="display:block">'+esc(d.neighborhoods?.name||"BAIRRO NÃO INFORMADO")+(d.reference?' · '+esc(d.reference):"")+'</small></td><td>'+esc(({normal:"Normal",high:"Alta",scheduled:"Agendada"})[d.priority]||d.priority)+'</td><td>'+esc(d.created_source==="management"?"Administração/Vendas":"Entregador")+'</td><td><button type="button" class="button danger" data-delete-pending-delivery="'+esc(d.id)+'">Excluir</button></td></tr>').join("")+'</tbody></table></div>';
- target.onclick=async event=>{const button=event.target.closest("[data-delete-pending-delivery]");if(!button)return;const id=button.dataset.deletePendingDelivery;const delivery=pending.find(item=>item.id===id);if(!delivery)return;if(!confirm("Excluir a entrega "+(delivery.order_no||"selecionada")+"? Esta ação não pode ser desfeita."))return;button.disabled=true;button.textContent="Excluindo…";try{await backend.deletePendingDelivery({deliveryId:id});deliveries=deliveries.filter(item=>item.id!==id);renderDeliveryCatalog();const msg=$("deliveryCatalogMessage");if(msg)msg.textContent="Entrega excluída com sucesso.";notify("Entrega excluída.");}catch(error){console.error(error);button.disabled=false;button.textContent="Excluir";const msg=$("deliveryCatalogMessage");if(msg)msg.textContent="Não foi possível excluir: "+(error?.message||"verifique as permissões no Supabase.");notify("Não foi possível excluir a entrega.");}};
+ target.onclick=async event=>{const button=event.target.closest("[data-delete-pending-delivery]");if(!button)return;const id=button.dataset.deletePendingDelivery;const delivery=pending.find(item=>item.id===id);if(!delivery)return;if(!await confirmDeletePendingDelivery(delivery))return;button.disabled=true;button.textContent="Excluindo…";try{await backend.deletePendingDelivery({deliveryId:id});deliveries=deliveries.filter(item=>item.id!==id);renderDeliveryCatalog();const msg=$("deliveryCatalogMessage");if(msg)msg.textContent="Entrega excluída com sucesso.";notify("Entrega excluída.");}catch(error){console.error(error);button.disabled=false;button.textContent="Excluir";const msg=$("deliveryCatalogMessage");if(msg)msg.textContent="Não foi possível excluir: "+(error?.message||"verifique as permissões no Supabase.");notify("Não foi possível excluir a entrega.");}};
 }
 function renderRoutePlans(){
  const target=$("routePlansList");if(!target)return;
