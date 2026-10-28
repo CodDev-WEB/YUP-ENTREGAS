@@ -125,9 +125,9 @@
       <div class="page-heading"><div><p class="eyebrow">ÁREA COMERCIAL</p><h1>Cadastro de entregas</h1><p>Registre os pedidos vendidos. Eles ficarão disponíveis para o entregador selecionar ao iniciar a jornada.</p></div></div>
       <article class="panel"><div class="panel-title"><div><h2>Nova entrega</h2><p>Confira o endereço para facilitar a localização pelo entregador.</p></div></div>
         <form id="salesDeliveryForm" class="form-grid">
+          <label class="sales-cep-priority">CEP <span class="sales-priority-tag">PREENCHA PRIMEIRO</span><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" aria-label="CEP, primeiro campo recomendado"></label>
           <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
           <label>Bairro<select name="neighborhood" required><option value="">Carregando bairros…</option></select></label>
-          <label>CEP<input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
           <label>Número do imóvel<input name="houseNumber" maxlength="20" autocomplete="address-line2" placeholder="Nº da casa/loja"></label>
           <label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Rua, avenida ou endereço completo"></label>
           <label>Complemento (opcional)<input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento…"></label>
