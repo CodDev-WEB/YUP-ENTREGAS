@@ -14,6 +14,13 @@
   }catch(error){deliveryMessage("Não foi possível carregar os bairros: "+error.message,"error");}
   await loadRecent();
  }
+ salesForm.addEventListener("input",event=>{
+  const field=event.target;
+  if(!(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement))return;
+  if(field.type==="url"||field.type==="email"||field.type==="password"||field.type==="number"||field.name==="postalCode")return;
+  const start=field.selectionStart,end=field.selectionEnd,upper=field.value.toLocaleUpperCase("pt-BR");
+  if(field.value!==upper){field.value=upper;if(typeof start==="number"&&typeof end==="number")field.setSelectionRange(start,end);}
+ });
  const onlyDigits=value=>String(value||"").replace(/\D/g,"");
  function formatCep(value){const digits=onlyDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;}
  const salesForm=$("salesDeliveryForm");
