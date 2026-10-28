@@ -168,7 +168,7 @@
     const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
     const {data,error}=await backend.client.from("deliveries").delete().eq("id",item.id).eq("created_by",user.id).is("journey_id",null).select("id");
     if(error)throw error;
-    if(!data?.length)throw new Error("O Supabase não confirmou a exclusão. Verifique se a migração de permissões foi aplicada e se a entrega continua sem jornada vinculada.");
+    if(!data?.length)throw new Error("O banco bloqueou a exclusão ou a entrega já não está pendente/sem jornada. Execute supabase/migrations/20261028_sales_delete_pending_delivery.sql no SQL Editor do Supabase e tente novamente.");
     close();deliveryMessage("Entrega excluída e confirmada no Supabase.","success");await loadRecent();
    }catch(error){msg.textContent="Não foi possível excluir: "+error.message;msg.className="sales-message error";button.disabled=false;}
   });
