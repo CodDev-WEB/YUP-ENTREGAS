@@ -2576,3 +2576,16 @@ body.sales-mode .topbar .sales-brand-logo{
 .sales-order-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:12px;}
 .sales-order-actions .button{margin:0;flex:0 0 auto;}
 @media(max-width:480px){.sales-order-actions{gap:10px}.sales-order-actions .button{min-width:120px}}
+
+/* Modal próprio de confirmação de exclusão de entrega */
+.delivery-delete-backdrop{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;background:rgba(12,20,32,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+.delivery-delete-modal{width:min(460px,100%);padding:28px;border:1px solid var(--line,#e5e7eb);border-radius:20px;background:var(--surface,#fff);color:var(--text,#17202a);box-shadow:0 24px 90px rgba(0,0,0,.28);animation:deliveryDeleteIn .16s ease-out}
+.delivery-delete-eyebrow{margin-bottom:12px;color:var(--muted,#6b7280);font-size:10px;font-weight:800;letter-spacing:.16em}
+.delivery-delete-modal h2{margin:0 0 10px;font-size:24px;letter-spacing:-.035em}
+.delivery-delete-modal p{margin:0;color:var(--muted,#667085);font-size:14px;line-height:1.65}
+.delivery-delete-modal p strong{color:var(--text,#17202a)}
+.delivery-delete-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:26px}
+.delivery-delete-actions .button{min-height:42px;padding:10px 16px}
+.delivery-delete-actions [data-delete-cancel]{background:var(--surface,#fff);color:var(--text,#17202a);border:1px solid var(--line,#d0d5dd)}
+@keyframes deliveryDeleteIn{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.delivery-delete-backdrop{padding:16px}.delivery-delete-modal{padding:22px;border-radius:18px}.delivery-delete-actions{flex-direction:column-reverse}.delivery-delete-actions .button{width:100%}}
