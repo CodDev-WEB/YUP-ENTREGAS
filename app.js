@@ -1049,7 +1049,7 @@ function parseHistoricalCsv(text){
   if(/^\d{4}-\d{2}-\d{2}$/.test(rawDate))date=rawDate;
   else {const m=rawDate.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(m)date=m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
   const vals=indexes.map((j,k)=>k===0?date:cells[j]);
-  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),quantityNumber=deliveriesRaw===""||deliveriesRaw==="-"?0:number(deliveriesRaw),historicalPurpose=deliveriesRaw!==""&&deliveriesRaw!=="-"&&!Number.isFinite(quantityNumber)?deliveriesRaw:"",deliveries=historicalPurpose?0:quantityNumber,revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
+  const start=number(vals[3]),end=number(vals[4]),km=number(vals[5]),deliveriesRaw=String(vals[6]??"").trim(),quantityNumber=deliveriesRaw===""?0:number(deliveriesRaw),historicalPurpose=deliveriesRaw!==""&&!Number.isFinite(quantityNumber)?deliveriesRaw:"",deliveries=historicalPurpose?0:quantityNumber,revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]||"").trim(),profit=number(vals[10]);
   if(!date||![start,end,km,revenue,fuel,profit].every(Number.isFinite)||(!historicalPurpose&&!Number.isFinite(deliveries))||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
   if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
   if(end<start||Math.abs(end-start-km)>0.11){issues.push("Linha "+(ix+2)+": KM rodado não corresponde à diferença do odômetro.");return}
@@ -1094,7 +1094,7 @@ function parseHistoricalXlsxRows(sheet){
   if(!row.some(v=>v!==""&&v!==null&&v!==undefined))return;
   const vals=indexes.map(i=>row[i]);
   const date=dateValue(vals[0]),start=number(vals[3]),end=number(vals[4]),km=number(vals[5]);
-  const dr=String(vals[6]??"").trim(),quantityNumber=dr===""||dr==="-"?0:number(vals[6]),historicalPurpose=dr!==""&&dr!=="-"&&!Number.isFinite(quantityNumber)?dr:"",deliveries=historicalPurpose?0:quantityNumber;
+  const dr=String(vals[6]??"").trim(),quantityNumber=dr===""?0:number(vals[6]),historicalPurpose=dr!==""&&!Number.isFinite(quantityNumber)?dr:"",deliveries=historicalPurpose?0:quantityNumber;
   const revenue=number(vals[7]),fuel=number(vals[8]),vehicle=String(vals[9]??"").trim(),profit=number(vals[10]);
   if(!date||![start,end,km,revenue,fuel,profit].every(Number.isFinite)||(!historicalPurpose&&!Number.isFinite(deliveries))||!vehicle){issues.push("Linha "+(ix+2)+": data, números ou veículo inválido.");return}
   if(date<"2026-06-01"||date>new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})){issues.push("Linha "+(ix+2)+": data fora do período permitido (01/06/2026 até hoje).");return}
