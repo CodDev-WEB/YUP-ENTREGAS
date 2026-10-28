@@ -91,29 +91,42 @@
   }catch(error){deliveryMessage("Não foi possível cadastrar. "+error.message,"error");}
   finally{button.disabled=false;}
  });
+ function closeSalesEditModal(){document.getElementById("salesEditModal")?.remove();}
  async function editDelivery(item){
   if(!item)return;
-  const orderReference=prompt("Número do pedido (deixe vazio se não houver):",item.customer_order_ref||"");if(orderReference===null)return;
-  const address=prompt("Endereço completo (logradouro, número e complemento):",item.address||"");if(address===null)return;
-  const neighborhoodList=neighborhoods.map((n,i)=>(i+1)+". "+n.name).join("\n");
-  const currentIndex=Math.max(0,neighborhoods.findIndex(n=>n.id===item.neighborhood_id));
-  const choice=prompt("Informe o número do bairro cadastrado:\n"+neighborhoodList,String(currentIndex+1));if(choice===null)return;
-  const chosen=neighborhoods[Number(choice)-1];if(!chosen){deliveryMessage("Bairro inválido. Nenhuma alteração foi salva.","error");return;}
-  const reference=prompt("Referência (opcional):",item.reference||"");if(reference===null)return;
-  const mapLink=prompt("Link de localização (opcional):",item.map_link||"");if(mapLink===null)return;
-  const priorities=["normal","high","scheduled"];
-  const defaultPriority=priorities.indexOf(item.priority)+1;
-  const priorityChoice=prompt("Prioridade: 1 = Normal, 2 = Alta, 3 = Agendada",String(defaultPriority>0?defaultPriority:1));if(priorityChoice===null)return;
-  const priority=priorities[Number(priorityChoice)-1];if(!priority){deliveryMessage("Prioridade inválida. Nenhuma alteração foi salva.","error");return;}
-  if(!address.trim()){deliveryMessage("O endereço não pode ficar vazio.","error");return;}
-  try{
-   deliveryMessage("Salvando correções…");
-   const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
-   const {error}=await backend.client.from("deliveries").update({customer_order_ref:orderReference.trim()||null,address:address.trim().toLocaleUpperCase("pt-BR"),neighborhood_id:chosen.id,reference:reference.trim().toLocaleUpperCase("pt-BR")||null,map_link:mapLink.trim()||null,priority}).eq("id",item.id).eq("created_by",user.id);
-   if(error)throw error;
-   deliveryMessage(item.journey_id?"Entrega corrigida. Como já está vinculada a uma jornada, a opção de exclusão permanece bloqueada.":"Entrega atualizada com sucesso.","success");
-   await loadRecent();
-  }catch(error){deliveryMessage("Não foi possível atualizar a entrega: "+error.message,"error");}
+  closeSalesEditModal();
+  const modal=document.createElement("div");
+  modal.id="salesEditModal";modal.className="sales-modal-backdrop";modal.innerHTML='<section class="sales-modal" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sales-modal-head"><div><p class="eyebrow">CORREÇÃO DE PEDIDO</p><h2 id="salesEditTitle">Alterar / corrigir entrega</h2><p>Revise os dados e salve as alterações.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><form id="salesEditForm" class="form-grid"><label>Número do pedido (opcional)<input name="orderReference" maxlength="80"></label><label>Bairro<select name="neighborhood" required></select></label><label class="wide">Endereço completo<input name="address" required maxlength="300"></label><label>Referência (opcional)<input name="reference" maxlength="250"></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label><label class="wide">Link de localização (opcional)<input name="mapLink" type="url"></label><footer class="sales-modal-actions"><button type="button" class="button secondary" data-sales-cancel>Cancelar</button><button type="submit" class="button primary">Salvar correções</button></footer><p class="sales-message" id="salesEditMessage" role="status"></p></form></section>';
+  document.body.append(modal);
+  const form=modal.querySelector("#salesEditForm"),msg=modal.querySelector("#salesEditMessage"),close=()=>modal.remove();
+  const show=(text,type="")=>{msg.textContent=text;msg.className="sales-message"+(type?" "+type:"");};
+  form.elements.orderReference.value=item.customer_order_ref||"";
+  form.elements.address.value=item.address||"";
+  form.elements.reference.value=item.reference||"";
+  form.elements.mapLink.value=item.map_link||"";
+  form.elements.priority.value=item.priority||"normal";
+  form.elements.neighborhood.innerHTML='<option value="">Selecione o bairro</option>'+neighborhoods.map(n=>'<option value="'+esc(n.id)+'">'+esc(n.name)+'</option>').join("");
+  form.elements.neighborhood.value=item.neighborhood_id||"";
+  form.addEventListener("input",event=>{const field=event.target;if(!(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)||["url","email","password","number"].includes(field.type))return;const a=field.selectionStart,b=field.selectionEnd,upper=field.value.toLocaleUpperCase("pt-BR");if(upper!==field.value){field.value=upper;if(typeof a==="number"&&typeof b==="number")field.setSelectionRange(a,b);}});
+  modal.querySelector(".sales-modal-close").addEventListener("click",close);
+  modal.querySelector("[data-sales-cancel]").addEventListener("click",close);
+  modal.addEventListener("click",event=>{if(event.target===modal)close();});
+  form.addEventListener("submit",async event=>{
+   event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;
+   const data=new FormData(form),address=String(data.get("address")||"").trim(),neighborhoodId=String(data.get("neighborhood")||"");
+   if(!address||!neighborhoodId){show("Preencha o endereço e selecione o bairro.","error");button.disabled=false;return;}
+   try{
+    show("Salvando correções…");
+    const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
+    const {data:updated,error}=await backend.client.from("deliveries").update({customer_order_ref:String(data.get("orderReference")||"").trim()||null,address:address.toLocaleUpperCase("pt-BR"),neighborhood_id:neighborhoodId,reference:String(data.get("reference")||"").trim().toLocaleUpperCase("pt-BR")||null,map_link:String(data.get("mapLink")||"").trim()||null,priority:String(data.get("priority")||"normal")}).eq("id",item.id).eq("created_by",user.id).select("id,journey_id");
+    if(error)throw error;if(!updated?.length)throw new Error("Nenhuma alteração foi gravada. Confira suas permissões ou se a entrega mudou de responsável.");
+    show("Correção salva no sistema.","success");
+    deliveryMessage(item.journey_id?"Entrega corrigida. A exclusão continua bloqueada porque a entrega já está vinculada a uma jornada.":"Entrega atualizada com sucesso.","success");
+    await loadRecent();setTimeout(close,650);
+   }catch(error){show("Não foi possível atualizar: "+error.message,"error");}
+   finally{button.disabled=false;}
+  });
+  form.elements.orderReference.focus();
  }
  async function deleteDelivery(item){
   if(!item)return;
