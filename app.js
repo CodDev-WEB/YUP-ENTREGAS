@@ -236,6 +236,7 @@ $("deliveryCatalogForm")?.addEventListener("submit",async e=>{
 $("refreshDeliveryCatalog")?.addEventListener("click",refresh);
 $("deliveryForm").addEventListener("submit",async e=>{
  e.preventDefault();if(!currentJourney)return notify("Inicie uma jornada antes de adicionar entregas.");
+ if(currentJourney.journey_type==="store_use")return notify("Esta jornada é de uso interno da loja. Não é permitido cadastrar entregas nela.");
  const address=$("address").value.trim();
  if(!address)return notify("Informe o endereço da entrega.");
  const related=deliveries.filter(d=>d.journey_id===currentJourney.id);
