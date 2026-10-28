@@ -9,7 +9,7 @@ const ASSETS = [
   "./styles.css?v=83",
   "./app.js?v=30",
   "./driver-mobile.css?v=6",
-  "./driver-mobile.js?v=1",
+  "./driver-mobile.js?v=2",
   "./manifest.webmanifest",
   "./pwa-icon.svg",
   "./yup-brand.svg",
