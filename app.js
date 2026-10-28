@@ -1064,9 +1064,9 @@ function parseHistoricalXlsxRows(sheet){
  if(indexes.some(i=>i<0))throw new Error("Cabeçalho incompatível. Confira as 11 colunas obrigatórias da planilha histórica.");
  const number=value=>{
   if(typeof value==="number")return Number.isFinite(value)?value:NaN;
-  let s=String(value??"").trim().replace(/R\\$/gi,"").replace(/\\s/g,"");
+  let s=String(value??"").trim().replace(/R\$/gi,"").replace(/\s/g,"");
   if(!s||s==="-")return NaN;
-  if(s.includes(",")&&s.includes("."))s=s.replace(/\\./g,"").replace(",",".");
+  if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");
   else if(s.includes(","))s=s.replace(",",".");
   const n=Number(s);return Number.isFinite(n)?n:NaN;
  };
@@ -1077,8 +1077,8 @@ function parseHistoricalXlsxRows(sheet){
    return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0");
   }
   const s=String(value??"").trim();
-  if(/^\\d{4}-\\d{2}-\\d{2}$/.test(s))return s;
-  const m=s.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{2}|\\d{4})$/);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})$/);
   if(m){let y=Number(m[3]);if(y<100)y+=y>=70?1900:2000;return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
   return "";
  };
