@@ -236,9 +236,22 @@ create policy journey_location_points_read_accessible on public.journey_location
 using(public.can_access_journey(journey_id));
 create policy journey_location_points_insert_driver on public.journey_location_points for insert to authenticated
 with check(public.is_active_user() and exists(select 1 from public.journeys j join public.drivers d on d.id=j.driver_id where j.id=journey_location_points.journey_id and j.status='open' and d.profile_id=(select auth.uid())));
+grant select, insert, update, delete on table public.deliveries to authenticated;
 create policy deliveries_read_owner_or_management on public.deliveries for select to authenticated using(public.can_access_journey(journey_id));
 create policy deliveries_insert_owner_or_management on public.deliveries for insert to authenticated with check(public.can_access_journey(journey_id));
 create policy deliveries_update_owner_or_management on public.deliveries for update to authenticated using(public.can_access_journey(journey_id)) with check(public.can_access_journey(journey_id));
+drop policy if exists deliveries_delete_unassigned_owner_or_management on public.deliveries;
+create policy deliveries_delete_unassigned_owner_or_management on public.deliveries
+for delete to authenticated
+using (
+  public.current_app_role()::text in ('admin','manager')
+  or (
+    public.current_app_role()::text = 'sales'
+    and created_by = (select auth.uid())
+    and journey_id is null
+    and status = 'pending'
+  )
+);
 create policy events_read_owner_or_management on public.delivery_events for select to authenticated
 using(exists(select 1 from public.deliveries d where d.id=delivery_id and public.can_access_journey(d.journey_id)));
 create policy events_insert_as_self_on_accessible_delivery on public.delivery_events for insert to authenticated
