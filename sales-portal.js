@@ -152,15 +152,26 @@
  async function deleteDelivery(item){
   if(!item)return;
   if(item.journey_id){deliveryMessage("Esta entrega já está vinculada a uma jornada e não pode ser excluída pelo vendedor.","error");return;}
-  if(!confirm("Excluir definitivamente a entrega "+(item.customer_order_ref||item.order_no)+"? Esta ação não pode ser desfeita."))return;
-  try{
-   deliveryMessage("Excluindo entrega…");
-   const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
-   const {data,error}=await backend.client.from("deliveries").delete().eq("id",item.id).eq("created_by",user.id).is("journey_id",null).select("id");
-   if(error)throw error;
-   if(!data?.length)throw new Error("Nenhuma linha foi excluída. A entrega pode ter sido vinculada a uma jornada ou a política de acesso bloqueou a operação.");
-   deliveryMessage("Entrega excluída com sucesso.","success");await loadRecent();
-  }catch(error){deliveryMessage("Não foi possível excluir a entrega: "+error.message,"error");}
+  const modal=document.createElement("div");
+  modal.className="sales-modal-backdrop";
+  modal.innerHTML='<section class="sales-modal sales-delete-modal" role="dialog" aria-modal="true" aria-labelledby="salesDeleteTitle"><header class="sales-modal-head"><div><p class="eyebrow">CONFIRMAR EXCLUSÃO</p><h2 id="salesDeleteTitle">Excluir entrega?</h2><p>Esta ação não pode ser desfeita.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><p class="sales-delete-description"></p><p class="sales-message" role="status"></p><footer class="sales-modal-actions"><button type="button" class="button secondary" data-cancel>Cancelar</button><button type="button" class="button danger" data-confirm-delete>Excluir entrega</button></footer></section>';
+  document.body.append(modal);
+  modal.querySelector(".sales-delete-description").textContent=(item.customer_order_ref||("Entrega "+item.order_no))+" · "+item.address;
+  const close=()=>modal.remove();
+  modal.querySelector(".sales-modal-close").addEventListener("click",close);
+  modal.querySelector("[data-cancel]").addEventListener("click",close);
+  modal.addEventListener("click",event=>{if(event.target===modal)close();});
+  modal.querySelector("[data-confirm-delete]").addEventListener("click",async()=>{
+   const button=modal.querySelector("[data-confirm-delete]"),msg=modal.querySelector(".sales-message");
+   button.disabled=true;msg.textContent="Excluindo e verificando no Supabase…";msg.className="sales-message";
+   try{
+    const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
+    const {data,error}=await backend.client.from("deliveries").delete().eq("id",item.id).eq("created_by",user.id).is("journey_id",null).select("id");
+    if(error)throw error;
+    if(!data?.length)throw new Error("O Supabase não confirmou a exclusão. Verifique se a migração de permissões foi aplicada e se a entrega continua sem jornada vinculada.");
+    close();deliveryMessage("Entrega excluída e confirmada no Supabase.","success");await loadRecent();
+   }catch(error){msg.textContent="Não foi possível excluir: "+error.message;msg.className="sales-message error";button.disabled=false;}
+  });
  }
  $("salesRefresh")?.addEventListener("click",loadRecent);
  async function init(){
