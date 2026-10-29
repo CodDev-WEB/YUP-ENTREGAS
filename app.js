@@ -409,9 +409,10 @@ function renderDeliveries(){
  const pending=ds.filter(d=>!["completed","failed"].includes(d.status));
  const completed=ds.filter(d=>["completed","failed"].includes(d.status));
  const next=pending[0]||null;
- $("metricStops").textContent=ds.length;
- $("metricDone").textContent=ds.filter(d=>d.status==="completed").length;
- $("metricKm").textContent=currentJourney?"Em andamento":"—";
+ const metricStopsEl=$("metricStops"),metricDoneEl=$("metricDone"),metricKmEl=$("metricKm");
+ if(metricStopsEl)metricStopsEl.textContent=ds.length;
+ if(metricDoneEl)metricDoneEl.textContent=ds.filter(d=>d.status==="completed").length;
+ if(metricKmEl)metricKmEl.textContent=currentJourney?"Em andamento":"—";
  $("journeyBadge").textContent=currentJourney?"Jornada em andamento":"Jornada não iniciada";
  $("startJourney").classList.toggle("hidden",!!currentJourney);
  $("finishJourney").classList.toggle("hidden",!currentJourney);
