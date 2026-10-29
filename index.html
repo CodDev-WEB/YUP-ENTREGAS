@@ -46,8 +46,15 @@
         <article class="metric"><span>Entregas concluídas</span><strong id="metricDone">0</strong></article>
         <article class="metric"><span>KM da jornada</span><strong id="metricKm">—</strong></article>
       </div>
-      <article class="panel">
-        <div class="panel-title"><div><h2>1. Identificação da jornada</h2><p>Preencha antes de sair para a primeira entrega.</p></div></div>
+      <article class="panel driver-performance-panel">
+        <div class="panel-title"><div><h2>4. Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
+        <div id="driverAnalyticsSummary" class="metrics driver-analytics-summary"></div>
+        <div id="driverAnalyticsTable" class="table-wrap"><p class="hint">Carregando indicadores dos entregadores…</p></div>
+        <p class="hint">As médias consideram somente registros com horários válidos. A duração média da entrega depende dos eventos de saída/chegada registrados; dados ausentes aparecem como “—”.</p>
+      </article>
+
+      <details class="panel driver-dropdown">
+        <summary class="driver-dropdown-summary"><div><h2>Identificação da jornada</h2><p>Preencha antes de sair para a primeira entrega.</p></div><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
         <form id="journeyForm" class="form-grid">
           <label>Tipo de jornada<select id="journeyType" required><option value="delivery">Entrega para cliente</option><option value="store_use">Outros — benefício da loja</option></select></label>
           <label id="journeyPurposeNoteWrap" class="hidden">Observação / finalidade<input id="journeyPurposeNote" maxlength="160" placeholder="Ex.: compras, AMAVIE, jogar lixo"></label>
@@ -57,9 +64,9 @@
           <div class="form-action"><button class="button primary" id="startJourney" type="submit">Iniciar jornada</button><button class="button danger hidden" id="finishJourney" type="button">Finalizar jornada</button></div>
         </form>
         <p id="gpsTrackingStatus" class="hint" role="status">A localização será solicitada uma única vez ao entrar no PWA; o rastreamento continuará automaticamente durante a jornada, sem botão.</p>
-      </article>
-      <article class="panel">
-        <div class="panel-title"><div><h2>2. Adicionar entrega</h2><p>O sistema gera o número da ordem automaticamente ao cadastrar cada entrega.</p></div></div>
+      </details>
+      <details class="panel driver-dropdown">
+        <summary class="driver-dropdown-summary"><div><h2>Adicionar entrega</h2><p>O sistema gera o número da ordem automaticamente ao cadastrar cada entrega.</p></div><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
         <form id="deliveryForm" class="form-grid">
           
           <label>Bairro<select id="neighborhood" required><option value="">Selecione o bairro</option></select></label>
@@ -70,17 +77,12 @@
           <div class="form-action wide"><button class="button primary" type="submit">＋ Adicionar entrega à rota</button><button class="button secondary" id="pasteLocation" type="button">Usar localização atual do aparelho</button></div>
         </form>
         <p class="hint">A permissão de localização é solicitada na entrada do PWA; durante uma jornada aberta, as posições são registradas automaticamente. Para o endereço da entrega, cole o link compartilhado pelo cliente no WhatsApp.</p>
-      </article>
-      <article class="panel">
-        <div class="panel-title"><div><h2>3. Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button></div>
+      </details>
+      <details class="panel driver-dropdown">
+        <summary class="driver-dropdown-summary"><div><h2>Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
         <div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div>
-      </article>
-      <article class="panel driver-performance-panel">
-        <div class="panel-title"><div><h2>4. Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
-        <div id="driverAnalyticsSummary" class="metrics driver-analytics-summary"></div>
-        <div id="driverAnalyticsTable" class="table-wrap"><p class="hint">Carregando indicadores dos entregadores…</p></div>
-        <p class="hint">As médias consideram somente registros com horários válidos. A duração média da entrega depende dos eventos de saída/chegada registrados; dados ausentes aparecem como “—”.</p>
-      </article>
+      </details>
+
     </div>
     <div id="view-painel" class="view">
       <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Visão consolidada das jornadas e entregas registradas no Supabase.</p></div></div>
