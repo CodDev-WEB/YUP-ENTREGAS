@@ -731,7 +731,7 @@ function driverScreenMarkup(){
  if(driverScreen==="new"){
   return heading("JORNADA #J-"+String(currentJourney?.order_number||"—"),"Nova entrega")+
    '<div class="driver-sequence-note"><strong>'+String(ds.length+1).padStart(2,"0")+'</strong><span><b>Próxima parada da sequência</b><small>Número atribuído automaticamente.</small></span></div>'+
-   '<form id="driverNewForm" class="driver-form"><button class="driver-outline" type="button" data-driver-action="location">◎　Usar minha localização atual</button><label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>'+neighborhoods.map(n=>'<option value="'+n.id+'">'+esc(n.name)+'</option>').join("")+'</select></label><label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label><label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Casa com portão azul"></label><fieldset class="driver-priority"><legend>Prioridade</legend>'+["Normal","Alta","Agendada"].map(p=>'<label class="'+(driverDraftPriority===p?'selected':'')+'"><input type="radio" name="priority" value="'+p+'" '+(driverDraftPriority===p?'checked':'')+'>'+p+'</label>').join("")+'</fieldset><label>Link de localização compartilhada <small>Opcional</small><input name="mapLink" type="url" placeholder="Cole o link do Maps ou WhatsApp"></label><div class="driver-info">ⓘ A localização atual exige permissão. Confira o endereço antes de adicionar a entrega.</div></form>';
+   '<form id="driverNewForm" class="driver-form"><button class="driver-outline" type="button" data-driver-action="location">◎　Usar minha localização atual</button><label class="sales-cep-priority">CEP <small>Preencha para localizar o endereço</small><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label><label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>'+neighborhoods.map(n=>'<option value="'+n.id+'">'+esc(n.name)+'</option>').join("")+'</select></label><label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label><label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Casa com portão azul"></label><fieldset class="driver-priority"><legend>Prioridade</legend>'+["Normal","Alta","Agendada"].map(p=>'<label class="'+(driverDraftPriority===p?'selected':'')+'"><input type="radio" name="priority" value="'+p+'" '+(driverDraftPriority===p?'checked':'')+'>'+p+'</label>').join("")+'</fieldset><label>Link de localização compartilhada <small>Opcional</small><input name="mapLink" type="url" placeholder="Cole o link do Maps ou WhatsApp"></label><div class="driver-info">ⓘ A localização atual exige permissão. Confira o endereço antes de adicionar a entrega.</div></form>';
  }
  if(driverScreen==="detail"){
   const d=deliveries.find(x=>x.id===window.driverSelectedDeliveryId)||next;
@@ -803,18 +803,52 @@ function renderDriverExperience(){
  });}
  const newForm=$("driverNewForm");
  if(newForm){
+  newForm.elements.postalCode.value=driverNewDelivery.postalCode||"";
   newForm.elements.neighborhood.value=driverNewDelivery.neighborhood;
   newForm.elements.address.value=driverNewDelivery.address;
   newForm.elements.reference.value=driverNewDelivery.reference;
   newForm.elements.priority.value=driverDraftPriority;
   newForm.elements.mapLink.value=driverNewDelivery.mapLink;
   newForm.querySelectorAll('input[name="priority"]').forEach(r=>r.addEventListener("change",()=>{driverDraftPriority=r.value;renderDriverExperience()}));
-  newForm.addEventListener("input",()=>{driverNewDelivery={neighborhood:newForm.elements.neighborhood.value,address:newForm.elements.address.value,reference:newForm.elements.reference.value,priority:driverDraftPriority,mapLink:newForm.elements.mapLink.value}});
+  const cepField=newForm.elements.postalCode;
+  const onlyCepDigits=value=>String(value||"").replace(/\D/g,"");
+  const formatDriverCep=value=>{const digits=onlyCepDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;};
+  let lastDriverCep="";
+  async function lookupDriverCep(){
+   const cep=onlyCepDigits(cepField.value);
+   if(cep.length!==8){notify("Digite um CEP válido com 8 números ou preencha o endereço manualmente.");return;}
+   const token=cep;lastDriverCep=cep;notify("Consultando CEP…");
+   try{
+    const response=await fetch("https://viacep.com.br/ws/"+cep+"/json/");
+    if(!response.ok)throw new Error("Serviço de CEP indisponível.");
+    const result=await response.json();
+    if(onlyCepDigits(cepField.value)!==token)return;
+    if(result.erro)throw new Error("CEP não encontrado. Preencha o endereço manualmente.");
+    if(result.logradouro&&!newForm.elements.address.value.trim())newForm.elements.address.value=result.logradouro;
+    if(result.bairro){
+     const match=[...newForm.elements.neighborhood.options].find(option=>option.value&&option.textContent.trim().toLocaleLowerCase("pt-BR")===result.bairro.trim().toLocaleLowerCase("pt-BR"));
+     if(match)newForm.elements.neighborhood.value=match.value;
+     else notify("CEP localizado, mas o bairro retornado ("+result.bairro+") não está cadastrado. Selecione um bairro disponível.");
+    }
+    if(result.localidade||result.uf){
+     const cityState=[result.localidade,result.uf].filter(Boolean).join("/");
+     const addressField=newForm.elements.address;
+     if(addressField.value.trim()&&!addressField.value.toLocaleLowerCase("pt-BR").includes(cityState.toLocaleLowerCase("pt-BR")))addressField.value=addressField.value.trim()+" - "+cityState;
+    }
+    if(!result.bairro||[...newForm.elements.neighborhood.options].some(option=>option.value===newForm.elements.neighborhood.value&&option.textContent.trim().toLocaleLowerCase("pt-BR")===String(result.bairro||"").trim().toLocaleLowerCase("pt-BR")))notify("Endereço localizado pelo CEP. Confira os dados antes de adicionar.");
+    newForm.elements.address.focus();
+    driverNewDelivery={...driverNewDelivery,postalCode:cepField.value,neighborhood:newForm.elements.neighborhood.value,address:newForm.elements.address.value};
+   }catch(error){notify(error.message+" O preenchimento manual continua disponível.");}
+  }
+  cepField.addEventListener("input",()=>{cepField.value=formatDriverCep(cepField.value);const digits=onlyCepDigits(cepField.value);if(digits.length===8&&digits!==lastDriverCep){lastDriverCep=digits;lookupDriverCep();}else if(digits.length<8)lastDriverCep="";});
+  cepField.addEventListener("change",lookupDriverCep);
+  cepField.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();lookupDriverCep();}});
+  newForm.addEventListener("input",()=>{driverNewDelivery={postalCode:cepField.value,neighborhood:newForm.elements.neighborhood.value,address:newForm.elements.address.value,reference:newForm.elements.reference.value,priority:driverDraftPriority,mapLink:newForm.elements.mapLink.value}});
   newForm.addEventListener("submit",async e=>{
    e.preventDefault();const f=e.target,button=bottom.querySelector('[data-driver-submit="driverNewForm"]')||f.querySelector('button[type="submit"]');
    const address=f.elements.address.value.trim();if(!address)return;
    if(button)button.disabled=true;
-   try{const ds=driverStops();const created=await backend.createDelivery({journeyId:currentJourney.id,neighborhoodId:f.elements.neighborhood.value,address,reference:f.elements.reference.value.trim(),priority:priorityMap[driverDraftPriority]||"normal",mapLink:f.elements.mapLink.value.trim(),sequenceNo:ds.length+1});driverNewDelivery={neighborhood:"",address:"",reference:"",priority:"Normal",mapLink:""};driverDraftPriority="Normal";await refresh();window.driverSelectedDeliveryId=created.id;driverScreen="route";renderDriverExperience()}
+   try{const ds=driverStops();const created=await backend.createDelivery({journeyId:currentJourney.id,neighborhoodId:f.elements.neighborhood.value,address,reference:f.elements.reference.value.trim(),priority:priorityMap[driverDraftPriority]||"normal",mapLink:f.elements.mapLink.value.trim(),sequenceNo:ds.length+1});driverNewDelivery={postalCode:"",neighborhood:"",address:"",reference:"",priority:"Normal",mapLink:""};driverDraftPriority="Normal";await refresh();window.driverSelectedDeliveryId=created.id;driverScreen="route";renderDriverExperience()}
    catch(error){notify("Não foi possível cadastrar a entrega: "+error.message);if(button)button.disabled=false}
   });
  }
