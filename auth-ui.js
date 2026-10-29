@@ -52,6 +52,10 @@
       document.getElementById("view-entregador").classList.remove("hidden");
       document.getElementById("view-vendas").classList.add("hidden");
     } else {
+      // Todas as contas administrativas entram no mesmo layout e área de conteúdo.
+      document.querySelectorAll(".view").forEach(el => el.classList.add("hidden"));
+      document.getElementById("view-painel").classList.remove("hidden");
+      document.querySelectorAll(".nav").forEach(el => el.classList.toggle("active", el.dataset.view === "painel"));
       document.getElementById("view-vendas").classList.add("hidden");
     }
     if (role !== "admin") document.getElementById("view-manutencao").classList.add("hidden");
