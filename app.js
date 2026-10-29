@@ -718,9 +718,17 @@ async function refreshFleetGeoHeatmap(filteredJourneys){
  }
 }
 function renderFleetHistory(){
+ renderUnassignedDeliveries();
  const driverSelect=$("fleetDriver"),vehicleSelect=$("fleetVehicle");
  if(driverSelect){const old=driverSelect.value;driverSelect.innerHTML='<option value="all">Todos os entregadores</option>'+drivers.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.registration_no+" — "+d.full_name)+'</option>').join("");driverSelect.value=[...driverSelect.options].some(o=>o.value===old)?old:"all"}
  if(vehicleSelect){const old=vehicleSelect.value;vehicleSelect.innerHTML='<option value="all">Todos os veículos</option>'+vehicles.map(v=>'<option value="'+esc(v.id)+'">'+esc([v.code,v.plate,v.make_model].filter(Boolean).join(" — "))+'</option>').join("");vehicleSelect.value=[...vehicleSelect.options].some(o=>o.value===old)?old:"all"}
+function renderUnassignedDeliveries(){
+ const target=$("unassignedDeliveries");if(!target)return;
+ const journeyIds=new Set(journeys.map(j=>j.id));
+ const unassigned=deliveries.filter(d=>!d.journey_id||!journeyIds.has(d.journey_id)).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+ if(!unassigned.length){target.innerHTML='<p class="hint">Todas as entregas estão vinculadas a jornadas carregadas.</p>';return;}
+ target.innerHTML='<table><thead><tr><th>Pedido</th><th>Endereço</th><th>Bairro</th><th>Status</th><th>Cadastro</th></tr></thead><tbody>'+unassigned.map(d=>'<tr><td><strong>'+esc(d.order_no||"—")+'</strong></td><td>'+esc(d.address||"—")+(d.reference?'<small style="display:block">'+esc(d.reference)+'</small>':"")+'</td><td>'+esc(d.neighborhoods?.name||"—")+'</td><td>'+esc(statusLabel[d.status]||d.status||"—")+'</td><td>'+fmtDate(d.created_at)+'</td></tr>').join("")+'</tbody></table>';
+}
  const {filtered,period,anchor}=getFleetFilter();
  refreshFleetGeoHeatmap(filtered);
  const rows=filtered.map(j=>{
@@ -730,7 +738,7 @@ function renderFleetHistory(){
  });
  $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
  const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
- if($("fleetFilterSummary")){const countText=filtered.length+" jornada(s) exibida(s) · "+filterCaption;const sourceText=journeysTotalFromSupabase==null?"":(" · Supabase: "+journeys.length+" carregadas de "+journeysTotalFromSupabase);const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase;$("fleetFilterSummary").textContent=countText+sourceText+(mismatch?" · ATENÇÃO: a quantidade carregada não confere com o total informado pelo Supabase.":"");$("fleetFilterSummary").classList.toggle("warning",mismatch)}
+ if($("fleetFilterSummary")){const countText=filtered.length+" jornada(s) exibida(s) · "+filterCaption;const sourceText=journeysTotalFromSupabase==null?"":(" · Jornadas no Supabase: "+journeys.length+"/"+journeysTotalFromSupabase);const linkedCount=deliveries.filter(d=>d.journey_id&&journeys.some(j=>j.id===d.journey_id)).length;const unassignedCount=deliveries.length-linkedCount;const deliveryText=" · Entregas: "+deliveries.length+" carregadas"+(deliveriesTotalFromSupabase==null?"":" de "+deliveriesTotalFromSupabase)+" ("+linkedCount+" vinculadas; "+unassignedCount+" fora de jornadas)";const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase||deliveriesTotalFromSupabase!=null&&deliveries.length!==deliveriesTotalFromSupabase;$("fleetFilterSummary").textContent=countText+sourceText+deliveryText+(mismatch?" · ATENÇÃO: a quantidade carregada não confere com o total informado pelo Supabase.":"");$("fleetFilterSummary").classList.toggle("warning",mismatch)}
  const filteredJourneyIds=new Set(filtered.map(j=>j.id));
  const regionalDeliveries=deliveries.filter(d=>filteredJourneyIds.has(d.journey_id));
  const regions=new Map();
