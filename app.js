@@ -569,9 +569,55 @@ function previewRoutePlan(){
  if(waypoints.length)params.set("waypoints",waypoints.join("|"));
  window.open("https://www.google.com/maps/dir/?"+params.toString(),"_blank","noopener,noreferrer");
 }
+function driverAnalyticsDuration(ms){
+ if(!Number.isFinite(ms)||ms<0)return "—";
+ const total=Math.round(ms/60000),hours=Math.floor(total/60),minutes=total%60;
+ return hours?hours+"h "+minutes+"min":minutes+" min";
+}
+function renderDriverAnalytics(){
+ const summary=$("driverAnalyticsSummary"),table=$("driverAnalyticsTable");
+ if(!summary||!table)return;
+ const visibleDrivers=admin?drivers:drivers.filter(d=>d.profile_id===backend?.profile?.id);
+ const driverRows=visibleDrivers.map(driver=>{
+  const js=journeys.filter(j=>j.driver_id===driver.id);
+  const ids=new Set(js.map(j=>j.id));
+  const ds=deliveries.filter(d=>d.journey_id&&ids.has(d.journey_id));
+  const done=ds.filter(d=>d.status==="completed").length;
+  const failed=ds.filter(d=>d.status==="failed").length;
+  const durations=js.map(j=>{
+   const start=j.started_at_device||j.started_at_server;
+   const end=j.finished_at_device||j.finished_at_server;
+   if(!start||!end)return null;
+   const ms=new Date(end)-new Date(start);
+   return Number.isFinite(ms)&&ms>=0?ms:null;
+  }).filter(v=>v!==null);
+  const deliveryDurations=[];
+  ds.forEach(d=>{
+   const events=(d.delivery_events||[]).slice().sort((a,b)=>new Date(a.occurred_at_device||a.received_at_server||0)-new Date(b.occurred_at_device||b.received_at_server||0));
+   const start=events.find(e=>["in_transit","started","departure","delivery_started"].includes(String(e.event_type||"").toLowerCase()));
+   const end=events.find(e=>["completed","delivered"].includes(String(e.event_type||"").toLowerCase()));
+   const startTime=start&&(start.occurred_at_device||start.received_at_server);
+   const endTime=end&&(end.occurred_at_device||end.received_at_server);
+   if(startTime&&endTime){const ms=new Date(endTime)-new Date(startTime);if(Number.isFinite(ms)&&ms>=0)deliveryDurations.push(ms);}
+  });
+  const km=js.reduce((sum,j)=>sum+(j.odometer_end!=null&&j.odometer_start!=null&&Number(j.odometer_end)>=Number(j.odometer_start)?Number(j.odometer_end)-Number(j.odometer_start):0),0);
+  return {driver,js,ds,done,failed,open:js.filter(j=>j.status==="open").length,finished:js.filter(j=>j.status==="finished").length,duration:durations.length?durations.reduce((a,b)=>a+b,0)/durations.length:null,deliveryDuration:deliveryDurations.length?deliveryDurations.reduce((a,b)=>a+b,0)/deliveryDurations.length:null,km};
+ });
+ const totalJourneys=driverRows.reduce((s,r)=>s+r.js.length,0);
+ const totalDeliveries=driverRows.reduce((s,r)=>s+r.ds.length,0);
+ const totalDone=driverRows.reduce((s,r)=>s+r.done,0);
+ const totalOpen=driverRows.reduce((s,r)=>s+r.open,0);
+ summary.innerHTML='<article class="metric"><span>Entregadores ativos</span><strong>'+driverRows.length+'</strong></article><article class="metric"><span>Jornadas registradas</span><strong>'+totalJourneys+'</strong></article><article class="metric"><span>Entregas registradas</span><strong>'+totalDeliveries+'</strong></article><article class="metric"><span>Entregas concluídas</span><strong>'+totalDone+'</strong></article><article class="metric"><span>Jornadas em andamento</span><strong>'+totalOpen+'</strong></article>';
+ if(!driverRows.length){table.innerHTML='<p class="hint">Nenhum entregador ativo vinculado para exibir indicadores.</p>';return;}
+ const rows=driverRows.sort((a,b)=>a.driver.full_name.localeCompare(b.driver.full_name,"pt-BR")).map(r=>{
+  const rate=r.ds.length?Math.round(r.done/r.ds.length*100):0;
+  return '<tr><td><strong>'+esc(r.driver.full_name)+'</strong><br><small>'+esc(r.driver.registration_no||"Sem matrícula")+'</small></td><td>'+r.js.length+'</td><td>'+r.open+'</td><td>'+r.ds.length+'</td><td>'+r.done+'</td><td>'+r.failed+'</td><td>'+rate+'%</td><td>'+esc(driverAnalyticsDuration(r.duration))+'</td><td>'+esc(driverAnalyticsDuration(r.deliveryDuration))+'</td><td>'+r.km.toLocaleString("pt-BR",{maximumFractionDigits:1})+' km</td></tr>';
+ }).join("");
+ table.innerHTML='<table><thead><tr><th>Entregador</th><th>Jornadas</th><th>Em andamento</th><th>Entregas</th><th>Concluídas</th><th>Não realizadas</th><th>Conclusão</th><th>Duração média da jornada</th><th>Tempo médio por entrega*</th><th>KM registrados</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
 function render(){
  renderRoutePlans();renderDeliveryCatalog();
- renderDeliveries();
+ renderDeliveries();renderDriverAnalytics();
  renderDriverExperience();
  $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
  $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
