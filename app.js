@@ -119,14 +119,14 @@ async function loadJourneyTimeline(){
   const related=deliveries.filter(d=>d.journey_id===id),events=[];
   const started=journey.started_at_device||journey.started_at_server;
   const finished=journey.finished_at_device||journey.finished_at_server;
-  const firstPoint=points[0],lastPoint=points[points.length-1];
-  if(started)events.push({time:started,type:"Saída da loja · início da jornada",detail:"Ponto de saída"+(firstPoint?" · "+Number(firstPoint.latitude).toFixed(6)+", "+Number(firstPoint.longitude).toFixed(6):" · GPS inicial não registrado")+" · Odômetro inicial: "+(journey.odometer_start==null?"não informado":Number(journey.odometer_start).toLocaleString("pt-BR")+" km"),kind:"journey",point:firstPoint||null});
+  const timelineStartPoint=points[0],timelineEndPoint=points[points.length-1];
+  if(started)events.push({time:started,type:"Saída da loja · início da jornada",detail:"Ponto de saída"+(timelineStartPoint?" · "+Number(timelineStartPoint.latitude).toFixed(6)+", "+Number(timelineStartPoint.longitude).toFixed(6):" · GPS inicial não registrado")+" · Odômetro inicial: "+(journey.odometer_start==null?"não informado":Number(journey.odometer_start).toLocaleString("pt-BR")+" km"),kind:"journey",point:timelineStartPoint||null});
   related.forEach(d=>{
    (d.delivery_events||[]).forEach(ev=>events.push({time:ev.occurred_at_device||ev.received_at_server,type:"Entrega · "+(statusLabel[ev.event_type]||ev.event_type),detail:"Pedido "+(d.order_no||"")+" · "+d.address+(d.neighborhoods?.name?" · "+d.neighborhoods.name:"")+(ev.note?" · "+ev.note:""),kind:"delivery",address:d.address+(d.neighborhoods?.name?", "+d.neighborhoods.name:"")}));
    if(["completed","failed"].includes(d.status)&&!(d.delivery_events||[]).some(ev=>ev.event_type===d.status))events.push({time:d.updated_at||d.created_at,type:"Entrega · "+(statusLabel[d.status]||d.status),detail:"Pedido "+(d.order_no||"")+" · "+d.address,kind:"delivery",address:d.address});
   });
   points.forEach((p,i)=>events.push({time:p.captured_at_device,type:i===0?"GPS · saída da loja":i===points.length-1?"GPS · chegada/último ponto":"GPS · ponto de rota",detail:"Coordenada "+Number(p.latitude).toFixed(6)+", "+Number(p.longitude).toFixed(6),kind:"gps",point:p}));
-  if(finished)events.push({time:finished,type:"Chegada · encerramento da jornada",detail:"Ponto de chegada"+(lastPoint?" · "+Number(lastPoint.latitude).toFixed(6)+", "+Number(lastPoint.longitude).toFixed(6):" · GPS final não registrado")+" · Odômetro final: "+(journey.odometer_end==null?"não informado":Number(journey.odometer_end).toLocaleString("pt-BR")+" km"),kind:"journey",point:lastPoint||null});
+  if(finished)events.push({time:finished,type:"Chegada · encerramento da jornada",detail:"Ponto de chegada"+(timelineEndPoint?" · "+Number(timelineEndPoint.latitude).toFixed(6)+", "+Number(timelineEndPoint.longitude).toFixed(6):" · GPS final não registrado")+" · Odômetro final: "+(journey.odometer_end==null?"não informado":Number(journey.odometer_end).toLocaleString("pt-BR")+" km"),kind:"journey",point:timelineEndPoint||null});
   events.sort((x,y)=>new Date(x.time||0)-new Date(y.time||0));
   let meters=0;
   for(let i=1;i<points.length;i++)meters+=distanceMeters({latitude:Number(points[i-1].latitude),longitude:Number(points[i-1].longitude)},{latitude:Number(points[i].latitude),longitude:Number(points[i].longitude)});
