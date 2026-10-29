@@ -32,7 +32,7 @@
     const role = profile.role;
     const isManager = ["admin","manager"].includes(role);
     const isSales = role === "sales";
-    document.body.classList.toggle("sales-mode", isSales);
+    document.body.classList.toggle("sales-mode", isSales);\n    document.body.classList.toggle("admin-mode", isManager);
     document.body.classList.toggle("driver-mode", role === "driver");
     document.querySelectorAll('[data-view="painel"],[data-view="rotas"]').forEach(el => el.classList.toggle("hidden", !isManager));
     document.querySelectorAll('[data-view="manutencao"]').forEach(el => el.classList.toggle("hidden", role !== "admin"));
@@ -52,11 +52,7 @@
       document.getElementById("view-entregador").classList.remove("hidden");
       document.getElementById("view-vendas").classList.add("hidden");
     } else {
-      // Todas as contas administrativas entram no mesmo layout e área de conteúdo.
-      document.querySelectorAll(".view").forEach(el => el.classList.add("hidden"));
-      document.getElementById("view-painel").classList.remove("hidden");
-      document.querySelectorAll(".nav").forEach(el => el.classList.toggle("active", el.dataset.view === "painel"));
-      document.getElementById("view-vendas").classList.add("hidden");
+      // Abas administrativas dentro da mesma área de conteúdo.\n      document.querySelectorAll(".view").forEach(el => el.classList.add("hidden"));\n      document.getElementById("view-painel").classList.remove("hidden");\n      document.getElementById("view-vendas").classList.add("hidden");\n      const sidebar = document.querySelector(".sidebar");\n      let tabs = document.getElementById("adminTabs");\n      if (sidebar && !tabs) {\n        tabs = document.createElement("nav");\n        tabs.id = "adminTabs";\n        tabs.className = "admin-tabs";\n        tabs.setAttribute("aria-label", "Navegação administrativa");\n        sidebar.querySelectorAll(".nav").forEach(button => tabs.appendChild(button));\n        document.querySelector(".content")?.prepend(tabs);\n      }\n      document.querySelectorAll(".admin-tabs .nav").forEach(el => el.classList.toggle("active", el.dataset.view === "painel"));
     }
     if (role !== "admin") document.getElementById("view-manutencao").classList.add("hidden");
     document.querySelectorAll(".nav").forEach(el => {
