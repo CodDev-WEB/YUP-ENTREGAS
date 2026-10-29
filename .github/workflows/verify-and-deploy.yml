@@ -67,7 +67,7 @@ jobs:
       - name: Check required files, links and public configuration
         run: |
           set -e
-          for file in index.html app.js auth-ui.js sales-portal.js vendas.html styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql supabase/route-plans-migration.sql supabase/migrations/20261022_sales_delivery_policies.sql supabase/migrations/20261022_sales_role.sql supabase/migrations/20261022_delivery_catalog.sql supabase/migrations/20261022_align_delivery_catalog.sql supabase/migrations/20261022_sales_catalog_isolation.sql supabase/migrations/20261022_atomic_operations.sql supabase/migrations/20261029_fix_pending_delivery_assignment_rpc.sql; do
+          for file in index.html app.js auth-ui.js sales-portal.js vendas.html styles.css manifest.webmanifest sw.js _worker.js supabase-client.js supabase-config.js yup-brand.svg pwa-icon.svg supabase/schema.sql supabase/route-plans-migration.sql supabase/migrations/20261022_sales_delivery_policies.sql supabase/migrations/20261022_sales_role.sql supabase/migrations/20261022_delivery_catalog.sql supabase/migrations/20261022_align_delivery_catalog.sql supabase/migrations/20261022_sales_catalog_isolation.sql supabase/migrations/20261022_atomic_operations.sql supabase/migrations/20261029_add_admin_yup_email.sql supabase/migrations/20261029_fix_pending_delivery_assignment_rpc.sql; do
             test -s "$file"
           done
           grep -q 'https://gswadshjadzobwhurjxc.supabase.co' supabase-config.js
