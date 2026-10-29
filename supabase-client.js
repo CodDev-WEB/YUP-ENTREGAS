@@ -136,19 +136,11 @@
   async function getLatestVehicleOdometer(vehicleId) {
     const client = await requireReady();
     if (!vehicleId) return null;
-    const {data,error} = await client.from("journeys")
-      .select("id,vehicle_id,odometer_start,odometer_end,started_at_server,finished_at_server,status")
-      .eq("vehicle_id",vehicleId)
-      .order("started_at_server",{ascending:false})
-      .limit(200);
-    if (error) throw error;
-    const rows=data||[];
-    const withEnd=rows.filter(row=>row.odometer_end!==null&&row.odometer_end!==undefined&&row.odometer_end!=="")
-      .sort((a,b)=>new Date(b.finished_at_server||b.started_at_server||0)-new Date(a.finished_at_server||a.started_at_server||0))[0];
-    if(withEnd)return {value:withEnd.odometer_end,source:"end",journeyId:withEnd.id};
-    const withStart=rows.filter(row=>row.odometer_start!==null&&row.odometer_start!==undefined&&row.odometer_start!=="")
-      .sort((a,b)=>new Date(b.started_at_server||0)-new Date(a.started_at_server||0))[0];
-    return withStart?{value:withStart.odometer_start,source:"start",journeyId:withStart.id}:null;
+    const {data,error} = await client.rpc("get_latest_vehicle_odometer",{p_vehicle_id:vehicleId});
+    if(error) throw error;
+    return data && data.value !== null && data.value !== undefined
+      ? {value:data.value,source:"end",journeyId:data.journey_id||null,finishedAt:data.finished_at||null}
+      : null;
   }
   async function recordJourneyLocation({journeyId,latitude,longitude,accuracy,speed,heading,capturedAt}) {
     const client = await requireReady();
