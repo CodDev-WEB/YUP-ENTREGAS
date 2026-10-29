@@ -223,6 +223,7 @@ async function refresh(){
    const result=await backend.listOperations();
    journeys=result.journeys;
    deliveries=result.deliveries;
+   populateTimelineJourneySelect();
    currentJourney=openJourney();
    try{routePlans=await backend.listRoutePlans();routePlansError="";}catch(routeError){routePlans=[];routePlansError=routeError?.message||"erro desconhecido";console.error("YUP-ENTREGAS: falha ao carregar rotas prontas",routeError);}
    shareEntryLocationOnce();
@@ -452,7 +453,26 @@ $("openRoute").addEventListener("click",()=>{
  }
  openGoogleRoute(ds,startIndex);
 });
-const timelineSelect=$("timelineJourney");if(timelineSelect){const selected=timelineSelect.value;timelineSelect.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Selecione uma jornada";timelineSelect.append(first);journeys.forEach(j=>{const o=document.createElement("option");o.value=j.id;o.textContent=(j.drivers?.full_name||j.drivers?.registration_no||"Entregador")+" · "+fmtDate(j.started_at_server)+" · "+(statusLabel[j.status]||j.status);timelineSelect.append(o)});if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;}
+function populateTimelineJourneySelect(){
+ const timelineSelect=$("timelineJourney");
+ if(!timelineSelect)return;
+ const selected=timelineSelect.value;
+ timelineSelect.replaceChildren();
+ const first=document.createElement("option");
+ first.value="";
+ first.textContent=journeys.length?"Selecione uma jornada":"Nenhuma jornada encontrada";
+ timelineSelect.append(first);
+ [...journeys].sort((a,b)=>new Date(b.started_at_device||b.started_at_server||0)-new Date(a.started_at_device||a.started_at_server||0)).forEach(j=>{
+  const o=document.createElement("option");
+  o.value=j.id;
+  const driver=j.drivers?.full_name||drivers.find(d=>d.id===j.driver_id)?.full_name||drivers.find(d=>d.id===j.driver_id)?.registration_no||"Entregador";
+  const vehicle=vehicles.find(v=>v.id===j.vehicle_id);
+  const vehicleLabel=[vehicle?.code,vehicle?.plate].filter(Boolean).join(" · ");
+  o.textContent=driver+" · "+fmtDate(j.started_at_device||j.started_at_server)+" · "+(statusLabel[j.status]||j.status)+(vehicleLabel?" · "+vehicleLabel:"");
+  timelineSelect.append(o);
+ });
+ if(journeys.some(j=>j.id===selected))timelineSelect.value=selected;
+}
 function confirmDeletePendingDelivery(delivery){
  return new Promise(resolve=>{
   const overlay=document.createElement("div");
