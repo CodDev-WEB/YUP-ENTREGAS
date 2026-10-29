@@ -57,17 +57,10 @@
       document.querySelectorAll(".view").forEach(el => el.classList.add("hidden"));
       document.getElementById("view-painel").classList.remove("hidden");
       document.getElementById("view-vendas").classList.add("hidden");
-      const sidebar = document.querySelector(".sidebar");
-      let tabs = document.getElementById("adminTabs");
-      if (sidebar && !tabs) {
-        tabs = document.createElement("nav");
-        tabs.id = "adminTabs";
-        tabs.className = "admin-tabs";
-        tabs.setAttribute("aria-label", "Navegação administrativa");
-        sidebar.querySelectorAll(".nav").forEach(button => tabs.appendChild(button));
-        document.querySelector(".content")?.prepend(tabs);
-      }
-      document.querySelectorAll(".admin-tabs .nav").forEach(el => el.classList.toggle("active", el.dataset.view === "painel"));
+      // Mantém a navegação administrativa na barra lateral original.
+      const tabs = document.getElementById("adminTabs");
+      if (tabs) tabs.remove();
+      document.querySelectorAll(".sidebar .nav").forEach(el => el.classList.toggle("active", el.dataset.view === "painel"));
     }
     if (role !== "admin") document.getElementById("view-manutencao").classList.add("hidden");
     document.querySelectorAll(".nav").forEach(el => {
