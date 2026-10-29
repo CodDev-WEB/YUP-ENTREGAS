@@ -3,7 +3,7 @@ const backend = window.YupBackend;
 const localKey = "yup-entregas-local-expenses-v1:" + (backend?.profile?.id || "unknown");
 const entryLocationKey = "yup-entregas-entry-location-v1:" + (backend?.profile?.id || "unknown");
 const admin = ["admin","manager"].includes(backend?.profile?.role);
-let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], routePlans=[], routePlansError="", currentJourney=null, loading=false, entryLocationRequested=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null, gpsSaving=false;
+let drivers=[], vehicles=[], neighborhoods=[], journeys=[], deliveries=[], routePlans=[], routePlansError="", currentJourney=null, loading=false, entryLocationRequested=false, gpsWatchId=null, gpsJourneyId=null, lastGpsSaved=null, gpsSaving=false, journeysTotalFromSupabase=null, deliveriesTotalFromSupabase=null;
 let local = (()=>{try{return JSON.parse(localStorage.getItem(localKey))||{fuel:[],maintenance:[]}}catch{return {fuel:[],maintenance:[]}}})();
 const now = () => new Date().toISOString();
 const fmtDate = v => v ? new Date(v).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : "—";
@@ -235,6 +235,8 @@ async function refresh(){
    const result=await backend.listOperations();
    journeys=result.journeys;
    deliveries=result.deliveries;
+   journeysTotalFromSupabase=Number.isFinite(result.journeysTotal)?result.journeysTotal:journeys.length;
+   deliveriesTotalFromSupabase=Number.isFinite(result.deliveriesTotal)?result.deliveriesTotal:deliveries.length;
    populateTimelineJourneySelect();
    currentJourney=openJourney();
    try{routePlans=await backend.listRoutePlans();routePlansError="";}catch(routeError){routePlans=[];routePlansError=routeError?.message||"erro desconhecido";console.error("YUP-ENTREGAS: falha ao carregar rotas prontas",routeError);}
@@ -728,7 +730,7 @@ function renderFleetHistory(){
  });
  $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
  const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
- if($("fleetFilterSummary"))$("fleetFilterSummary").textContent=filtered.length+" jornada(s) · "+filterCaption;
+ if($("fleetFilterSummary")){const countText=filtered.length+" jornada(s) exibida(s) · "+filterCaption;const sourceText=journeysTotalFromSupabase==null?"":(" · Supabase: "+journeys.length+" carregadas de "+journeysTotalFromSupabase);const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase;$("fleetFilterSummary").textContent=countText+sourceText+(mismatch?" · ATENÇÃO: a quantidade carregada não confere com o total informado pelo Supabase.":"");$("fleetFilterSummary").classList.toggle("warning",mismatch)}
  const filteredJourneyIds=new Set(filtered.map(j=>j.id));
  const regionalDeliveries=deliveries.filter(d=>filteredJourneyIds.has(d.journey_id));
  const regions=new Map();
