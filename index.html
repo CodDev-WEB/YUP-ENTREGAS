@@ -75,6 +75,12 @@
         <div class="panel-title"><div><h2>3. Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button></div>
         <div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div>
       </article>
+      <article class="panel driver-performance-panel">
+        <div class="panel-title"><div><h2>4. Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
+        <div id="driverAnalyticsSummary" class="metrics driver-analytics-summary"></div>
+        <div id="driverAnalyticsTable" class="table-wrap"><p class="hint">Carregando indicadores dos entregadores…</p></div>
+        <p class="hint">As médias consideram somente registros com horários válidos. A duração média da entrega depende dos eventos de saída/chegada registrados; dados ausentes aparecem como “—”.</p>
+      </article>
     </div>
     <div id="view-painel" class="view">
       <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Visão consolidada das jornadas e entregas registradas no Supabase.</p></div></div>
