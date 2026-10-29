@@ -2680,3 +2680,67 @@ body.sales-mode .sales-modal .sales-modal-actions [data-confirm-delete],
 .journey-timeline-map{width:100%;height:clamp(320px,55vh,580px);border-radius:12px;overflow:hidden;background:#eef1ed}
 .journey-timeline-events h3{margin:0 0 12px}
 @media(max-width:760px){.journey-timeline-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-timeline-map-heading{align-items:flex-start;flex-direction:column}.journey-timeline-map{height:380px}}
+
+
+/* Experiência administrativa: mesma linguagem visual dos portais Entregador e Vendas,
+   com navegação de abas dentro do conteúdo e sem a sidebar desktop tradicional. */
+body.admin-mode{
+  --admin-ink:#202a31;
+  --admin-green:#176b43;
+  --admin-yellow:#fcde52;
+  --admin-border:#dfe9e2;
+  background:#f3f7f4;
+}
+body.admin-mode .layout{display:block;min-height:calc(100vh - 68px)}
+body.admin-mode .sidebar{display:none!important}
+body.admin-mode .topbar{
+  min-height:68px;height:auto;padding:12px clamp(16px,3vw,30px);
+  background:#fff;border-bottom:1px solid var(--admin-border);
+  box-shadow:0 2px 12px rgba(21,45,30,.035)
+}
+body.admin-mode .content{
+  width:100%;max-width:980px;margin:0 auto;
+  padding:clamp(16px,4vw,30px) clamp(14px,4vw,24px) 36px
+}
+body.admin-mode .page-heading{margin:2px 0 20px}
+body.admin-mode .page-heading .eyebrow{
+  display:inline-flex;align-items:center;min-height:28px;margin:0 0 10px;padding:5px 10px;
+  border-radius:999px;background:#fff1a6;color:#514400;font-size:11px;font-weight:900;letter-spacing:.07em
+}
+body.admin-mode .page-heading h1{color:var(--admin-ink);font-size:clamp(25px,6vw,34px);font-weight:900;letter-spacing:-.04em}
+body.admin-mode .panel{
+  margin:0 0 16px;padding:clamp(16px,4vw,24px);border:1px solid var(--admin-border);
+  border-radius:20px;background:#fff;box-shadow:0 5px 20px rgba(21,45,30,.045)
+}
+body.admin-mode .panel-title h2{color:var(--admin-ink);font-size:18px;font-weight:900}
+body.admin-mode .form-grid{gap:15px}
+body.admin-mode .form-grid input,
+body.admin-mode .form-grid select,
+body.admin-mode .form-grid textarea{
+  min-height:48px;border-radius:13px;border-color:#d8e4dc;background:#fbfdfb;padding:12px 14px;font-size:14px
+}
+body.admin-mode .button{min-height:44px;border-radius:13px}
+body.admin-mode .button.primary{background:var(--admin-yellow);border-color:#f0cf31;color:#202a31;box-shadow:0 5px 12px rgba(160,130,0,.12)}
+body.admin-mode .button.primary:hover{background:#f5d63f;border-color:#e4c52b}
+body.admin-mode .metrics{gap:12px}
+body.admin-mode .metric{border-radius:17px;border-color:var(--admin-border);box-shadow:0 5px 18px rgba(21,45,30,.035)}
+body.admin-mode .nav{display:none!important}
+body.admin-mode .admin-tabs{
+  display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;
+  margin:0 0 20px;padding:7px;border:1px solid var(--admin-border);border-radius:17px;
+  background:#fff;scrollbar-width:thin
+}
+body.admin-mode .admin-tabs .nav{
+  display:flex!important;flex:0 0 auto;width:auto;min-height:42px;padding:10px 14px;
+  border:1px solid transparent;border-radius:12px;background:transparent;color:#617067;
+  font-size:12px;font-weight:800;white-space:nowrap
+}
+body.admin-mode .admin-tabs .nav.active{background:#e8f5ed;border-color:#d5eadc;color:#176b43}
+@media(max-width:720px){
+ body.admin-mode .layout{min-height:calc(100dvh - 66px)}
+ body.admin-mode .content{padding:16px 12px 28px}
+ body.admin-mode .page-heading{margin-bottom:18px}
+ body.admin-mode .panel-title{align-items:flex-start}
+ body.admin-mode .admin-tabs{position:sticky;top:66px;z-index:12;margin-inline:-2px;border-radius:14px}
+ body.admin-mode .admin-tabs .nav{min-height:40px;padding:9px 12px}
+}
