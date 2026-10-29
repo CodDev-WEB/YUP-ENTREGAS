@@ -208,36 +208,32 @@
     if (form?.id === "driverStartForm") {
       const vehicleField = form.elements.vehicle;
       const odometerField = form.elements.odometer;
-      const prefillOdometer = () => {
+      let lookupToken = 0;
+      const prefillOdometer = async () => {
         if (!vehicleField || !odometerField) return;
         const vehicleId = vehicleField.value;
-        if (!vehicleId) {
-          odometerField.value = "";
-          odometerField.readOnly = false;
-          odometerField.placeholder = "Selecione o veículo para preencher automaticamente";
-          odometerField.title = "";
-          return;
-        }
-        const history = journeys.filter(item => String(item.vehicle_id) === String(vehicleId));
-        const latestWithEnd = history.filter(item => item.odometer_end !== null && item.odometer_end !== undefined && item.odometer_end !== "").sort((a, b) => new Date(b.finished_at_server || b.started_at_server || 0) - new Date(a.finished_at_server || a.started_at_server || 0))[0];
-        const latestWithStart = history.filter(item => item.odometer_start !== null && item.odometer_start !== undefined && item.odometer_start !== "").sort((a, b) => new Date(b.started_at_server || 0) - new Date(a.started_at_server || 0))[0];
-        const source = latestWithEnd || latestWithStart;
-        if (source) {
-          odometerField.value = String(latestWithEnd ? source.odometer_end : source.odometer_start);
-          odometerField.readOnly = true;
-          odometerField.placeholder = latestWithEnd ? "Último odômetro final deste veículo" : "Sem odômetro final; usando o último inicial registrado";
-          odometerField.title = latestWithEnd ? "Preenchido pelo último odômetro final registrado para este veículo." : "Não há odômetro final disponível; usando o último inicial registrado.";
-        } else {
-          odometerField.value = "";
-          odometerField.readOnly = false;
-          odometerField.placeholder = "Sem histórico para este veículo — informe o valor";
-          odometerField.title = "Nenhuma jornada deste veículo possui odômetro registrado.";
+        const token = ++lookupToken;
+        if (!vehicleId) { odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Selecione o veículo para preencher automaticamente"; odometerField.title = ""; return; }
+        odometerField.value = ""; odometerField.readOnly = true; odometerField.placeholder = "Consultando último odômetro no Supabase…";
+        try {
+          const latest = await window.YupBackend?.getLatestVehicleOdometer?.(vehicleId);
+          if (token !== lookupToken || vehicleField.value !== vehicleId) return;
+          if (latest && latest.value !== null && latest.value !== undefined && latest.value !== "") {
+            odometerField.value = String(latest.value); odometerField.readOnly = true;
+            odometerField.placeholder = latest.source === "end" ? "Último odômetro final deste veículo" : "Sem odômetro final; usando o último inicial";
+            odometerField.title = latest.source === "end" ? "Valor consultado diretamente no histórico do Supabase." : "Nenhum odômetro final encontrado; usando o último inicial disponível.";
+          } else { odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Sem histórico visível para este veículo — informe o valor"; odometerField.title = "O Supabase não retornou jornadas com odômetro para o veículo selecionado."; }
+        } catch (error) {
+          if (token !== lookupToken) return;
+          console.error("YUP Entregas: erro ao consultar odômetro do veículo", error);
+          odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Não foi possível consultar o histórico — informe o valor"; odometerField.title = error?.message || "Falha ao consultar histórico no Supabase.";
         }
       };
       vehicleField?.addEventListener("change", prefillOdometer);
+      vehicleField?.addEventListener("input", prefillOdometer);
       prefillOdometer();
     }
-    if (form?.id === "driverFinishForm" && finishDraft?.journey === currentJourney?.id) form.elements.odometer.value = finishDraft.value;
+        if (form?.id === "driverFinishForm" && finishDraft?.journey === currentJourney?.id) form.elements.odometer.value = finishDraft.value;
     const bottom = root.querySelector("#driverBottom");
     // Secondary actions live in content; keep the fixed dock small enough for narrow screens.
     bottom.querySelectorAll("button").forEach(button => {
