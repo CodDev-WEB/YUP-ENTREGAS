@@ -202,6 +202,38 @@
     root.dataset.mobileScreen = driverScreen;
     root.dataset.mobileJourney = currentJourney?.id || "";
     const form = root.querySelector("form");
+    if (form?.id === "driverStartForm") {
+      const vehicleField = form.elements.vehicle;
+      const odometerField = form.elements.odometer;
+      const prefillOdometer = () => {
+        if (!vehicleField || !odometerField) return;
+        const vehicleId = vehicleField.value;
+        if (!vehicleId) {
+          odometerField.value = "";
+          odometerField.readOnly = false;
+          odometerField.placeholder = "Selecione o veículo para preencher automaticamente";
+          odometerField.title = "";
+          return;
+        }
+        const history = journeys.filter(item => String(item.vehicle_id) === String(vehicleId));
+        const latestWithEnd = history.filter(item => item.odometer_end !== null && item.odometer_end !== undefined && item.odometer_end !== "").sort((a, b) => new Date(b.finished_at_server || b.started_at_server || 0) - new Date(a.finished_at_server || a.started_at_server || 0))[0];
+        const latestWithStart = history.filter(item => item.odometer_start !== null && item.odometer_start !== undefined && item.odometer_start !== "").sort((a, b) => new Date(b.started_at_server || 0) - new Date(a.started_at_server || 0))[0];
+        const source = latestWithEnd || latestWithStart;
+        if (source) {
+          odometerField.value = String(latestWithEnd ? source.odometer_end : source.odometer_start);
+          odometerField.readOnly = true;
+          odometerField.placeholder = latestWithEnd ? "Último odômetro final deste veículo" : "Sem odômetro final; usando o último inicial registrado";
+          odometerField.title = latestWithEnd ? "Preenchido pelo último odômetro final registrado para este veículo." : "Não há odômetro final disponível; usando o último inicial registrado.";
+        } else {
+          odometerField.value = "";
+          odometerField.readOnly = false;
+          odometerField.placeholder = "Sem histórico para este veículo — informe o valor";
+          odometerField.title = "Nenhuma jornada deste veículo possui odômetro registrado.";
+        }
+      };
+      vehicleField?.addEventListener("change", prefillOdometer);
+      prefillOdometer();
+    }
     if (form && form.id === oldForm?.id) {
       for (const [name, value] of values) if (form.elements.namedItem(name)) form.elements.namedItem(name).value = value;
     }
