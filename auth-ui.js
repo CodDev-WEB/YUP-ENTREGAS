@@ -101,7 +101,7 @@
         document.head.appendChild(styles);
         script.addEventListener("load", () => {
           const mobile = document.createElement("script");
-          mobile.src = "driver-mobile.js?v=4";
+          mobile.src = "driver-mobile.js?v=5";
           mobile.onerror = () => message("Não foi possível carregar a interface móvel do entregador. Atualize a página.", "error");
           document.body.appendChild(mobile);
         }, { once: true });
