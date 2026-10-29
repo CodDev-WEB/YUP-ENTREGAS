@@ -133,6 +133,23 @@
     );
     return {journeys, deliveries, journeysTotal:journeysTotal??journeys.length, deliveriesTotal:deliveriesTotal??deliveries.length};
   }
+  async function getLatestVehicleOdometer(vehicleId) {
+    const client = await requireReady();
+    if (!vehicleId) return null;
+    const {data,error} = await client.from("journeys")
+      .select("id,vehicle_id,odometer_start,odometer_end,started_at_server,finished_at_server,status")
+      .eq("vehicle_id",vehicleId)
+      .order("started_at_server",{ascending:false})
+      .limit(200);
+    if (error) throw error;
+    const rows=data||[];
+    const withEnd=rows.filter(row=>row.odometer_end!==null&&row.odometer_end!==undefined&&row.odometer_end!=="")
+      .sort((a,b)=>new Date(b.finished_at_server||b.started_at_server||0)-new Date(a.finished_at_server||a.started_at_server||0))[0];
+    if(withEnd)return {value:withEnd.odometer_end,source:"end",journeyId:withEnd.id};
+    const withStart=rows.filter(row=>row.odometer_start!==null&&row.odometer_start!==undefined&&row.odometer_start!=="")
+      .sort((a,b)=>new Date(b.started_at_server||0)-new Date(a.started_at_server||0))[0];
+    return withStart?{value:withStart.odometer_start,source:"start",journeyId:withStart.id}:null;
+  }
   async function recordJourneyLocation({journeyId,latitude,longitude,accuracy,speed,heading,capturedAt}) {
     const client = await requireReady();
     const {data,error} = await client.from("journey_location_points").insert({
@@ -267,5 +284,5 @@
     if (error) throw error;
     return data;
   }
-  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,createRoutePlan,startJourney,finishJourney,createDelivery,deletePendingDelivery,assignDeliveriesToJourney,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
+  window.YupBackend={connect,signIn,signOut,getSessionProfile,subscribeToOperations,listDrivers,listVehicles,listNeighborhoods,listOperations,listRoutePlans,getLatestVehicleOdometer,createRoutePlan,startJourney,finishJourney,createDelivery,deletePendingDelivery,assignDeliveriesToJourney,updateDeliveryStatus,recordJourneyLocation,listJourneyLocationPoints,listJourneyLocationPointsForJourneys,get client(){return state.client;},get profile(){return state.profile;} };
 })();
