@@ -2758,3 +2758,9 @@ body.admin-mode #adminTabs{display:none!important}
  .driver-route-actions{justify-content:stretch}
  .driver-route-actions .button{width:100%}
 }
+
+
+/* Mensagens explícitas para falhas de leitura do Supabase */
+.supabase-data-status{margin:12px 0 18px;padding:14px 16px;border:1px solid #e7b8b8;border-radius:12px;background:#fff3f2;color:#8f2525;font-size:13px;line-height:1.5;font-weight:650;overflow-wrap:anywhere}
+.supabase-data-status.is-warning{border-color:#e8d28c;background:#fff9df;color:#6c5200}
+.supabase-data-status.hidden{display:none!important}
