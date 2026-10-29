@@ -45,7 +45,7 @@
           <label class="hidden" id="driverPurposeNoteWrap">Observação / finalidade<input name="purposeNote" maxlength="160" placeholder="Ex.: compras, AMAVIE, jogar lixo"></label>
           <label>Veículo<select name="vehicle" required${activeVehicles.length ? "" : " disabled"}><option value="">Selecione seu veículo</option>${activeVehicles.map(item => `<option value="${escape(item.id)}">${escape([item.make_model || item.code, item.plate].filter(Boolean).join(" · "))}</option>`).join("")}</select></label>
           ${activeVehicles.length ? "" : '<p class="driver-warning" role="status">Nenhum veículo ativo disponível. Peça à equipe para verificar o cadastro antes de iniciar.</p>'}
-          <label>Odômetro inicial (km)<input name="odometer" type="number" min="0" step="0.1" inputmode="decimal" required placeholder="Informe a quilometragem"></label>
+          <label class="hidden" id="driverOdometerWrap">Odômetro inicial (km)<input name="odometer" type="number" min="0" step="0.1" inputmode="decimal" required readonly placeholder="Selecione um veículo primeiro"><small id="driverOdometerStatus" role="status">Selecione um veículo para consultar o último odômetro final.</small></label>
           <div class="driver-info">A localização exige sua permissão e depende do dispositivo e da conexão. Mantenha o aplicativo aberto durante a jornada.</div>
           ${submit("Iniciar jornada")}
         </form>`;
@@ -208,25 +208,41 @@
     if (form?.id === "driverStartForm") {
       const vehicleField = form.elements.vehicle;
       const odometerField = form.elements.odometer;
+      const odometerWrap = form.querySelector("#driverOdometerWrap");
+      const odometerStatus = form.querySelector("#driverOdometerStatus");
       let lookupToken = 0;
       const prefillOdometer = async () => {
-        if (!vehicleField || !odometerField) return;
+        if (!vehicleField || !odometerField || !odometerWrap) return;
         const vehicleId = vehicleField.value;
         const token = ++lookupToken;
-        if (!vehicleId) { odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Selecione o veículo para preencher automaticamente"; odometerField.title = ""; return; }
-        odometerField.value = ""; odometerField.readOnly = true; odometerField.placeholder = "Consultando último odômetro no Supabase…";
+        odometerField.value = ""; odometerField.readOnly = true;
+        if (!vehicleId) {
+          odometerWrap.classList.add("hidden");
+          odometerField.placeholder = "Selecione um veículo primeiro";
+          if (odometerStatus) odometerStatus.textContent = "Selecione um veículo para consultar o último odômetro final.";
+          return;
+        }
+        odometerWrap.classList.remove("hidden");
+        odometerField.placeholder = "Consultando último odômetro final…";
+        if (odometerStatus) odometerStatus.textContent = "Buscando o último odômetro final registrado para este veículo…";
         try {
           const latest = await window.YupBackend?.getLatestVehicleOdometer?.(vehicleId);
           if (token !== lookupToken || vehicleField.value !== vehicleId) return;
           if (latest && latest.value !== null && latest.value !== undefined && latest.value !== "") {
-            odometerField.value = String(latest.value); odometerField.readOnly = true;
-            odometerField.placeholder = latest.source === "end" ? "Último odômetro final deste veículo" : "Sem odômetro final; usando o último inicial";
-            odometerField.title = latest.source === "end" ? "Valor consultado diretamente no histórico do Supabase." : "Nenhum odômetro final encontrado; usando o último inicial disponível.";
-          } else { odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Sem histórico visível para este veículo — informe o valor"; odometerField.title = "O Supabase não retornou jornadas com odômetro para o veículo selecionado."; }
+            odometerField.value = String(latest.value);
+            odometerField.placeholder = "Último odômetro final registrado";
+            if (odometerStatus) odometerStatus.textContent = "Preenchido automaticamente com o último odômetro final deste veículo. Você só precisa iniciar a jornada.";
+          } else {
+            odometerField.value = "";
+            odometerField.placeholder = "Sem odômetro final registrado";
+            if (odometerStatus) odometerStatus.textContent = "Não há odômetro final registrado para este veículo. Peça ao administrador para conferir o histórico antes de iniciar.";
+          }
         } catch (error) {
           if (token !== lookupToken) return;
-          console.error("YUP Entregas: erro ao consultar odômetro do veículo", error);
-          odometerField.value = ""; odometerField.readOnly = false; odometerField.placeholder = "Não foi possível consultar o histórico — informe o valor"; odometerField.title = error?.message || "Falha ao consultar histórico no Supabase.";
+          console.error("YUP Entregas: erro ao consultar odômetro final", error);
+          odometerField.value = "";
+          odometerField.placeholder = "Falha ao consultar odômetro";
+          if (odometerStatus) odometerStatus.textContent = "Não foi possível consultar o Supabase. Verifique a conexão/permissões e tente novamente.";
         }
       };
       vehicleField?.addEventListener("change", prefillOdometer);
