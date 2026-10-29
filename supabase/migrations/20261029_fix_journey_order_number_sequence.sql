@@ -1,7 +1,24 @@
 -- Corrige a sequência identity de journeys quando o contador ficou atrás dos registros existentes.
--- Isso evita "duplicate key value violates unique constraint journeys_order_number_uidx"
--- sem alterar ou apagar jornadas já registradas.
+-- Também garante numeração segura em inclusões concorrentes.
+-- Não altera nem apaga jornadas já registradas.
 begin;
+
+create or replace function public.assign_current_journey_number()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  perform pg_advisory_xact_lock(hashtext('public.journeys.order_number'));
+  new.order_number := coalesce((select max(j.order_number) from public.journeys j), 0) + 1;
+  return new;
+end;
+$$;
+
+drop trigger if exists journeys_assign_current_number on public.journeys;
+create trigger journeys_assign_current_number
+before insert on public.journeys
+for each row execute function public.assign_current_journey_number();
 
 do $$
 declare
@@ -19,7 +36,6 @@ begin
 end
 $$;
 
--- Mantém o índice único como proteção e registra o motivo da correção.
 comment on column public.journeys.order_number is
   'Número sequencial único da jornada; sequência sincronizada com os registros existentes em 2026-10-29.';
 
