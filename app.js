@@ -168,6 +168,11 @@ async function loadJourneyTimeline(){
  }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
 }
 $("loadTimeline")?.addEventListener("click",loadJourneyTimeline);
+function setSupabaseDataStatus(message,kind="error"){
+ const el=$("supabaseDataStatus");if(!el)return;
+ if(!message){el.textContent="";el.className="supabase-data-status hidden";return;}
+ el.textContent=message;el.className="supabase-data-status "+(kind==="warning"?"is-warning":"is-error");
+}
 async function refresh(){
  if(loading)return;
  loading=true;
@@ -237,12 +242,21 @@ async function refresh(){
    else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
   }catch(operationsError){
    console.error("YUP-ENTREGAS: falha ao carregar jornadas/entregas",operationsError);
+   const detail=operationsError?.message||String(operationsError||"erro desconhecido");
+   setSupabaseDataStatus("O Supabase conectou, mas não foi possível carregar jornadas e entregas. Detalhe: "+detail+" Confira as migrações e as permissões RLS. Os dados anteriores não foram substituídos.");
+  }
+  if(masterErrors.length){
+   setSupabaseDataStatus("Alguns cadastros não carregaram: "+masterErrors.join(" | ")+". Confira as tabelas e as permissões RLS.","warning");
+  }else if(journeys.length||deliveries.length||!masterErrors.length){
+   setSupabaseDataStatus("");
   }
   render();
  }catch(error){
   console.error("YUP-ENTREGAS: falha ao carregar cadastros do Supabase",error);
+  const detail=error?.message||String(error||"erro desconhecido");
+  setSupabaseDataStatus("Falha ao carregar dados do Supabase: "+detail+" Confira a conexão, a URL/chave pública, as migrações e as permissões RLS.");
   const vehicleSelect=$("vehicle");
-  if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — verifique conexão/permissões";vehicleSelect.append(option);vehicleSelect.disabled=true;}
+  if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — "+detail;vehicleSelect.append(option);vehicleSelect.disabled=true;}
  }finally{loading=false}
 }
 const journeyTypeField=$("journeyType"),journeyNoteWrap=$("journeyPurposeNoteWrap"),journeyNoteField=$("journeyPurposeNote");
