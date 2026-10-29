@@ -278,10 +278,12 @@ function prefillVehicleOdometer(){
  const source=latestWithEnd||latestWithStart;
  if(source){
   const value=latestWithEnd?source.odometer_end:source.odometer_start;
+  field.readOnly=true;
   field.value=String(value);
   field.placeholder=latestWithEnd?"Último odômetro final registrado para este veículo":"Último odômetro inicial registrado; veículo sem odômetro final disponível";
   field.title=latestWithEnd?"Preenchido pelo último odômetro final registrado no sistema.":"Não há odômetro final registrado para este veículo; usando o último inicial conhecido.";
  }else{
+  field.readOnly=false;
   field.value="";
   field.placeholder="Sem histórico para este veículo — informe o odômetro inicial";
   field.title="Este veículo ainda não possui jornadas com odômetro registrado.";
