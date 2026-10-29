@@ -969,7 +969,34 @@ function renderDriverExperience(){
   if(action==="location"){if(!navigator.geolocation)return notify("Geolocalização indisponível.");navigator.geolocation.getCurrentPosition(pos=>{const f=$("driverNewForm");f.elements.mapLink.value="https://www.google.com/maps/search/?api=1&query="+pos.coords.latitude+","+pos.coords.longitude;},err=>notify("Não foi possível obter localização: "+err.message),{enableHighAccuracy:true,timeout:10000})}
  }));
  const startForm=$("driverStartForm");
- if(startForm){const typeField=startForm.elements.journeyType,noteWrap=$("driverPurposeNoteWrap"),noteField=startForm.elements.purposeNote;const syncPurpose=()=>{const isStore=typeField.value==="store_use";noteWrap?.classList.toggle("hidden",!isStore);noteField.required=isStore;};typeField.addEventListener("change",syncPurpose);syncPurpose();startForm.addEventListener("submit",async e=>{
+ if(startForm){
+  const vehicleField=startForm.elements.vehicle,odometerField=startForm.elements.odometer;
+  const prefillDriverOdometer=()=>{
+   if(!vehicleField||!odometerField)return;
+   const vehicleId=vehicleField.value;
+   if(!vehicleId){odometerField.value="";odometerField.readOnly=false;odometerField.placeholder="Selecione o veículo para preencher automaticamente";return;}
+   const vehicleHistory=journeys.filter(j=>String(j.vehicle_id)===String(vehicleId)).sort((a,b)=>{
+    const time=j=>{const value=j.finished_at_server||j.started_at_server;const parsed=value?new Date(value).getTime():0;return Number.isFinite(parsed)?parsed:0;};
+    return time(b)-time(a);
+   });
+   const latestWithEnd=vehicleHistory.find(j=>j.odometer_end!==null&&j.odometer_end!==undefined&&j.odometer_end!=="");
+   const latestWithStart=vehicleHistory.find(j=>j.odometer_start!==null&&j.odometer_start!==undefined&&j.odometer_start!=="");
+   const source=latestWithEnd||latestWithStart;
+   if(source){
+    odometerField.value=String(latestWithEnd?source.odometer_end:source.odometer_start);
+    odometerField.readOnly=true;
+    odometerField.placeholder=latestWithEnd?"Último odômetro final deste veículo":"Sem odômetro final; usando o último inicial registrado";
+    odometerField.title=latestWithEnd?"Preenchido automaticamente pelo último odômetro final da jornada deste veículo.":"Este veículo não tem odômetro final registrado; valor baseado no último odômetro inicial.";
+   }else{
+    odometerField.value="";
+    odometerField.readOnly=false;
+    odometerField.placeholder="Sem histórico para este veículo — informe o valor";
+    odometerField.title="Nenhuma jornada com odômetro foi encontrada para este veículo.";
+   }
+  };
+  vehicleField?.addEventListener("change",prefillDriverOdometer);
+  prefillDriverOdometer();
+  const typeField=startForm.elements.journeyType,noteWrap=$("driverPurposeNoteWrap"),noteField=startForm.elements.purposeNote;const syncPurpose=()=>{const isStore=typeField.value==="store_use";noteWrap?.classList.toggle("hidden",!isStore);noteField.required=isStore;};typeField.addEventListener("change",syncPurpose);syncPurpose();startForm.addEventListener("submit",async e=>{
   e.preventDefault();const vehicleId=e.target.elements.vehicle.value,odometerStart=Number(e.target.elements.odometer.value),journeyType=e.target.elements.journeyType.value,purposeNote=String(e.target.elements.purposeNote?.value||"").trim(),d=currentDriver();
   if(journeyType==="store_use"&&!purposeNote)return notify("Informe a finalidade do deslocamento da loja.");
   if(!d)return notify("Seu usuário ainda não está vinculado a um cadastro ativo de entregador.");
