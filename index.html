@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=88">
+<link rel="stylesheet" href="styles.css?v=89">
 <title>YUP Entregas</title>
 </head>
 <body>
@@ -29,13 +29,13 @@
 <main class="layout hidden" id="appLayout">
   <aside class="sidebar">
     <p class="eyebrow">OPERAÇÃO</p>
+    <button class="nav active" data-view="painel">▦ <span>Painel de frota</span></button>
     <button class="nav" data-view="entregador">▣ <span>Entregador</span></button>
-    <button class="nav active" data-view="painel">▦ <span>Painel da frota</span></button>
-    <button class="nav" data-view="rotas">↗ <span>Rotas de entrega</span></button>
+    <button class="nav" data-view="rotas">↗ <span>Rotas de entrega (Entregas)</span></button>
     <button class="nav" data-view="combustivel">◉ <span>Combustível</span></button>
-    <button class="nav nav-subsection" data-view="planilha-combustivel"><span class="nav-submark">↳</span><span>Planilha de combustível</span></button>
+    <button class="nav" data-view="planilha-combustivel">▤ <span>Relatórios</span></button>
+    <button class="nav" data-view="importacao-historico">⇧ <span>Importação</span></button>
     <button class="nav" data-view="manutencao">⚙ <span>Manutenção</span></button>
-    <button class="nav" data-view="importacao-historico">⇧ <span>Importação histórica</span></button>
     <div class="side-note"><strong>YUP Store</strong><p>Santarém — Pará</p><small>Jornadas e entregas sincronizadas pelo banco de dados.</small></div>
   </aside>
   <section class="content">
