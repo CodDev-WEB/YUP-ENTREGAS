@@ -176,6 +176,7 @@ function setSupabaseDataStatus(message,kind="error"){
 async function refresh(){
  if(loading)return;
  loading=true;
+ let operationsLoadFailed=false;
  try{
   // Carrega e exibe os cadastros mestres antes das operações. Assim, uma migração
   // ausente em journeys/deliveries não apaga as opções de veículos, entregadores e bairros.
@@ -241,13 +242,14 @@ async function refresh(){
    if(localStorage.getItem(entryLocationKey)==="done"&&currentJourney)startGpsTracking(currentJourney);
    else if(!currentJourney&&gpsWatchId!==null)stopGpsTracking();
   }catch(operationsError){
+   operationsLoadFailed=true;
    console.error("YUP-ENTREGAS: falha ao carregar jornadas/entregas",operationsError);
    const detail=operationsError?.message||String(operationsError||"erro desconhecido");
    setSupabaseDataStatus("O Supabase conectou, mas não foi possível carregar jornadas e entregas. Detalhe: "+detail+" Confira as migrações e as permissões RLS. Os dados anteriores não foram substituídos.");
   }
   if(masterErrors.length){
    setSupabaseDataStatus("Alguns cadastros não carregaram: "+masterErrors.join(" | ")+". Confira as tabelas e as permissões RLS.","warning");
-  }else if(journeys.length||deliveries.length||!masterErrors.length){
+  }else if(!operationsLoadFailed){
    setSupabaseDataStatus("");
   }
   render();
