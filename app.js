@@ -144,7 +144,9 @@ async function loadJourneyTimeline(){
   }).join("");
   const first=points[0],last=points[points.length-1];
   const deliveryWaypoints=related.filter(d=>d.address&&d.address.trim()).map(d=>[d.address,d.neighborhoods?.name].filter(Boolean).join(", ")).slice(0,9);
-  const googleLink=first&&last?'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(first.latitude+","+first.longitude)+'&destination='+encodeURIComponent(last.latitude+","+last.longitude)+(deliveryWaypoints.length?'&waypoints='+encodeURIComponent(deliveryWaypoints.join("|")):'')+'&travelmode=driving':"https://www.google.com/maps";
+  const origin=first?Number(first.latitude)+","+Number(first.longitude):(deliveryWaypoints[0]||"");
+  const destination=last?Number(last.latitude)+","+Number(last.longitude):(deliveryWaypoints[deliveryWaypoints.length-1]||origin);
+  const googleLink=origin&&destination?'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+encodeURIComponent(destination)+(deliveryWaypoints.length?'&waypoints='+encodeURIComponent(deliveryWaypoints.join("|")):'')+'&travelmode=driving':"https://www.google.com/maps";
   target.innerHTML='<div class="journey-timeline-summary"><article><span>Duração total</span><strong>'+esc(elapsed)+'</strong></article><article><span>Pontos GPS</span><strong>'+points.length+'</strong></article><article><span>Distância estimada</span><strong>'+esc(dist)+'</strong></article><article><span>Maior intervalo GPS</span><strong>'+esc(maxGap)+'</strong></article></div><section class="journey-timeline-map-panel"><div class="journey-timeline-map-heading"><div><strong>Saída da loja → entregas → chegada</strong><p>'+esc(driver)+' · '+esc(vehicleLabel)+'</p></div><a class="button secondary" target="_blank" rel="noopener" href="'+googleLink+'">Abrir no Google Maps ↗</a></div><div id="journeyTimelineMap" class="journey-timeline-map"></div><p class="hint">'+(points.length?'Rota do Google Maps: saída registrada por GPS, endereços das entregas e último ponto GPS disponível. Horários e odômetros estão na linha do tempo abaixo.':'Esta jornada não possui pontos GPS salvos; o caminho não pode ser reconstruído retroativamente.')+'</p></section><section class="journey-timeline-events"><h3>Linha do tempo detalhada</h3><div class="table-wrap"><table><thead><tr><th>Horário</th><th>Evento</th><th>Detalhes</th><th>Intervalo desde o evento anterior</th><th>Local</th></tr></thead><tbody>'+tableRows+'</tbody></table></div></section><p class="hint">Distância estimada pela soma entre pontos GPS consecutivos em linha reta; não é a quilometragem rodoviária exata. O intervalo entre eventos mede o tempo entre registros, não necessariamente o tempo efetivo de direção. A precisão depende do GPS, da conexão e de o sistema operacional manter o PWA ativo.</p>';
   const mapNode=$("journeyTimelineMap");
   if(!points.length){
@@ -154,11 +156,14 @@ async function loadJourneyTimeline(){
   const firstPoint=points[0],lastPoint=points[points.length-1];
   const origin=Number(firstPoint.latitude)+","+Number(firstPoint.longitude);
   const destination=Number(lastPoint.latitude)+","+Number(lastPoint.longitude);
-  const waypoints=points.length>2?points.slice(1,-1).filter((p,i)=>i%Math.max(1,Math.ceil((points.length-2)/8))===0).slice(0,8).map(p=>Number(p.latitude)+","+Number(p.longitude)).join("|"):"";
-  const params=new URLSearchParams({output:"embed",saddr:origin,daddr:destination});
-  if(waypoints)params.set("waypoints",waypoints);
-  const embedUrl="https://www.google.com/maps?"+params.toString();
-  mapNode.innerHTML='<iframe title="Trajeto da jornada no Google Maps" src="'+embedUrl+'" width="100%" height="100%" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>';
+  const separated=distanceMeters({latitude:Number(firstPoint.latitude),longitude:Number(firstPoint.longitude)},{latitude:Number(lastPoint.latitude),longitude:Number(lastPoint.longitude)})>=50;
+  const directionsUrl="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(destination)+(deliveryWaypoints.length?"&waypoints="+encodeURIComponent(deliveryWaypoints.join("|")):"")+"&travelmode=driving";
+  if(!separated){
+   mapNode.innerHTML='<div class="journey-timeline-map-empty"><strong>Início e fim aparecem no mesmo ponto GPS.</strong><p>O rastreamento desta jornada não registrou deslocamento suficiente entre o primeiro e o último ponto. Para exibir a rota real, o GPS precisa permanecer ativo durante a jornada e sincronizar pontos ao longo do percurso.</p><a class="button secondary" target="_blank" rel="noopener" href="'+directionsUrl+'">Abrir rota e entregas no Google Maps ↗</a></div>';
+   return;
+  }
+  const embedUrl="https://maps.google.com/maps?saddr="+encodeURIComponent(origin)+"&daddr="+encodeURIComponent(destination)+"&output=embed";
+  mapNode.innerHTML='<iframe title="Trajeto da jornada do início ao fim no Google Maps" src="'+embedUrl+'" width="100%" height="100%" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><p class="hint">Origem: primeiro ponto GPS registrado · Destino: último ponto GPS registrado. Use “Abrir no Google Maps” para incluir os endereços das entregas.</p>';
   journeyTimelineMap=null;journeyTimelineLine=null;journeyTimelinePins=null;
  }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
 }
