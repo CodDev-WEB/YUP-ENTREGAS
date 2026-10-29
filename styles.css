@@ -2667,3 +2667,16 @@ body.sales-mode .sales-modal .sales-modal-actions [data-confirm-delete],
 @keyframes yupModalFade{from{opacity:0}to{opacity:1}}
 @keyframes yupModalPop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.yup-system-modal-backdrop,.yup-system-modal{animation:none}}
+
+
+/* Linha do tempo geográfica das jornadas */
+.journey-timeline-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.journey-timeline-summary article{padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface,#fff);display:grid;gap:8px;min-width:0}
+.journey-timeline-summary span{font-size:12px;color:var(--muted)}
+.journey-timeline-summary strong{font-size:clamp(16px,2vw,22px);overflow-wrap:anywhere}
+.journey-timeline-map-panel,.journey-timeline-events{border:1px solid var(--line);border-radius:16px;padding:16px;margin:16px 0;background:var(--surface,#fff)}
+.journey-timeline-map-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.journey-timeline-map-heading p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.journey-timeline-map{width:100%;height:clamp(320px,55vh,580px);border-radius:12px;overflow:hidden;background:#eef1ed}
+.journey-timeline-events h3{margin:0 0 12px}
+@media(max-width:760px){.journey-timeline-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-timeline-map-heading{align-items:flex-start;flex-direction:column}.journey-timeline-map{height:380px}}
