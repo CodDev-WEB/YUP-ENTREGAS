@@ -154,15 +154,15 @@ async function loadJourneyTimeline(){
    return;
   }
   const firstPoint=points[0],lastPoint=points[points.length-1];
-  const origin=Number(firstPoint.latitude)+","+Number(firstPoint.longitude);
-  const destination=Number(lastPoint.latitude)+","+Number(lastPoint.longitude);
+  const embedOrigin=Number(firstPoint.latitude)+","+Number(firstPoint.longitude);
+  const embedDestination=Number(lastPoint.latitude)+","+Number(lastPoint.longitude);
   const separated=distanceMeters({latitude:Number(firstPoint.latitude),longitude:Number(firstPoint.longitude)},{latitude:Number(lastPoint.latitude),longitude:Number(lastPoint.longitude)})>=50;
-  const directionsUrl="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(origin)+"&destination="+encodeURIComponent(destination)+(deliveryWaypoints.length?"&waypoints="+encodeURIComponent(deliveryWaypoints.join("|")):"")+"&travelmode=driving";
+  const directionsUrl="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(embedOrigin)+"&destination="+encodeURIComponent(embedDestination)+(deliveryWaypoints.length?"&waypoints="+encodeURIComponent(deliveryWaypoints.join("|")):"")+"&travelmode=driving";
   if(!separated){
    mapNode.innerHTML='<div class="journey-timeline-map-empty"><strong>Início e fim aparecem no mesmo ponto GPS.</strong><p>O rastreamento desta jornada não registrou deslocamento suficiente entre o primeiro e o último ponto. Para exibir a rota real, o GPS precisa permanecer ativo durante a jornada e sincronizar pontos ao longo do percurso.</p><a class="button secondary" target="_blank" rel="noopener" href="'+directionsUrl+'">Abrir rota e entregas no Google Maps ↗</a></div>';
    return;
   }
-  const embedUrl="https://maps.google.com/maps?saddr="+encodeURIComponent(origin)+"&daddr="+encodeURIComponent(destination)+"&output=embed";
+  const embedUrl="https://maps.google.com/maps?saddr="+encodeURIComponent(embedOrigin)+"&daddr="+encodeURIComponent(embedDestination)+"&output=embed";
   mapNode.innerHTML='<iframe title="Trajeto da jornada do início ao fim no Google Maps" src="'+embedUrl+'" width="100%" height="100%" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe><p class="hint">Origem: primeiro ponto GPS registrado · Destino: último ponto GPS registrado. Use “Abrir no Google Maps” para incluir os endereços das entregas.</p>';
   journeyTimelineMap=null;journeyTimelineLine=null;journeyTimelinePins=null;
  }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
