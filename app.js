@@ -615,6 +615,7 @@ function renderDriverAnalytics(){
  }).join("");
  table.innerHTML='<table><thead><tr><th>Entregador</th><th>Jornadas</th><th>Em andamento</th><th>Entregas</th><th>Concluídas</th><th>Não realizadas</th><th>Conclusão</th><th>Duração média da jornada</th><th>Tempo médio por entrega*</th><th>KM registrados</th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
+$("refreshDriverAnalytics")?.addEventListener("click",()=>refresh());
 function render(){
  renderRoutePlans();renderDeliveryCatalog();
  renderDeliveries();renderDriverAnalytics();
