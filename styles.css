@@ -2735,3 +2735,26 @@ body.admin-mode #adminTabs{display:none!important}
  body.admin-mode .page-heading{margin-bottom:18px}
  body.admin-mode .panel-title{align-items:flex-start}
 }
+
+
+/* Seções recolhíveis da central do entregador */
+.driver-dropdown{padding:0!important;overflow:hidden}
+.driver-dropdown-summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;cursor:pointer;user-select:none}
+.driver-dropdown-summary::-webkit-details-marker{display:none}
+.driver-dropdown-summary h2{margin:0;color:var(--text,#1f2933);font-size:18px;font-weight:850}
+.driver-dropdown-summary p{margin:5px 0 0;color:var(--muted,#667085);font-size:13px;line-height:1.45}
+.driver-dropdown-chevron{flex:0 0 auto;display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line,#dfe7e1);border-radius:10px;color:var(--primary,#176b43);font-size:22px;transition:transform .18s ease,background .18s ease}
+.driver-dropdown[open] .driver-dropdown-chevron{transform:rotate(180deg);background:#e8f5ed}
+.driver-dropdown[open] .driver-dropdown-summary{border-bottom:1px solid var(--line,#e3e9e5)}
+.driver-dropdown>form,.driver-dropdown>.hint,.driver-dropdown>.driver-dropdown-content{margin:20px 24px 24px}
+.driver-dropdown>.hint{display:block}
+.driver-route-actions{display:flex;justify-content:flex-end;margin-bottom:12px}
+.driver-performance-panel{margin-top:0}
+.driver-performance-panel .panel-title h2{margin:0}
+.driver-analytics-summary{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+@media(max-width:640px){
+ .driver-dropdown-summary{padding:16px;align-items:flex-start}
+ .driver-dropdown>form,.driver-dropdown>.hint,.driver-dropdown>.driver-dropdown-content{margin:16px}
+ .driver-route-actions{justify-content:stretch}
+ .driver-route-actions .button{width:100%}
+}
