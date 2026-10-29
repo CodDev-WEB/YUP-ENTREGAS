@@ -12,6 +12,36 @@ const esc = v => String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">
 const statusLabel = {open:"Em andamento",finished:"Finalizada",cancelled:"Cancelada",pending:"Pendente",in_transit:"Em deslocamento",at_destination:"No endereço",completed:"Concluída",failed:"Não realizada"};
 const priorityMap = {"Normal":"normal","Alta":"high","Agendada":"scheduled"};
 function notify(text){alert(text)}
+function showSystemModal({title="Atenção",message,detail="",kind="warning"}={}){
+ const existing=document.getElementById("yupSystemModal");existing?.remove();
+ const backdrop=document.createElement("div");backdrop.id="yupSystemModal";backdrop.className="yup-system-modal-backdrop";
+ backdrop.innerHTML='<section class="yup-system-modal" role="alertdialog" aria-modal="true" aria-labelledby="yupSystemModalTitle" aria-describedby="yupSystemModalMessage"><div class="yup-system-modal-icon '+esc(kind)+'" aria-hidden="true">'+(kind==="error"?"!":"i")+'</div><h2 id="yupSystemModalTitle">'+esc(title)+'</h2><p id="yupSystemModalMessage">'+esc(message||"Verifique os dados e tente novamente.")+'</p>'+(detail?'<small>'+esc(detail)+'</small>':"")+'<div class="yup-system-modal-actions"><button type="button" class="button primary" data-yup-modal-close>Entendi</button></div></section>';
+ document.body.append(backdrop);
+ const close=()=>{backdrop.remove()};
+ backdrop.querySelector("[data-yup-modal-close]").addEventListener("click",close);
+ backdrop.addEventListener("click",e=>{if(e.target===backdrop)close()});
+ const onKey=e=>{if(e.key==="Escape"&&document.getElementById("yupSystemModal")){close();document.removeEventListener("keydown",onKey)}};
+ document.addEventListener("keydown",onKey);
+ backdrop.querySelector("button")?.focus();
+}
+function vehicleInUse(vehicleId){
+ const journey=journeys.find(item=>item.status==="open"&&item.vehicle_id===vehicleId);
+ if(!journey)return null;
+ const vehicle=vehicles.find(item=>item.id===vehicleId);
+ const driver=drivers.find(item=>item.id===journey.driver_id);
+ return {journey,vehicle,driver};
+}
+function vehicleInUseMessage(vehicleId){
+ const conflict=vehicleInUse(vehicleId);
+ if(!conflict)return false;
+ const name=[conflict.vehicle?.make_model||conflict.vehicle?.code,conflict.vehicle?.plate].filter(Boolean).join(" · ")||"Veículo selecionado";
+ showSystemModal({title:"Veículo já está em uso",message:"Este veículo já está vinculado a uma jornada em andamento. Selecione outro veículo disponível para iniciar sua jornada.",detail:"Veículo: "+name+(conflict.driver?.full_name?" · Em uso por: "+conflict.driver.full_name:""),kind:"warning"});
+ return true;
+}
+function isVehicleInUseError(error){
+ const message=String(error?.message||error||"").toLowerCase();
+ return message.includes("vehicle")&&(/duplicate key|unique constraint|already in use|já está em uso|journey/.test(message));
+}
 function setBusy(form,busy){form.querySelectorAll("button").forEach(b=>b.disabled=busy)}
 function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
@@ -199,9 +229,10 @@ const journeyTypeField=$("journeyType"),journeyNoteWrap=$("journeyPurposeNoteWra
  const driverId=$("driverId").value,vehicleId=$("vehicle").value,odometerStart=Number($("odoStart").value),journeyType=journeyTypeField?.value||"delivery",purposeNote=String(journeyNoteField?.value||"").trim();
  if(journeyType==="store_use"&&!purposeNote)return notify("Informe a finalidade do deslocamento da loja.");
  if(!driverId||!vehicleId)return notify("Selecione um entregador e um veículo cadastrados.");
+ if(vehicleInUseMessage(vehicleId))return;
  setBusy(e.target,true);
  try{await backend.startJourney({driverId,vehicleId,odometerStart,journeyType,purposeNote});e.target.reset();syncJourneyPurpose();await refresh();notify("Jornada iniciada e salva no banco de dados.");}
- catch(error){console.error(error);notify("Não foi possível iniciar a jornada: "+error.message);}
+ catch(error){console.error(error);if(isVehicleInUseError(error)){await refresh();showSystemModal({title:"Veículo já está em uso",message:"Outro entregador iniciou uma jornada com este veículo antes de você. Selecione outro veículo disponível.",kind:"warning"});}else notify("Não foi possível iniciar a jornada: "+error.message);}
  finally{setBusy(e.target,false)}
 });
 $("finishJourney").addEventListener("click",async()=>{
@@ -797,9 +828,11 @@ function renderDriverExperience(){
   e.preventDefault();const vehicleId=e.target.elements.vehicle.value,odometerStart=Number(e.target.elements.odometer.value),journeyType=e.target.elements.journeyType.value,purposeNote=String(e.target.elements.purposeNote?.value||"").trim(),d=currentDriver();
   if(journeyType==="store_use"&&!purposeNote)return notify("Informe a finalidade do deslocamento da loja.");
   if(!d)return notify("Seu usuário ainda não está vinculado a um cadastro ativo de entregador.");
+  if(!vehicleId)return notify("Selecione um veículo antes de iniciar.");
+  if(vehicleInUseMessage(vehicleId))return;
   const button=bottom.querySelector('[form="driverStartForm"]')||e.target.querySelector("button[type=submit]");if(button)button.disabled=true;
   try{await backend.startJourney({driverId:d.id,vehicleId,odometerStart,journeyType,purposeNote});await refresh();driverScreen="route";renderDriverExperience()}
-  catch(error){notify("Não foi possível iniciar a jornada: "+error.message);if(button)button.disabled=false}
+  catch(error){if(isVehicleInUseError(error)){await refresh();showSystemModal({title:"Veículo já está em uso",message:"Outro entregador iniciou uma jornada com este veículo antes de você. Selecione outro veículo disponível.",kind:"warning"});}else notify("Não foi possível iniciar a jornada: "+error.message);if(button)button.disabled=false}
  });}
  const newForm=$("driverNewForm");
  if(newForm){
