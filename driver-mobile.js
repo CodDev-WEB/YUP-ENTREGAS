@@ -63,6 +63,7 @@
         <details class="driver-manual-entry"><summary>＋ Cadastrar entrega manualmente</summary>
           <form id="driverNewForm" class="driver-form">
             ${action("Usar minha localização atual", "location")}
+            <label class="sales-cep-priority">CEP <small>Preencha para localizar o endereço</small><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
             <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>${neighborhoods.map(item => `<option value="${escape(item.id)}">${escape(item.name)}</option>`).join("")}</select></label>
             <label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label>
             <label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Referência para encontrar o endereço"></label>
