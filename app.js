@@ -212,6 +212,7 @@ async function refresh(){
     vehicleSelect.append(option);
    });
    vehicleSelect.disabled=vehicles.length===0;
+   prefillVehicleOdometer();
   }
   if(!admin){
    const d=currentDriver();
@@ -263,12 +264,37 @@ async function refresh(){
   if(vehicleSelect){vehicleSelect.replaceChildren();const option=document.createElement("option");option.value="";option.textContent="Falha ao carregar veículos — "+detail;vehicleSelect.append(option);vehicleSelect.disabled=true;}
  }finally{loading=false}
 }
+function prefillVehicleOdometer(){
+ const vehicleId=$("vehicle")?.value,field=$("odoStart");
+ if(!field)return;
+ if(!vehicleId){field.value="";field.placeholder="Selecione um veículo para preencher automaticamente";return;}
+ const history=journeys.filter(j=>String(j.vehicle_id)===String(vehicleId)).sort((a,b)=>{
+  const ta=new Date(a.finished_at_server||a.started_at_server||0).getTime();
+  const tb=new Date(b.finished_at_server||b.started_at_server||0).getTime();
+  return tb-ta;
+ });
+ const latestWithEnd=history.find(j=>j.odometer_end!==null&&j.odometer_end!==undefined&&j.odometer_end!=="");
+ const latestWithStart=history.find(j=>j.odometer_start!==null&&j.odometer_start!==undefined&&j.odometer_start!=="");
+ const source=latestWithEnd||latestWithStart;
+ if(source){
+  const value=latestWithEnd?source.odometer_end:source.odometer_start;
+  field.value=String(value);
+  field.placeholder=latestWithEnd?"Último odômetro final registrado para este veículo":"Último odômetro inicial registrado; veículo sem odômetro final disponível";
+  field.title=latestWithEnd?"Preenchido pelo último odômetro final registrado no sistema.":"Não há odômetro final registrado para este veículo; usando o último inicial conhecido.";
+ }else{
+  field.value="";
+  field.placeholder="Sem histórico para este veículo — informe o odômetro inicial";
+  field.title="Este veículo ainda não possui jornadas com odômetro registrado.";
+ }
+}
+$("vehicle")?.addEventListener("change",prefillVehicleOdometer);
 const journeyTypeField=$("journeyType"),journeyNoteWrap=$("journeyPurposeNoteWrap"),journeyNoteField=$("journeyPurposeNote");
  const syncJourneyPurpose=()=>{const isStore=journeyTypeField?.value==="store_use";journeyNoteWrap?.classList.toggle("hidden",!isStore);if(journeyNoteField)journeyNoteField.required=!!isStore;};
  journeyTypeField?.addEventListener("change",syncJourneyPurpose);syncJourneyPurpose();
  $("journeyForm").addEventListener("submit",async e=>{
  e.preventDefault();if(currentJourney)return notify("Já existe uma jornada aberta para este entregador.");
  const driverId=$("driverId").value,vehicleId=$("vehicle").value,odometerStart=Number($("odoStart").value),journeyType=journeyTypeField?.value||"delivery",purposeNote=String(journeyNoteField?.value||"").trim();
+ if(!$("odoStart").value||!Number.isFinite(odometerStart)||odometerStart<0)return notify("Não há odômetro válido para este veículo. Confira o histórico ou registre o valor inicial.");
  if(journeyType==="store_use"&&!purposeNote)return notify("Informe a finalidade do deslocamento da loja.");
  if(!driverId||!vehicleId)return notify("Selecione um entregador e um veículo cadastrados.");
  if(vehicleInUseMessage(vehicleId))return;
