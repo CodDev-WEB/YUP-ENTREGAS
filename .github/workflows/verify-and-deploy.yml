@@ -42,7 +42,7 @@ jobs:
           const checks = [
             ['sales area integrated into main application', html.includes('id="view-vendas"')],
             ['sales area uses shared authentication', !sales.includes('salesLoginForm') && !sales.includes('salesLogout')],
-            ['driver mobile interface loads after authentication', fs.readFileSync('auth-ui.js', 'utf8').includes('driver-mobile.js?v=6')],
+            ['driver mobile interface loads after authentication', fs.readFileSync('auth-ui.js', 'utf8').includes('driver-mobile.js?v=7')],
             ['sales role is restricted to its view', html.includes('data-sales-view')],
             ['sales profile hides administrative sidebar', fs.readFileSync('styles.css', 'utf8').includes('body.sales-mode .sidebar{display:none!important}')],
             ['driver starts without route selection', !app.includes('name="routeMode"') && !driverMobile.includes('name="routeMode"')],
