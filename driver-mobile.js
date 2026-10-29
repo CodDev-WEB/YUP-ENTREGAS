@@ -202,6 +202,9 @@
     root.dataset.mobileScreen = driverScreen;
     root.dataset.mobileJourney = currentJourney?.id || "";
     const form = root.querySelector("form");
+    if (form && form.id === oldForm?.id) {
+      for (const [name, value] of values) if (form.elements.namedItem(name)) form.elements.namedItem(name).value = value;
+    }
     if (form?.id === "driverStartForm") {
       const vehicleField = form.elements.vehicle;
       const odometerField = form.elements.odometer;
@@ -233,9 +236,6 @@
       };
       vehicleField?.addEventListener("change", prefillOdometer);
       prefillOdometer();
-    }
-    if (form && form.id === oldForm?.id) {
-      for (const [name, value] of values) if (form.elements.namedItem(name)) form.elements.namedItem(name).value = value;
     }
     if (form?.id === "driverFinishForm" && finishDraft?.journey === currentJourney?.id) form.elements.odometer.value = finishDraft.value;
     const bottom = root.querySelector("#driverBottom");
