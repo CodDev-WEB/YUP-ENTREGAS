@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=89">
+<link rel="stylesheet" href="styles.css?v=90">
 <title>YUP Entregas</title>
 </head>
 <body>
@@ -47,7 +47,7 @@
         <article class="metric"><span>KM da jornada</span><strong id="metricKm">—</strong></article>
       </div>
       <article class="panel driver-performance-panel">
-        <div class="panel-title"><div><h2>4. Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
+        <div class="panel-title"><div><h2>Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
         <div id="driverAnalyticsSummary" class="metrics driver-analytics-summary"></div>
         <div id="driverAnalyticsTable" class="table-wrap"><p class="hint">Carregando indicadores dos entregadores…</p></div>
         <p class="hint">As médias consideram somente registros com horários válidos. A duração média da entrega depende dos eventos de saída/chegada registrados; dados ausentes aparecem como “—”.</p>
@@ -79,8 +79,8 @@
         <p class="hint">A permissão de localização é solicitada na entrada do PWA; durante uma jornada aberta, as posições são registradas automaticamente. Para o endereço da entrega, cole o link compartilhado pelo cliente no WhatsApp.</p>
       </details>
       <details class="panel driver-dropdown">
-        <summary class="driver-dropdown-summary"><div><h2>Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
-        <div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div>
+        <summary class="driver-dropdown-summary"><div><h2>Sequência da rota</h2><p>Reordene as paradas e abra a navegação no mapa.</p></div><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
+        <div class="driver-dropdown-content"><div class="driver-route-actions"><button class="button secondary" id="openRoute" type="button">Abrir rota no Maps</button></div><div id="deliveryList" class="delivery-list empty">Nenhuma entrega adicionada ainda.</div></div>
       </details>
 
     </div>
