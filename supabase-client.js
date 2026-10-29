@@ -103,13 +103,31 @@
     }
     return plan;
   }
+  async function fetchAllRows(makeQuery, pageSize = 1000) {
+    const all = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await makeQuery().range(offset, offset + pageSize - 1);
+      if (error) throw error;
+      const page = data || [];
+      all.push(...page);
+      if (page.length < pageSize) break;
+      if (all.length > 100000) throw new Error("A consulta ultrapassou 100.000 registros. Divida a consulta por período para evitar carregar dados excessivos.");
+    }
+    return all;
+  }
   async function listOperations() {
     const client = await requireReady();
-    const {data:journeys,error:jError} = await client.from("journeys").select("id,order_number,driver_id,vehicle_id,route_plan_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate,vehicle_type)").order("started_at_server",{ascending:false});
-    if (jError) throw jError;
-    const {data:deliveries,error:dError}=await client.from("deliveries").select("id,journey_id,order_no,neighborhood_id,address,reference,map_link,latitude,longitude,priority,status,result_note,sequence_no,created_at,updated_at,created_source,created_by,neighborhoods(name),delivery_events(id,event_type,occurred_at_device,received_at_server,note)").order("created_at",{ascending:false}).limit(5000);
-    if(dError)throw dError;
-    return {journeys:journeys || [],deliveries:deliveries || []};
+    const journeys = await fetchAllRows(() =>
+      client.from("journeys")
+        .select("id,order_number,driver_id,vehicle_id,route_plan_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate,vehicle_type)")
+        .order("started_at_server", {ascending:false})
+    );
+    const deliveries = await fetchAllRows(() =>
+      client.from("deliveries")
+        .select("id,journey_id,order_no,neighborhood_id,address,reference,map_link,latitude,longitude,priority,status,result_note,sequence_no,created_at,updated_at,created_source,created_by,neighborhoods(name),delivery_events(id,event_type,occurred_at_device,received_at_server,note)")
+        .order("created_at", {ascending:false})
+    );
+    return {journeys, deliveries};
   }
   async function recordJourneyLocation({journeyId,latitude,longitude,accuracy,speed,heading,capturedAt}) {
     const client = await requireReady();
