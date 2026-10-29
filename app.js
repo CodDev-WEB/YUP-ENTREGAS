@@ -144,21 +144,20 @@ async function loadJourneyTimeline(){
   const first=points[0],last=points[points.length-1];
   const googleLink=first&&last?'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(first.latitude+","+first.longitude)+'&destination='+encodeURIComponent(last.latitude+","+last.longitude):"https://www.google.com/maps";
   target.innerHTML='<div class="journey-timeline-summary"><article><span>Duração total</span><strong>'+esc(elapsed)+'</strong></article><article><span>Pontos GPS</span><strong>'+points.length+'</strong></article><article><span>Distância estimada</span><strong>'+esc(dist)+'</strong></article><article><span>Maior intervalo GPS</span><strong>'+esc(maxGap)+'</strong></article></div><section class="journey-timeline-map-panel"><div class="journey-timeline-map-heading"><div><strong>Trajeto registrado</strong><p>'+esc(driver)+' · '+esc(vehicleLabel)+'</p></div><a class="button secondary" target="_blank" rel="noopener" href="'+googleLink+'">Abrir no Google Maps ↗</a></div><div id="journeyTimelineMap" class="journey-timeline-map"></div><p class="hint">'+(points.length?'Linha desenhada a partir dos pontos GPS registrados, em ordem cronológica.':'Esta jornada não possui pontos GPS salvos; o caminho não pode ser reconstruído retroativamente.')+'</p></section><section class="journey-timeline-events"><h3>Linha do tempo detalhada</h3><div class="table-wrap"><table><thead><tr><th>Horário</th><th>Evento</th><th>Detalhes</th><th>Intervalo desde o evento anterior</th><th>Local</th></tr></thead><tbody>'+tableRows+'</tbody></table></div></section><p class="hint">Distância estimada pela soma entre pontos GPS consecutivos em linha reta; não é a quilometragem rodoviária exata. O intervalo entre eventos mede o tempo entre registros, não necessariamente o tempo efetivo de direção. A precisão depende do GPS, da conexão e de o sistema operacional manter o PWA ativo.</p>';
-  if(!points.length||!window.L)return;
-  if(journeyTimelineMap){journeyTimelineMap.remove();journeyTimelineMap=null}
-  const node=$("journeyTimelineMap");
-  journeyTimelineMap=L.map(node,{scrollWheelZoom:true}).setView([Number(first.latitude),Number(first.longitude)],14);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(journeyTimelineMap);
-  const coords=points.map(p=>[Number(p.latitude),Number(p.longitude)]);
-  journeyTimelineLine=L.polyline(coords,{color:"#167a4a",weight:5,opacity:.9}).addTo(journeyTimelineMap);
-  journeyTimelinePins=L.layerGroup().addTo(journeyTimelineMap);
-  points.forEach((p,i)=>{
-   const firstPoint=i===0,lastPoint=i===points.length-1;
-   L.circleMarker([Number(p.latitude),Number(p.longitude)],{radius:firstPoint||lastPoint?8:4,color:firstPoint?"#167a4a":lastPoint?"#c0392b":"#2457a7",fillOpacity:.9,weight:2})
-    .bindPopup("<strong>"+(firstPoint?"Início":lastPoint?"Último ponto GPS":"Ponto GPS "+(i+1))+"</strong><br>"+esc(fmtDate(p.captured_at_device))+"<br>"+Number(p.latitude).toFixed(6)+", "+Number(p.longitude).toFixed(6)).addTo(journeyTimelinePins);
-  });
-  if(coords.length===1)journeyTimelineMap.setView(coords[0],16);else journeyTimelineMap.fitBounds(L.latLngBounds(coords).pad(.12));
-  setTimeout(()=>journeyTimelineMap?.invalidateSize(),120);
+  const mapNode=$("journeyTimelineMap");
+  if(!points.length){
+   mapNode.innerHTML='<div class="journey-timeline-map-empty">Não há pontos GPS registrados para exibir no Google Maps.</div>';
+   return;
+  }
+  const firstPoint=points[0],lastPoint=points[points.length-1];
+  const origin=Number(firstPoint.latitude)+","+Number(firstPoint.longitude);
+  const destination=Number(lastPoint.latitude)+","+Number(lastPoint.longitude);
+  const waypoints=points.length>2?points.slice(1,-1).filter((p,i)=>i%Math.max(1,Math.ceil((points.length-2)/8))===0).slice(0,8).map(p=>Number(p.latitude)+","+Number(p.longitude)).join("|"):"";
+  const params=new URLSearchParams({output:"embed",saddr:origin,daddr:destination});
+  if(waypoints)params.set("waypoints",waypoints);
+  const embedUrl="https://www.google.com/maps?"+params.toString();
+  mapNode.innerHTML='<iframe title="Trajeto da jornada no Google Maps" src="'+embedUrl+'" width="100%" height="100%" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>';
+  journeyTimelineMap=null;journeyTimelineLine=null;journeyTimelinePins=null;
  }catch(error){console.error(error);target.innerHTML='<p class="hint">Não foi possível carregar a linha do tempo: '+esc(error.message)+'</p>'}
 }
 $("loadTimeline")?.addEventListener("click",loadJourneyTimeline);
