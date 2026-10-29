@@ -83,7 +83,7 @@
     if (!appLoaded) {
       appLoaded = true;
       const script = document.createElement("script");
-      script.src = "app.js?v=35";
+      script.src = "app.js?v=37";
       script.onerror = () => message("Não foi possível carregar o aplicativo. Atualize a página e tente novamente.", "error");
       if (profile.role === "driver") {
         const styles = document.createElement("link");
@@ -93,7 +93,7 @@
         document.head.appendChild(styles);
         script.addEventListener("load", () => {
           const mobile = document.createElement("script");
-          mobile.src = "driver-mobile.js?v=2";
+          mobile.src = "driver-mobile.js?v=4";
           mobile.onerror = () => message("Não foi possível carregar a interface móvel do entregador. Atualize a página.", "error");
           document.body.appendChild(mobile);
         }, { once: true });
