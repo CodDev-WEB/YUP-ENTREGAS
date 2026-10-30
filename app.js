@@ -274,14 +274,13 @@ function prefillVehicleOdometer(){
   return tb-ta;
  });
  const latestWithEnd=history.find(j=>j.odometer_end!==null&&j.odometer_end!==undefined&&j.odometer_end!=="");
- const latestWithStart=history.find(j=>j.odometer_start!==null&&j.odometer_start!==undefined&&j.odometer_start!=="");
- const source=latestWithEnd||latestWithStart;
+ const source=latestWithEnd;
  if(source){
-  const value=latestWithEnd?source.odometer_end:source.odometer_start;
+  const value=source.odometer_end;
   field.readOnly=true;
   field.value=String(value);
-  field.placeholder=latestWithEnd?"Último odômetro final registrado para este veículo":"Último odômetro inicial registrado; veículo sem odômetro final disponível";
-  field.title=latestWithEnd?"Preenchido pelo último odômetro final registrado no sistema.":"Não há odômetro final registrado para este veículo; usando o último inicial conhecido.";
+  field.placeholder="Último odômetro final registrado para este veículo";
+  field.title="Preenchido pelo último odômetro final registrado no sistema.";
  }else{
   field.readOnly=false;
   field.value="";
@@ -980,13 +979,12 @@ function renderDriverExperience(){
     return time(b)-time(a);
    });
    const latestWithEnd=vehicleHistory.find(j=>j.odometer_end!==null&&j.odometer_end!==undefined&&j.odometer_end!=="");
-   const latestWithStart=vehicleHistory.find(j=>j.odometer_start!==null&&j.odometer_start!==undefined&&j.odometer_start!=="");
-   const source=latestWithEnd||latestWithStart;
+   const source=latestWithEnd;
    if(source){
-    odometerField.value=String(latestWithEnd?source.odometer_end:source.odometer_start);
+    odometerField.value=String(source.odometer_end);
     odometerField.readOnly=true;
-    odometerField.placeholder=latestWithEnd?"Último odômetro final deste veículo":"Sem odômetro final; usando o último inicial registrado";
-    odometerField.title=latestWithEnd?"Preenchido automaticamente pelo último odômetro final da jornada deste veículo.":"Este veículo não tem odômetro final registrado; valor baseado no último odômetro inicial.";
+    odometerField.placeholder="Último odômetro final deste veículo";
+    odometerField.title="Preenchido automaticamente pelo último odômetro final da jornada deste veículo.";
    }else{
     odometerField.value="";
     odometerField.readOnly=false;
