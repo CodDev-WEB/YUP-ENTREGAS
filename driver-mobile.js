@@ -46,7 +46,7 @@
           <label>Veículo<select name="vehicle" required${activeVehicles.length ? "" : " disabled"}><option value="">Selecione seu veículo</option>${activeVehicles.map(item => `<option value="${escape(item.id)}">${escape([item.make_model || item.code, item.plate].filter(Boolean).join(" · "))}</option>`).join("")}</select></label>
           ${activeVehicles.length ? "" : '<p class="driver-warning" role="status">Nenhum veículo ativo disponível. Peça à equipe para verificar o cadastro antes de iniciar.</p>'}
           <label class="hidden" id="driverOdometerWrap">Odômetro inicial (km)<input name="odometer" type="number" min="0" step="0.1" inputmode="decimal" required readonly placeholder="Selecione um veículo primeiro"><small id="driverOdometerStatus" role="status">Selecione um veículo para consultar o último odômetro final.</small></label>
-          <div class="driver-info">A localização exige sua permissão e depende do dispositivo e da conexão. Mantenha o aplicativo aberto durante a jornada.</div>
+          
           ${submit("Iniciar jornada")}
         </form>`;
     }
