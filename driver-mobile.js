@@ -243,9 +243,26 @@
         } catch (error) {
           if (token !== lookupToken) return;
           console.error("YUP Entregas: erro ao consultar odômetro final", error);
-          odometerField.value = "";
-          odometerField.placeholder = "Falha ao consultar odômetro";
-          if (odometerStatus) odometerStatus.textContent = "Não foi possível consultar o Supabase. Verifique a conexão/permissões e tente novamente.";
+
+          // Fallback: usa o histórico de jornadas já carregado pelo aplicativo.
+          // Assim, uma falha na RPC não bloqueia a primeira jornada nem apaga
+          // o último odômetro conhecido quando o histórico está disponível.
+          const previous = (journeys || [])
+            .filter(item => item.vehicle_id === vehicleId && item.odometer_end !== null && item.odometer_end !== undefined && item.odometer_end !== "")
+            .sort((a, b) => new Date(b.finished_at_server || b.started_at_server || 0) - new Date(a.finished_at_server || a.started_at_server || 0))[0];
+
+          if (previous) {
+            odometerField.value = String(previous.odometer_end);
+            odometerField.readOnly = true;
+            odometerField.placeholder = "Último odômetro final registrado";
+            if (odometerStatus) odometerStatus.textContent = "Preenchido pelo histórico deste veículo. A consulta automática está temporariamente indisponível.";
+          } else {
+            // Sem jornada anterior com odômetro final: liberar digitação manual.
+            odometerField.value = "";
+            odometerField.readOnly = false;
+            odometerField.placeholder = "Informe o odômetro inicial deste veículo";
+            if (odometerStatus) odometerStatus.textContent = "Não há odômetro final anterior para este veículo. Informe a quilometragem atual do painel. A consulta automática está temporariamente indisponível.";
+          }
         }
       };
       vehicleField?.addEventListener("change", prefillOdometer);
