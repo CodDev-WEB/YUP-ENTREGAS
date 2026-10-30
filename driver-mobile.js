@@ -233,9 +233,12 @@
             odometerField.placeholder = "Último odômetro final registrado";
             if (odometerStatus) odometerStatus.textContent = "Preenchido automaticamente com o último odômetro final deste veículo. Você só precisa iniciar a jornada.";
           } else {
+            // Primeiro uso do veículo: o entregador informa o odômetro físico inicial.
+            // Depois da primeira jornada, o valor vem automaticamente do último odômetro final.
             odometerField.value = "";
-            odometerField.placeholder = "Sem odômetro final registrado";
-            if (odometerStatus) odometerStatus.textContent = "Não há odômetro final registrado para este veículo. Peça ao administrador para conferir o histórico antes de iniciar.";
+            odometerField.readOnly = false;
+            odometerField.placeholder = "Informe o odômetro inicial deste veículo";
+            if (odometerStatus) odometerStatus.textContent = "Primeira jornada deste veículo no sistema. Confira o painel e informe a quilometragem atual do odômetro.";
           }
         } catch (error) {
           if (token !== lookupToken) return;
