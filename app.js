@@ -756,7 +756,7 @@ function renderUnassignedDeliveries(){
  if(!unassigned.length){target.innerHTML='<p class="hint">Todas as entregas estão vinculadas a jornadas carregadas.</p>';return;}
  target.innerHTML='<table><thead><tr><th>Pedido</th><th>Endereço</th><th>Bairro</th><th>Status</th><th>Cadastro</th></tr></thead><tbody>'+unassigned.map(d=>'<tr><td><strong>'+esc(d.order_no||"—")+'</strong></td><td>'+esc(d.address||"—")+(d.reference?'<small style="display:block">'+esc(d.reference)+'</small>':"")+'</td><td>'+esc(d.neighborhoods?.name||"—")+'</td><td>'+esc(statusLabel[d.status]||d.status||"—")+'</td><td>'+fmtDate(d.created_at)+'</td></tr>').join("")+'</tbody></table>';
 }
- const {filtered,period,anchor}=getFleetFilter();
+ const {filtered,period,anchor,from,to}=getFleetFilter();
  refreshFleetGeoHeatmap(filtered);
  const rows=filtered.map(j=>{
   const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
