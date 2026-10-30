@@ -1,4 +1,4 @@
-const CACHE = "yup-entregas-shell-v181";
+const CACHE = "yup-entregas-shell-v182";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,7 +9,7 @@ const ASSETS = [
   "./styles.css?v=93",
   "./app.js?v=47",
   "./driver-mobile.css?v=6",
-  "./driver-mobile.js?v=8",
+  "./driver-mobile.js?v=9",
   "./manifest.webmanifest",
   "./pwa-icon.svg",
   "./yup-brand.svg",
