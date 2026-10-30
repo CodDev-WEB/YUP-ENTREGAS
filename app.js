@@ -766,13 +766,27 @@ function renderUnassignedDeliveries(){
  $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
  const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
  if($("fleetFilterSummary")){const countText=filtered.length+" jornada(s) exibida(s) · "+filterCaption;const sourceText=journeysTotalFromSupabase==null?"":(" · Jornadas no Supabase: "+journeys.length+"/"+journeysTotalFromSupabase);const linkedCount=deliveries.filter(d=>d.journey_id&&journeys.some(j=>j.id===d.journey_id)).length;const unassignedCount=deliveries.length-linkedCount;const deliveryText=" · Entregas: "+deliveries.length+" carregadas"+(deliveriesTotalFromSupabase==null?"":" de "+deliveriesTotalFromSupabase)+" ("+linkedCount+" vinculadas; "+unassignedCount+" fora de jornadas)";const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase||deliveriesTotalFromSupabase!=null&&deliveries.length!==deliveriesTotalFromSupabase;$("fleetFilterSummary").textContent=countText+sourceText+deliveryText+(mismatch?" · ATENÇÃO: a quantidade carregada não confere com o total informado pelo Supabase.":"");$("fleetFilterSummary").classList.toggle("warning",mismatch)}
- const filteredJourneyIds=new Set(filtered.map(j=>j.id));
- const regionalDeliveries=deliveries.filter(d=>filteredJourneyIds.has(d.journey_id));
+ // A análise regional considera os pedidos cadastrados no Supabase, inclusive os
+ // que ainda não foram vinculados a uma jornada. O período usa a data do pedido.
+ const journeyById=new Map(journeys.map(j=>[j.id,j]));
+ const selectedDriver=$("fleetDriver")?.value||"all";
+ const selectedVehicle=$("fleetVehicle")?.value||"all";
+ const selectedJourneyStatus=$("fleetStatus")?.value||"all";
+ const regionalDeliveries=deliveries.filter(d=>{
+  const createdAt=d.created_at?new Date(d.created_at):null;
+  const inPeriod=!from||(createdAt&&createdAt>=from&&createdAt<to);
+  const journey=d.journey_id?journeyById.get(d.journey_id):null;
+  const matchesDriver=selectedDriver==="all"||journey?.driver_id===selectedDriver;
+  const matchesVehicle=selectedVehicle==="all"||journey?.vehicle_id===selectedVehicle;
+  const matchesJourneyStatus=selectedJourneyStatus==="all"||journey?.status===selectedJourneyStatus;
+  return Boolean(inPeriod&&matchesDriver&&matchesVehicle&&matchesJourneyStatus);
+ });
  const regions=new Map();
  regionalDeliveries.forEach(d=>{
   const region=String(d.neighborhoods?.name||"Bairro não informado").trim()||"Bairro não informado";
   if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0,pending:0,journeys:new Set(),addresses:new Set()});
-  const item=regions.get(region);item.total++;item.journeys.add(d.journey_id);
+  const item=regions.get(region);item.total++;
+  if(d.journey_id)item.journeys.add(d.journey_id);
   if(d.status==="completed")item.completed++;
   else if(d.status==="failed")item.failed++;
   else item.pending++;
@@ -790,7 +804,7 @@ function renderUnassignedDeliveries(){
    const level=Math.max(1,Math.ceil(region.total/maxRegion*5));
    const rate=region.total?Math.round(region.completed/region.total*100):0;
    const addressPreview=[...region.addresses].slice(0,2).join(" • ");
-   return '<article class="fleet-heat-region heat-level-'+level+'"><div class="fleet-heat-region-head"><div><span class="fleet-heat-label">BAIRRO / REGIÃO</span><h3>'+esc(region.name)+'</h3></div><strong class="fleet-heat-count">'+region.total+' <small>'+(region.total===1?'solicitada':'solicitadas')+'</small></strong></div><div class="fleet-heat-comparison"><div class="fleet-heat-bar-row"><span>Solicitadas</span><div class="fleet-heat-bar fleet-heat-bar-requested" role="img" aria-label="'+region.total+' entregas solicitadas"><i style="width:'+Math.max(0,Math.min(100,region.total/maxRegion*100))+'%"></i></div><strong>'+region.total+'</strong></div><div class="fleet-heat-bar-row"><span>Realizadas</span><div class="fleet-heat-bar fleet-heat-bar-completed" role="img" aria-label="'+region.completed+' entregas realizadas"><i style="width:'+Math.max(0,Math.min(100,region.completed/maxRegion*100))+'%"></i></div><strong>'+region.completed+'</strong></div></div><div class="fleet-heat-metrics"><span>'+region.failed+' não realizadas</span><span>'+region.pending+' pendentes</span><span>'+region.journeys.size+' jornada(s)</span></div><div class="fleet-heat-footer"><span>'+rate+'% de conclusão</span><span>'+region.addresses.size+' endereço(s)</span></div>'+(addressPreview?'<p class="fleet-heat-addresses">'+esc(addressPreview)+(region.addresses.size>2?' · +'+(region.addresses.size-2)+' endereço(s)':'')+'</p>':'')+'</article>';
+   return '<article class="fleet-heat-region heat-level-'+level+'"><div class="fleet-heat-region-head"><div><span class="fleet-heat-label">BAIRRO / REGIÃO</span><h3>'+esc(region.name)+'</h3></div><strong class="fleet-heat-count">'+region.total+' <small>'+(region.total===1?'solicitada':'solicitadas')+'</small></strong></div><div class="fleet-heat-comparison"><div class="fleet-heat-bar-row"><span>Solicitadas</span><div class="fleet-heat-bar fleet-heat-bar-requested" role="img" aria-label="'+region.total+' entregas solicitadas"><i style="width:'+100+'%"></i></div><strong>'+region.total+'</strong></div><div class="fleet-heat-bar-row"><span>Realizadas</span><div class="fleet-heat-bar fleet-heat-bar-completed" role="img" aria-label="'+region.completed+' entregas realizadas"><i style="width:'+Math.max(0,Math.min(100,rate))+'%"></i></div><strong>'+region.completed+'</strong></div></div><div class="fleet-heat-metrics"><span>'+region.failed+' não realizadas</span><span>'+region.pending+' pendentes</span><span>'+region.journeys.size+' jornada(s)</span></div><div class="fleet-heat-footer"><span>'+rate+'% de conclusão</span><span>'+region.addresses.size+' endereço(s)</span></div>'+(addressPreview?'<p class="fleet-heat-addresses">'+esc(addressPreview)+(region.addresses.size>2?' · +'+(region.addresses.size-2)+' endereço(s)':'')+'</p>':'')+'</article>';
   }).join("");
  }
  const fuel=local.fuel.filter(x=>{const d=new Date(x.date);const f=getFleetFilter();return (!f.from||d>=f.from&&d<f.to)&&(($("fleetVehicle")?.value||"all")==="all"||String(x.vehicleId||x.vehicle)===(vehicles.find(v=>v.id===$("fleetVehicle").value)?.code||$("fleetVehicle").value));});
