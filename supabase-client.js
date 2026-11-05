@@ -123,7 +123,7 @@
     if(deliveriesCountError)throw deliveriesCountError;
     const journeys = await fetchAllRows(() =>
       client.from("journeys")
-        .select("id,order_number,driver_id,vehicle_id,route_plan_id,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate,vehicle_type)")
+        .select("id,order_number,driver_id,vehicle_id,route_plan_id,journey_type,purpose_note,status,odometer_start,odometer_end,started_at_server,finished_at_server,drivers(id,registration_no,full_name),vehicles(id,code,plate,vehicle_type)")
         .order("started_at_server", {ascending:false})
     );
     const deliveries = await fetchAllRows(() =>
