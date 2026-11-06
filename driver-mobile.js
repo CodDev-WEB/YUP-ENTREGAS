@@ -11,7 +11,7 @@
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   const heading = (kicker, title, subtitle = "") => `<p class="driver-kicker">${escape(kicker)}</p><h1>${escape(title)}</h1>${subtitle ? `<p class="driver-subtitle">${escape(subtitle)}</p>` : ""}`;
   const submit = label => `<button type="submit" hidden class="driver-mobile-submit">${escape(label)}</button>`;
-  const order = delivery => delivery.customer_name || (delivery.order_no ? `#${delivery.order_no}` : "Entrega");
+  const order = delivery => delivery.customer_order_ref || (delivery.order_no ? `#${delivery.order_no}` : "Entrega");
   const status = delivery => statusLabel[delivery.status] || delivery.status;
   const terminal = delivery => ["completed", "failed"].includes(delivery.status);
   const action = (label, name, id = "", className = "driver-outline") => `<button type="button" class="${className}" data-driver-action="${name}"${id ? ` data-id="${escape(id)}"` : ""}>${escape(label)}</button>`;
