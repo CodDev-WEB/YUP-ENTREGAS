@@ -228,7 +228,7 @@
       latitude:input.latitude==null?null:Number(input.latitude),
       longitude:input.longitude==null?null:Number(input.longitude),
       priority:input.priority||"normal",status:"pending",sequence_no:input.sequenceNo||1
-    }).select("id,journey_id,order_no,status,sequence_no,created_source").single();
+    }).select("id,journey_id,order_no,customer_name,status,sequence_no,created_source").single();
     if(error)throw error;
     return data;
   }
