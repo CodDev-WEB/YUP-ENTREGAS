@@ -335,7 +335,7 @@ $("deliveryForm").addEventListener("submit",async e=>{
  setBusy(e.target,true);
  try{
   const created=await backend.createDelivery({journeyId:currentJourney.id,customerName:$("customerName")?.value,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
-  e.target.reset();await refresh();notify("Entrega de "+(created.customer_name||"cliente não informado")+" cadastrada.");
+  e.target.reset();await refresh();notify("Entrega de "+(created.customer_order_ref||"cliente não informado")+" cadastrada.");
  }catch(error){console.error(error);notify("Não foi possível cadastrar a entrega: "+error.message)}
  finally{setBusy(e.target,false)}
 });
