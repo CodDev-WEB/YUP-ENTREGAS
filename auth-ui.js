@@ -82,7 +82,7 @@
       if (!window.salesPortalLoaded) {
         window.salesPortalLoaded = true;
         const salesScript = document.createElement("script");
-        salesScript.src = "sales-portal.js?v=4";
+        salesScript.src = "sales-portal.js?v=5";
         salesScript.onerror = () => message("Não foi possível carregar a área de vendas. Atualize a página e tente novamente.", "error");
         document.body.appendChild(salesScript);
       }
@@ -91,7 +91,7 @@
     if (!appLoaded) {
       appLoaded = true;
       const script = document.createElement("script");
-      script.src = "app.js?v=52";
+      script.src = "app.js?v=53";
       script.onerror = () => message("Não foi possível carregar o aplicativo. Atualize a página e tente novamente.", "error");
       if (profile.role === "driver") {
         const styles = document.createElement("link");
@@ -101,7 +101,7 @@
         document.head.appendChild(styles);
         script.addEventListener("load", () => {
           const mobile = document.createElement("script");
-          mobile.src = "driver-mobile.js?v=10";
+          mobile.src = "driver-mobile.js?v=11";
           mobile.onerror = () => message("Não foi possível carregar a interface móvel do entregador. Atualize a página.", "error");
           document.body.appendChild(mobile);
         }, { once: true });
