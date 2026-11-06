@@ -60,13 +60,13 @@
   try{
    const {data:{user},error:userError}=await backend.client.auth.getUser();
    if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
-   const {data,error}=await backend.client.from("deliveries").select("id,journey_id,order_no,customer_order_ref,address,reference,map_link,neighborhood_id,priority,status,created_at,neighborhoods(name)").eq("created_by",user.id).order("created_at",{ascending:false}).limit(30);
+   const {data,error}=await backend.client.from("deliveries").select("id,journey_id,order_no,customer_name,address,reference,map_link,neighborhood_id,priority,status,created_at,neighborhoods(name)").eq("created_by",user.id).order("created_at",{ascending:false}).limit(30);
    if(error)throw error;
    if(!data?.length){target.innerHTML='<div class="sales-empty">Você ainda não cadastrou entregas.</div>';return;}
    target.innerHTML=data.map(item=>{
     const locked=Boolean(item.journey_id);
     const state=({pending:"Pendente",in_transit:"Em deslocamento",at_destination:"No endereço",completed:"Concluída",failed:"Não realizada"})[item.status]||item.status;
-    return '<article class="sales-order"><strong>'+esc(item.customer_order_ref||("Entrega "+item.order_no))+' · '+esc(item.address)+'</strong><span>'+esc(item.neighborhoods?.name||"Bairro não informado")+' · '+esc(state)+'</span><small>Cadastrada em '+new Date(item.created_at).toLocaleString("pt-BR")+'</small><span class="sales-pill">'+esc(({normal:"Prioridade normal",high:"Prioridade alta",scheduled:"Agendada"})[item.priority]||item.priority)+'</span><div class="sales-order-actions"><button type="button" class="button secondary" data-sales-edit="'+esc(item.id)+'">Alterar / corrigir</button>'+(locked?'<span class="sales-pill">Vinculada à jornada · exclusão bloqueada</span>':'<button type="button" class="button danger" data-sales-delete="'+esc(item.id)+'">Excluir</button>')+'</div></article>';
+    return '<article class="sales-order"><strong>'+esc(item.customer_name||("Entrega "+item.order_no))+' · '+esc(item.address)+'</strong><span>'+esc(item.neighborhoods?.name||"Bairro não informado")+' · '+esc(state)+'</span><small>Cadastrada em '+new Date(item.created_at).toLocaleString("pt-BR")+'</small><span class="sales-pill">'+esc(({normal:"Prioridade normal",high:"Prioridade alta",scheduled:"Agendada"})[item.priority]||item.priority)+'</span><div class="sales-order-actions"><button type="button" class="button secondary" data-sales-edit="'+esc(item.id)+'">Alterar / corrigir</button>'+(locked?'<span class="sales-pill">Vinculada à jornada · exclusão bloqueada</span>':'<button type="button" class="button danger" data-sales-delete="'+esc(item.id)+'">Excluir</button>')+'</div></article>';
    }).join("");
    target.querySelectorAll("[data-sales-edit]").forEach(button=>button.addEventListener("click",()=>editDelivery(data.find(item=>item.id===button.dataset.salesEdit))));
    target.querySelectorAll("[data-sales-delete]").forEach(button=>button.addEventListener("click",()=>deleteDelivery(data.find(item=>item.id===button.dataset.salesDelete))));
@@ -85,7 +85,7 @@
   if(cep&&onlyDigits(cep).length!==8){deliveryMessage("O CEP deve conter 8 números ou ficar vazio para preenchimento manual.","error");return;}
   button.disabled=true;deliveryMessage("Cadastrando entrega…");
   try{
-   const result=await backend.createDelivery({journeyId:null,orderReference:data.get("orderReference"),neighborhoodId:data.get("neighborhood"),address,reference:data.get("reference"),mapLink:data.get("mapLink"),priority:data.get("priority")||"normal"});
+   const result=await backend.createDelivery({journeyId:null,orderReference:data.get("customerName"),neighborhoodId:data.get("neighborhood"),address,reference:data.get("reference"),mapLink:data.get("mapLink"),priority:data.get("priority")||"normal"});
    form.reset();deliveryMessage("Entrega cadastrada com sucesso. O pedido já está disponível para ser selecionado pelo entregador.","success");
    await loadRecent();
   }catch(error){deliveryMessage("Não foi possível cadastrar. "+error.message,"error");}
@@ -96,11 +96,11 @@
   if(!item)return;
   closeSalesEditModal();
   const modal=document.createElement("div");
-  modal.id="salesEditModal";modal.className="sales-modal-backdrop";modal.innerHTML='<section class="sales-modal" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sales-modal-head"><div><p class="eyebrow">CORREÇÃO DE PEDIDO</p><h2 id="salesEditTitle">Alterar / corrigir entrega</h2><p>Revise os dados e salve as alterações.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><form id="salesEditForm" class="form-grid"><label>Número do pedido (opcional)<input name="orderReference" maxlength="80"></label><label class="sales-cep-priority">CEP<input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label><label>Número do imóvel<input name="houseNumber" maxlength="20" placeholder="Nº da casa/loja"></label><label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address"></label><label>Complemento (opcional)<input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento…"></label><label>Bairro<select name="neighborhood" required></select></label><label>Referência (opcional)<input name="reference" maxlength="250"></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label><label class="wide">Link de localização (opcional)<input name="mapLink" type="url"></label><footer class="sales-modal-actions"><button type="button" class="button secondary" data-sales-cancel>Cancelar</button><button type="submit" class="button primary">Salvar correções</button></footer><p class="sales-message" id="salesEditMessage" role="status"></p></form></section>';
+  modal.id="salesEditModal";modal.className="sales-modal-backdrop";modal.innerHTML='<section class="sales-modal" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sales-modal-head"><div><p class="eyebrow">CORREÇÃO DE PEDIDO</p><h2 id="salesEditTitle">Alterar / corrigir entrega</h2><p>Revise os dados e salve as alterações.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><form id="salesEditForm" class="form-grid"><label>Nome do Cliente <small>Opcional</small><input name="customerName" maxlength="120"></label><label class="sales-cep-priority">CEP<input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label><label>Número do imóvel<input name="houseNumber" maxlength="20" placeholder="Nº da casa/loja"></label><label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address"></label><label>Complemento (opcional)<input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento…"></label><label>Bairro<select name="neighborhood" required></select></label><label>Referência (opcional)<input name="reference" maxlength="250"></label><label>Prioridade<select name="priority"><option value="normal">Normal</option><option value="high">Alta</option><option value="scheduled">Agendada</option></select></label><label class="wide">Link de localização (opcional)<input name="mapLink" type="url"></label><footer class="sales-modal-actions"><button type="button" class="button secondary" data-sales-cancel>Cancelar</button><button type="submit" class="button primary">Salvar correções</button></footer><p class="sales-message" id="salesEditMessage" role="status"></p></form></section>';
   document.body.append(modal);
   const form=modal.querySelector("#salesEditForm"),msg=modal.querySelector("#salesEditMessage"),close=()=>modal.remove();
   const show=(text,type="")=>{msg.textContent=text;msg.className="sales-message"+(type?" "+type:"");};
-  form.elements.orderReference.value=item.customer_order_ref||"";
+  form.elements.customerName.value=item.customer_name||"";
   form.elements.address.value=item.address||"";
   form.elements.houseNumber.value="";
   form.elements.complement.value="";
@@ -139,7 +139,7 @@
    try{
     show("Salvando correções…");
     const {data:{user},error:userError}=await backend.client.auth.getUser();if(userError||!user)throw new Error("Sessão expirada. Entre novamente.");
-    const {data:updated,error}=await backend.client.from("deliveries").update({customer_order_ref:String(data.get("orderReference")||"").trim()||null,address:address.toLocaleUpperCase("pt-BR"),neighborhood_id:neighborhoodId,reference:String(data.get("reference")||"").trim().toLocaleUpperCase("pt-BR")||null,map_link:String(data.get("mapLink")||"").trim()||null,priority:String(data.get("priority")||"normal")}).eq("id",item.id).eq("created_by",user.id).select("id,journey_id");
+    const {data:updated,error}=await backend.client.from("deliveries").update({customer_name:String(data.get("customerName")||"").trim().toLocaleUpperCase("pt-BR")||null,address:address.toLocaleUpperCase("pt-BR"),neighborhood_id:neighborhoodId,reference:String(data.get("reference")||"").trim().toLocaleUpperCase("pt-BR")||null,map_link:String(data.get("mapLink")||"").trim()||null,priority:String(data.get("priority")||"normal")}).eq("id",item.id).eq("created_by",user.id).select("id,journey_id");
     if(error)throw error;if(!updated?.length)throw new Error("Nenhuma alteração foi gravada. Confira suas permissões ou se a entrega mudou de responsável.");
     show("Correção salva no sistema.","success");
     deliveryMessage(item.journey_id?"Entrega corrigida. A exclusão continua bloqueada porque a entrega já está vinculada a uma jornada.":"Entrega atualizada com sucesso.","success");
@@ -147,7 +147,7 @@
    }catch(error){show("Não foi possível atualizar: "+error.message,"error");}
    finally{button.disabled=false;}
   });
-  form.elements.orderReference.focus();
+  form.elements.customerName.focus();
  }
  async function deleteDelivery(item){
   if(!item)return;
@@ -156,7 +156,7 @@
   modal.className="sales-modal-backdrop";
   modal.innerHTML='<section class="sales-modal sales-delete-modal" role="dialog" aria-modal="true" aria-labelledby="salesDeleteTitle"><header class="sales-modal-head"><div><p class="eyebrow">CONFIRMAR EXCLUSÃO</p><h2 id="salesDeleteTitle">Excluir entrega?</h2><p>Esta ação não pode ser desfeita.</p></div><button type="button" class="sales-modal-close" aria-label="Fechar">×</button></header><p class="sales-delete-description"></p><p class="sales-message" role="status"></p><footer class="sales-modal-actions"><button type="button" class="button secondary" data-cancel>Cancelar</button><button type="button" class="button danger" data-confirm-delete>Excluir entrega</button></footer></section>';
   document.body.append(modal);
-  modal.querySelector(".sales-delete-description").textContent=(item.customer_order_ref||("Entrega "+item.order_no))+" · "+item.address;
+  modal.querySelector(".sales-delete-description").textContent=(item.customer_name||("Entrega "+item.order_no))+" · "+item.address;
   const close=()=>modal.remove();
   modal.querySelector(".sales-modal-close").addEventListener("click",close);
   modal.querySelector("[data-cancel]").addEventListener("click",close);
