@@ -11,7 +11,7 @@
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
   const heading = (kicker, title, subtitle = "") => `<p class="driver-kicker">${escape(kicker)}</p><h1>${escape(title)}</h1>${subtitle ? `<p class="driver-subtitle">${escape(subtitle)}</p>` : ""}`;
   const submit = label => `<button type="submit" hidden class="driver-mobile-submit">${escape(label)}</button>`;
-  const order = delivery => delivery.order_no ? `#${delivery.order_no}` : "Número a atribuir";
+  const order = delivery => delivery.customer_name || (delivery.order_no ? `#${delivery.order_no}` : "Entrega");
   const status = delivery => statusLabel[delivery.status] || delivery.status;
   const terminal = delivery => ["completed", "failed"].includes(delivery.status);
   const action = (label, name, id = "", className = "driver-outline") => `<button type="button" class="${className}" data-driver-action="${name}"${id ? ` data-id="${escape(id)}"` : ""}>${escape(label)}</button>`;
@@ -64,6 +64,7 @@
           <form id="driverNewForm" class="driver-form">
             ${action("Usar minha localização atual", "location")}
             <label class="sales-cep-priority">CEP <small>Preencha para localizar o endereço</small><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
+            <label>Nome do Cliente <small>Opcional</small><input name="customerName" maxlength="120" placeholder="Nome de quem receberá a entrega"></label>
             <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option>${neighborhoods.map(item => `<option value="${escape(item.id)}">${escape(item.name)}</option>`).join("")}</select></label>
             <label>Endereço completo<textarea name="address" rows="2" required placeholder="Rua, número e complemento"></textarea></label>
             <label>Ponto de referência <small>Opcional</small><input name="reference" placeholder="Referência para encontrar o endereço"></label>
