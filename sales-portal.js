@@ -85,7 +85,7 @@
   if(cep&&onlyDigits(cep).length!==8){deliveryMessage("O CEP deve conter 8 números ou ficar vazio para preenchimento manual.","error");return;}
   button.disabled=true;deliveryMessage("Cadastrando entrega…");
   try{
-   const result=await backend.createDelivery({journeyId:null,orderReference:data.get("customerName"),neighborhoodId:data.get("neighborhood"),address,reference:data.get("reference"),mapLink:data.get("mapLink"),priority:data.get("priority")||"normal"});
+   const result=await backend.createDelivery({journeyId:null,customerName:data.get("customerName"),neighborhoodId:data.get("neighborhood"),address,reference:data.get("reference"),mapLink:data.get("mapLink"),priority:data.get("priority")||"normal"});
    form.reset();deliveryMessage("Entrega cadastrada com sucesso. O pedido já está disponível para ser selecionado pelo entregador.","success");
    await loadRecent();
   }catch(error){deliveryMessage("Não foi possível cadastrar. "+error.message,"error");}
