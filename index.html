@@ -66,6 +66,7 @@
         <summary class="driver-dropdown-summary"><div><h2>Adicionar entrega</h2><p>O sistema gera o número da ordem automaticamente ao cadastrar cada entrega.</p></div><span class="driver-dropdown-chevron" aria-hidden="true">⌄</span></summary>
         <form id="deliveryForm" class="form-grid">
           
+          <label>Nome do Cliente <small>Opcional</small><input id="customerName" maxlength="120" placeholder="Nome de quem receberá a entrega"></label>
           <label>Bairro<select id="neighborhood" required><option value="">Selecione o bairro</option></select></label>
           <label class="wide">Endereço completo<input id="address" required placeholder="Rua/avenida, número, complemento"></label>
           <label>Referência (opcional)<input id="reference" placeholder="Ponto de referência"></label>
@@ -111,7 +112,7 @@
       <article class="panel">
         <div class="panel-title"><div><h2>Cadastrar entrega de pedido</h2><p>O pedido ficará disponível para os entregadores até ser adicionado a uma jornada.</p></div></div>
         <form id="deliveryCatalogForm" class="form-grid">
-          <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
+          <label>Nome do Cliente <small>Opcional</small><input name="customerName" maxlength="120" placeholder="Nome de quem receberá a entrega"></label>
           <label>Bairro<select name="neighborhood" required><option value="">Selecione o bairro</option></select></label>
           <label class="wide">Endereço completo<input name="address" required maxlength="300" placeholder="Rua, número, complemento"></label>
           <label>Referência (opcional)<input name="reference" maxlength="250" placeholder="Ponto de referência"></label>
@@ -131,7 +132,7 @@
       <article class="panel"><div class="panel-title"><div><h2>Nova entrega</h2><p>Confira o endereço para facilitar a localização pelo entregador.</p></div></div>
         <form id="salesDeliveryForm" class="form-grid">
           <label class="sales-cep-priority">CEP <span class="sales-priority-tag">PREENCHA PRIMEIRO</span><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" aria-label="CEP, primeiro campo recomendado"></label>
-          <label>Número do pedido (opcional)<input name="orderReference" maxlength="80" placeholder="Ex.: PED-1024"></label>
+          <label>Nome do Cliente <small>Opcional</small><input name="customerName" maxlength="120" placeholder="Nome de quem receberá a entrega"></label>
           <label>Bairro<select name="neighborhood" required><option value="">Carregando bairros…</option></select></label>
           <label>Número do imóvel<input name="houseNumber" maxlength="20" autocomplete="address-line2" placeholder="Nº da casa/loja"></label>
           <label class="wide">Logradouro / endereço<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Rua, avenida ou endereço completo"></label>
