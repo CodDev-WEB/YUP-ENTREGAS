@@ -321,7 +321,7 @@ $("deliveryCatalogForm")?.addEventListener("submit",async e=>{
  if(!address){message.textContent="Informe o endereço completo.";return;}
  button.disabled=true;message.textContent="Cadastrando pedido…";
  try{
-  const created=await backend.createDelivery({journeyId:null,neighborhoodId:values.get("neighborhood")||null,address,reference:values.get("reference"),mapLink:values.get("mapLink"),priority:values.get("priority")||"normal"});
+  const created=await backend.createDelivery({journeyId:null,customerName:values.get("customerName"),neighborhoodId:values.get("neighborhood")||null,address,reference:values.get("reference"),mapLink:values.get("mapLink"),priority:values.get("priority")||"normal"});
   await refresh();form.reset();message.textContent="Entrega "+(created.order_no||"") +" cadastrada e disponível para o entregador.";
  }catch(error){console.error(error);message.textContent="Não foi possível cadastrar a entrega. "+(error?.message||"Verifique a migração do Supabase.");}
  finally{button.disabled=false;}
@@ -334,8 +334,8 @@ $("deliveryForm").addEventListener("submit",async e=>{
  const related=deliveries.filter(d=>d.journey_id===currentJourney.id);
  setBusy(e.target,true);
  try{
-  const created=await backend.createDelivery({journeyId:currentJourney.id,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
-  e.target.reset();await refresh();notify("Entrega "+(created.order_no||"") +" cadastrada com número automático.");
+  const created=await backend.createDelivery({journeyId:currentJourney.id,customerName:$("customerName")?.value,neighborhoodId:$("neighborhood").value||null,address,reference:$("reference").value.trim(),priority:priorityMap[$("priority").value]||"normal",mapLink:$("mapLink").value.trim(),sequenceNo:related.length+1});
+  e.target.reset();await refresh();notify("Entrega de "+(created.customer_name||"cliente não informado")+" cadastrada.");
  }catch(error){console.error(error);notify("Não foi possível cadastrar a entrega: "+error.message)}
  finally{setBusy(e.target,false)}
 });
