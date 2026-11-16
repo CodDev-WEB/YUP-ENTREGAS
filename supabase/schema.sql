@@ -279,7 +279,7 @@ insert into public.neighborhoods(name) values
 ('Conquista'),('Diamantino'),('Esperança'),('Fátima'),('Floresta'),('Interventoria'),('Jutaí'),('Liberdade'),
 ('Livramento'),('Maicá'),('Maracanã'),('Mapiri'),('Mararu'),('Matinha'),('Nova República'),('Novo Horizonte'),
 ('Pérola do Maicá'),('Prainha'),('Santarenzinho'),('Santíssimo'),('Santo André'),('São Cristóvão'),('São Francisco'),
-('São José Operário'),('Uruará'),('Urumari'),('Outro / informar')
+('São José Operário'),('Uruará'),('Urumari'),('Juá'),('Outro / informar')
 on conflict(name,city,state) do nothing;
 
 do $ begin alter publication supabase_realtime add table public.journey_location_points;
