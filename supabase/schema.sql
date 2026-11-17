@@ -282,14 +282,14 @@ insert into public.neighborhoods(name) values
 ('São José Operário'),('Uruará'),('Urumari'),('Juá'),('Residencial Salvação'),('Nova Jerusalém'),('Buriti'),('Espírito Santo'),('Outro / informar')
 on conflict(name,city,state) do nothing;
 
-do $
+do $body$
 begin
   alter publication supabase_realtime add table public.journey_location_points;
 exception
   when duplicate_object then null;
   when undefined_object then null;
 end;
-$;
+$body$;
 
 -- Bootstrap do primeiro admin: crie usuário em Authentication > Users e execute:
 -- update public.profiles set role='admin' where id='UUID-DO-ADMIN';
