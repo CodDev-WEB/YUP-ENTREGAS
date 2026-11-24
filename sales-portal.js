@@ -25,6 +25,31 @@
  const onlyDigits=value=>String(value||"").replace(/\D/g,"");
  function formatCep(value){const digits=onlyDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;}
  const cepField=salesForm.elements.postalCode,numberField=salesForm.elements.houseNumber,addressField=salesForm.elements.address,complementField=salesForm.elements.complement,neighborhoodField=salesForm.elements.neighborhood;
+ const fixedPointField=salesForm.elements.fixedPoint;
+ const fixedDeliveryPoints={
+  rodoviaria:{cep:"68030-000",number:"3360",address:"RODOVIÁRIA"},
+  hidroviario:{cep:"68005-200",number:"2",address:"HIDROVIÁRIO E D.E.R."},
+  frente_cidade:{cep:"68005-000",number:"834",address:"ENTREGA EM FRENTE DA CIDADE"},
+  transportadora:{cep:"68005-360",number:"387",address:"TRANSPORTADORA"}
+ };
+ fixedPointField.addEventListener("change",()=>{
+  const point=fixedDeliveryPoints[fixedPointField.value];
+  if(point){
+   cepField.value=point.cep;
+   numberField.value=point.number;
+   addressField.value=point.address;
+   complementField.value="";
+   neighborhoodField.value="";
+   neighborhoodField.required=false;
+   deliveryMessage("Ponto fixo selecionado. CEP, endereço e número foram preenchidos automaticamente.");
+  }else{
+   cepField.value="";
+   numberField.value="";
+   addressField.value="";
+   neighborhoodField.required=true;
+   deliveryMessage("Preencha o CEP e o endereço da entrega normalmente.");
+  }
+ });
  let cepLookupToken=0,lastLookedUpCep="";
  cepField.addEventListener("input",()=>{cepField.value=formatCep(cepField.value);const digits=onlyDigits(cepField.value);if(digits.length===8&&digits!==lastLookedUpCep){lastLookedUpCep=digits;lookupCep();}else if(digits.length<8){lastLookedUpCep="";}});
  async function lookupCep(){
@@ -81,7 +106,8 @@
   const cep=String(data.get("postalCode")||"").trim();
   const address=[street,houseNumber?"Nº "+houseNumber:"",complement].filter(Boolean).join(", ");
   if(!street){deliveryMessage("Informe o logradouro/endereço ou preencha manualmente.","error");return;}
-  if(!data.get("neighborhood")){deliveryMessage("Selecione o bairro. O CEP pode sugerir o bairro, mas você também pode selecioná-lo manualmente.","error");return;}
+  const fixedPoint=fixedDeliveryPoints[String(data.get("fixedPoint")||"")];
+  if(!data.get("neighborhood")&&!fixedPoint){deliveryMessage("Selecione o bairro ou escolha um ponto fixo de entrega.","error");return;}
   if(cep&&onlyDigits(cep).length!==8){deliveryMessage("O CEP deve conter 8 números ou ficar vazio para preenchimento manual.","error");return;}
   button.disabled=true;deliveryMessage("Cadastrando entrega…");
   try{
