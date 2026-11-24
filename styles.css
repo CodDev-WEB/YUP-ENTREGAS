@@ -2594,10 +2594,10 @@ body.sv-dialog-open{overflow:hidden}
   .sv-rows,.sv-submit{transition:none!important}
 }
 
-/* "Minhas entregas" em turquesa a 30% (#40e0d0 sobre branco = #c6f6f1).
-   Contraste sobre o fundo: título 12,7:1 · texto 8,8:1 · secundário 4,57:1
-   · Alterar 5,5:1 · Excluir 5,7:1 · destaque âmbar 5,7:1 */
-body.sales-mode{--sv-list-bg:#c6f6f1;--sv-list-line:#98d3cd;--sv-list-border:#8fccc6}
+/* "Minhas entregas" em turquesa a 10% (#40e0d0 sobre branco = #ecfcfa).
+   Contraste sobre o fundo: título 14,1:1 · texto 9,8:1 · secundário 5,1:1
+   · Alterar 6,2:1 · Excluir 6,3:1 · destaque âmbar 6,3:1 */
+body.sales-mode{--sv-list-bg:#ecfcfa;--sv-list-line:#cbe6e3;--sv-list-border:#c0dfdc}
 body.sales-mode .sv-list-card{background:var(--sv-list-bg);border-color:var(--sv-list-border)}
 body.sales-mode .sv-list-card .sv-tabs,
 body.sales-mode .sv-list-card .sv-row{border-color:var(--sv-list-line)}
