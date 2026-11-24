@@ -1,9 +1,9 @@
-const CACHE = "yup-entregas-shell-v191";
+const CACHE = "yup-entregas-shell-v192";
 const ASSETS = [
   "./",
   "./index.html",
   "./sales-portal.js",
-  "./sales-portal.js?v=6",
+  "./sales-portal.js?v=7",
   "./driver-access.js",
   "./styles.css",
   "./styles.css?v=93",
