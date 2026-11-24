@@ -2598,7 +2598,8 @@ body.sales-mode #view-vendas .sv-panel{margin:0}
 /* Formulário */
 .sv-form{display:block;margin:0}
 .sv-group{display:grid;gap:14px;min-width:0;margin:0;padding:0;border:0}
-.sv-group+.sv-group{margin-top:22px;padding-top:18px;border-top:1px solid var(--sv-line)}
+.sv-group+.sv-group{margin-top:18px}
+.sv-group:has(+.sv-group){padding-bottom:18px;border-bottom:1px solid var(--sv-line)}
 .sv-group>legend{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:0;color:var(--sv-text);font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
 .sv-group-plain>legend{text-transform:none;letter-spacing:0;font-size:14px;font-weight:700;margin-bottom:6px}
 .sv-group-plain+.sv-group-plain{margin-top:0;padding-top:0;border-top:0}
@@ -2713,4 +2714,72 @@ body.sv-dialog-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .sv-spin,.sv-icon-button:disabled svg,.sv-order.is-new,.sv-dialog{animation:none!important}
   .sv-orders,.sv-submit{transition:none!important}
+}
+
+/* Vendas no computador: a tela inteira cabe na janela, sem rolar a página.
+   Formulário compacto em grade de 6 colunas; se a janela for baixa (ou houver erros),
+   só o painel rola por dentro. No celular a página continua rolando normalmente. */
+@media(min-width:1000px){
+  body.sales-mode:not(.login-mode){display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:0;overflow:hidden}
+  body.sales-mode:not(.login-mode) .topbar{flex:0 0 auto}
+  body.sales-mode:not(.login-mode) .layout{flex:1 1 auto;min-height:0;height:auto}
+  body.sales-mode:not(.login-mode) .content{height:100%;max-width:1320px;padding:16px 24px 18px;overflow:hidden}
+  body.sales-mode #view-vendas:not(.hidden){height:100%}
+  body.sales-mode .sv-layout{height:100%;grid-template-columns:minmax(0,1.9fr) minmax(320px,1fr);grid-template-rows:auto minmax(0,1fr);gap:14px 18px}
+  body.sales-mode .sv-panel{height:100%;min-height:0;overflow:auto;overscroll-behavior:contain}
+  body.sales-mode .sv-panel:not(.sv-list-panel){height:auto;max-height:100%;align-self:start}
+  body.sales-mode .sv-list-panel{position:static;max-height:none}
+
+  /* Cabeçalho da página em uma linha */
+  body.sales-mode #view-vendas .sv-heading{margin:0}
+  body.sales-mode #view-vendas .sv-heading>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px}
+  body.sales-mode #view-vendas .sv-heading .eyebrow{margin:0;align-self:center}
+  body.sales-mode #view-vendas .sv-heading h1{font-size:26px}
+  body.sales-mode #view-vendas .sv-heading p:last-child{margin:0;font-size:14px}
+  body.sales-mode #view-vendas .sv-panel{padding:18px 20px}
+
+  /* Formulário compacto */
+  .sv-panel-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+  .sv-panel-head p{margin:0}
+  .sv-group>legend{margin-bottom:8px}
+  .sv-group,.sv-fields{gap:10px}
+  .sv-group+.sv-group{margin-top:0}
+  .sv-choice>label,.sv-points>label{min-height:44px;padding:8px 12px}
+  .sv-points{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sv-field{gap:4px}
+  body.sales-mode .sv-field :is(input,select){min-height:44px;padding:9px 12px}
+  .sv-help{font-size:12.5px}
+
+  /* Endereço em 12 colunas: CEP · Número · Logradouro / Complemento · Bairro · Referência / Link */
+  .sv-fields{grid-template-columns:repeat(12,minmax(0,1fr))}
+  .sv-fields>.sv-row{display:contents}
+  .sv-fields>.sv-row:first-child>.sv-field:first-child{grid-column:span 3}
+  .sv-fields>.sv-row:first-child>.sv-field:last-child{grid-column:span 2}
+  .sv-fields>.sv-row:first-child+.sv-field{grid-column:span 7}
+  .sv-fields>.sv-row:nth-of-type(2)>.sv-field{grid-column:span 4}
+  .sv-fields>.sv-row:nth-of-type(2)+.sv-field{grid-column:span 4}
+  .sv-fields>.sv-field:last-child{grid-column:1/-1}
+  /* A dica do CEP continua lida por leitores de tela, mas não ocupa altura */
+  #salesCepHelp{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+  /* Cliente · Prioridade · Cadastrar na mesma linha, com rótulos na mesma altura */
+  #salesDeliveryForm{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(210px,.75fr);column-gap:16px;align-items:end}
+  #salesDeliveryForm>.sv-group:first-of-type{grid-column:1/-1;margin-bottom:12px;padding-bottom:14px}
+  #salesDeliveryForm>.sv-group:nth-of-type(2),
+  #salesDeliveryForm>.sv-group:nth-of-type(3){padding-bottom:0;border-bottom:0;gap:4px}
+  #salesDeliveryForm>.sv-group:nth-of-type(2)>legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #salesDeliveryForm>.sv-group:nth-of-type(3)>legend{margin:0 0 4px;color:var(--sv-text);font-size:14px;font-weight:700;letter-spacing:0;text-transform:none;line-height:1.35}
+  #salesDeliveryForm>.sv-group:nth-of-type(3)>legend .sv-step{display:none}
+  body.sales-mode #salesDeliveryForm .sv-submit{margin-top:0;min-height:44px;height:44px;padding:8px 14px;white-space:nowrap;align-self:end}
+  #salesDeliveryForm>.sv-message{grid-column:1/-1}
+
+  /* Lista: filtros quebram em linhas em vez de rolar de lado */
+  .sv-filters{flex-wrap:wrap;margin:12px 0 10px;overflow:visible}
+  .sv-filters button{min-height:36px;padding:6px 12px;font-size:13px}
+}
+@media(min-width:1000px) and (max-width:1279px){
+  body.sales-mode .sv-layout{grid-template-columns:minmax(0,2.1fr) minmax(300px,1fr)}
+  #salesDeliveryForm{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr) minmax(176px,.7fr);column-gap:12px}
+  body.sales-mode #salesDeliveryForm .sv-submit{padding:8px 10px;gap:6px;font-size:15px}
+  .sv-choice-3>label{padding:8px 6px}
 }
