@@ -26,6 +26,7 @@
  function formatCep(value){const digits=onlyDigits(value).slice(0,8);return digits.length>5?digits.slice(0,5)+"-"+digits.slice(5):digits;}
  const cepField=salesForm.elements.postalCode,numberField=salesForm.elements.houseNumber,addressField=salesForm.elements.address,complementField=salesForm.elements.complement,neighborhoodField=salesForm.elements.neighborhood;
  const fixedPointField=salesForm.elements.fixedPoint;
+ salesForm.addEventListener("reset",()=>{neighborhoodField.required=true;});
  const fixedDeliveryPoints={
   rodoviaria:{cep:"68030-000",number:"3360",address:"RODOVIÁRIA"},
   hidroviario:{cep:"68005-200",number:"2",address:"HIDROVIÁRIO E D.E.R."},
