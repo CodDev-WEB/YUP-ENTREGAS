@@ -218,22 +218,23 @@
  }
  function syncFilterButtons(){document.querySelectorAll("[data-sales-filter]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.salesFilter===filter)));}
  function renderRecent(highlightId){
-  const target=$("salesRecentList");
-  $("salesCount").textContent=recent.length===1?"1 cadastrada recentemente":recent.length+" cadastradas recentemente";
+  const target=$("salesRecentList"),count=$("salesCount");
+  count.textContent=String(recent.length);count.setAttribute("aria-label",recent.length===1?"1 entrega":recent.length+" entregas");
+  document.querySelectorAll("[data-count-for]").forEach(el=>{el.textContent=String(recent.filter(item=>(filterMatch[el.dataset.countFor]||filterMatch.all)(item.status)).length);});
   const list=recent.filter(item=>(filterMatch[filter]||filterMatch.all)(item.status));
   if(!recent.length){target.innerHTML='<div class="sv-empty">Você ainda não cadastrou entregas. Use o formulário para registrar o primeiro pedido.</div>';return;}
   if(!list.length){target.innerHTML='<div class="sv-empty">Nenhuma entrega neste filtro.</div>';return;}
   target.innerHTML=list.map(item=>{
    const [statusClass,statusLabel]=statusInfo[item.status]||["pend",item.status];
-   const priority=item.priority==="high"?'<span class="sv-badge sv-badge-warn">Prioridade alta</span>':item.priority==="scheduled"?'<span class="sv-badge sv-badge-warn">Agendada</span>':"";
+   const priority=item.priority==="high"?'<span class="sv-flag">Prioridade alta</span> · ':item.priority==="scheduled"?'<span class="sv-flag">Agendada</span> · ':"";
    const locked=Boolean(item.journey_id);
-   return '<article class="sv-order'+(item.id===highlightId?" is-new":"")+'">'
-    +'<div class="sv-order-top"><h3>'+esc(item.customer_order_ref||("Pedido "+item.order_no))+'</h3><span class="sv-badge sv-status-'+statusClass+'">'+esc(statusLabel)+'</span></div>'
-    +'<p class="sv-order-address">'+esc(item.address)+' · '+esc(item.neighborhoods?.name||"Sem bairro")+'</p>'
-    +'<div class="sv-order-meta">'+priority+'<time datetime="'+esc(item.created_at)+'">'+esc(relativeDate(item.created_at))+'</time></div>'
-    +'<div class="sv-order-actions"><button type="button" class="sv-btn" data-sales-edit="'+esc(item.id)+'">'+icon.edit+'Alterar</button>'
-    +(locked?'<span class="sv-locked">'+icon.lock+'Já está numa jornada</span>':'<button type="button" class="sv-btn sv-btn-danger" data-sales-delete="'+esc(item.id)+'">'+icon.trash+'Excluir</button>')
-    +'</div></article>';
+   return '<article class="sv-row'+(item.id===highlightId?" is-new":"")+'">'
+    +'<div class="sv-row-top"><h3>'+esc(item.customer_order_ref||("Pedido "+item.order_no))+'</h3><span class="sv-badge sv-status-'+statusClass+'">'+esc(statusLabel)+'</span></div>'
+    +'<p class="sv-row-address">'+esc(item.address)+' · '+esc(item.neighborhoods?.name||"Sem bairro")+'</p>'
+    +'<div class="sv-row-bottom"><span class="sv-row-meta">'+priority+'<time datetime="'+esc(item.created_at)+'">'+esc(relativeDate(item.created_at))+'</time></span>'
+    +'<span class="sv-row-actions"><button type="button" class="sv-text-btn" data-sales-edit="'+esc(item.id)+'">'+icon.edit+'Alterar</button>'
+    +(locked?'<span class="sv-locked">'+icon.lock+'Em jornada</span>':'<button type="button" class="sv-text-btn sv-text-danger" data-sales-delete="'+esc(item.id)+'">'+icon.trash+'Excluir</button>')
+    +'</span></div></article>';
   }).join("");
  }
  async function loadRecent({highlightFirst=false}={}){
@@ -247,7 +248,7 @@
    recent=data||[];
    renderRecent(highlightFirst?recent[0]?.id:null);
   }catch(error){
-   $("salesCount").textContent="Lista indisponível";
+   $("salesCount").textContent="!";$("salesCount").setAttribute("aria-label","lista indisponível");
    target.innerHTML='<div class="sv-empty sv-empty-error">Não foi possível carregar suas entregas: '+esc(friendlyError(error))+' <button type="button" class="sv-link" data-sales-retry>Tentar de novo</button></div>';
   }finally{target.setAttribute("aria-busy","false");refresh.disabled=false;}
  }
@@ -267,14 +268,16 @@
   const needsNeighborhood=Boolean(item.neighborhood_id);
   const req='<span class="sv-req" aria-hidden="true">*</span>',opt='<span class="sv-opt">(opcional)</span>';
   const {dialog,close}=openDialog('<section class="sv-dialog" role="dialog" aria-modal="true" aria-labelledby="salesEditTitle"><header class="sv-dialog-head"><div><h2 id="salesEditTitle">Alterar entrega</h2><p>Revise os dados e salve.</p></div><button type="button" class="sv-icon-button" data-dialog-close aria-label="Fechar">'+icon.close+'</button></header>'
-   +'<form class="sv-form" novalidate><div class="sv-fields">'
-   +'<div class="sv-row"><label class="sv-field sv-cep"><span class="sv-label">CEP '+opt+'</span><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label><label class="sv-field"><span class="sv-label">Número '+req+'</span><input name="houseNumber" maxlength="20" placeholder="Ex.: 120 ou S/N" aria-required="true"></label></div>'
-   +'<label class="sv-field"><span class="sv-label">Logradouro '+req+'</span><input name="address" maxlength="300" aria-required="true"></label>'
-   +'<div class="sv-row"><label class="sv-field"><span class="sv-label">Complemento '+opt+'</span><input name="complement" maxlength="120" placeholder="Casa, bloco, apartamento"></label><label class="sv-field"><span class="sv-label">Bairro '+(needsNeighborhood?req:opt)+'</span><select name="neighborhood"'+(needsNeighborhood?' aria-required="true"':"")+'>'+neighborhoodOptions()+'</select></label></div>'
-   +'<label class="sv-field"><span class="sv-label">Referência '+opt+'</span><input name="reference" maxlength="250"></label>'
-   +'<label class="sv-field"><span class="sv-label">Link de localização '+opt+'</span><input name="mapLink" type="url" inputmode="url"></label>'
-   +'<label class="sv-field"><span class="sv-label">Nome do cliente '+opt+'</span><input name="customerName" maxlength="120"></label>'
-   +'<fieldset class="sv-group sv-group-plain"><legend>Prioridade</legend><div class="sv-choice sv-choice-3" role="radiogroup" aria-label="Prioridade"><label><input type="radio" name="priority" value="normal">Normal</label><label><input type="radio" name="priority" value="high">Alta</label><label><input type="radio" name="priority" value="scheduled">Agendada</label></div></fieldset>'
+   +'<form class="sv-form" novalidate><div class="sv-fields sv-fields-dialog">'
+   +'<label class="sv-field sv-c3 sv-cep"><span class="sv-label">CEP '+opt+'</span><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>'
+   +'<label class="sv-field sv-c2"><span class="sv-label">Número '+req+'</span><input name="houseNumber" maxlength="20" placeholder="Ex.: 120" aria-required="true"></label>'
+   +'<label class="sv-field sv-c7"><span class="sv-label">Logradouro '+req+'</span><input name="address" maxlength="300" aria-required="true"></label>'
+   +'<label class="sv-field sv-c4"><span class="sv-label">Complemento '+opt+'</span><input name="complement" maxlength="120" placeholder="Casa, bloco, apto."></label>'
+   +'<label class="sv-field sv-c4"><span class="sv-label">Bairro '+(needsNeighborhood?req:opt)+'</span><select name="neighborhood"'+(needsNeighborhood?' aria-required="true"':"")+'>'+neighborhoodOptions()+'</select></label>'
+   +'<label class="sv-field sv-c4"><span class="sv-label">Referência '+opt+'</span><input name="reference" maxlength="250"></label>'
+   +'<label class="sv-field sv-c12"><span class="sv-label">Link de localização '+opt+'</span><input name="mapLink" type="url" inputmode="url"></label>'
+   +'<label class="sv-field sv-c6"><span class="sv-label">Nome do cliente '+opt+'</span><input name="customerName" maxlength="120"></label>'
+   +'<div class="sv-field sv-c6"><span class="sv-label" id="salesEditPriorityLabel">Prioridade</span><div class="sv-seg sv-seg-3" role="radiogroup" aria-labelledby="salesEditPriorityLabel"><label><input type="radio" name="priority" value="normal">Normal</label><label><input type="radio" name="priority" value="high">Alta</label><label><input type="radio" name="priority" value="scheduled">Agendada</label></div></div>'
    +'</div><div class="sv-message" role="status" aria-live="polite"></div>'
    +'<div class="sv-dialog-actions"><button type="button" class="sv-btn" data-dialog-close>Cancelar</button><button type="submit" class="sv-btn sv-btn-primary">Salvar alterações</button></div></form></section>',origin,{canClose:()=>{
     if(!dirty)return true;
@@ -315,7 +318,7 @@
     deliveryMessage("Alterações salvas.","success");
     await loadRecent();
     const card=document.querySelector('[data-sales-edit="'+CSS.escape(item.id)+'"]');
-    card?.closest(".sv-order")?.classList.add("is-new");card?.focus();
+    card?.closest(".sv-row")?.classList.add("is-new");card?.focus();
    }catch(error){show("Não foi possível salvar: "+friendlyError(error),"error");button.disabled=false;button.textContent="Salvar alterações";}
   });
   form.elements.address.focus();
@@ -350,8 +353,22 @@
   });
  }
 
+ function decorateHeader(){
+  const context=document.querySelector(".topbar .brand-context small");
+  if(context)context.textContent="Área comercial";
+  const actions=document.querySelector(".topbar .header-actions");
+  if(actions&&!document.getElementById("salesUser")){
+   const user=document.createElement("div");
+   user.id="salesUser";user.className="sv-user";
+   user.innerHTML="<strong></strong><span>Vendas</span>";
+   const name=String(profile?.display_name||"").trim();
+   user.querySelector("strong").textContent=name&&!["sales","vendas"].includes(lower(name))?name:"Equipe de vendas";
+   actions.prepend(user);
+  }
+ }
  async function loadPortal(){
   if(!profile||profile.role!=="sales")return;
+  decorateHeader();
   try{
    neighborhoods=await backend.listNeighborhoods();
    fields.neighborhood.innerHTML=neighborhoodOptions();

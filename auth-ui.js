@@ -82,7 +82,7 @@
       if (!window.salesPortalLoaded) {
         window.salesPortalLoaded = true;
         const salesScript = document.createElement("script");
-        salesScript.src = "sales-portal.js?v=8";
+        salesScript.src = "sales-portal.js?v=9";
         salesScript.onerror = () => message("Não foi possível carregar a área de vendas. Atualize a página e tente novamente.", "error");
         document.body.appendChild(salesScript);
       }
