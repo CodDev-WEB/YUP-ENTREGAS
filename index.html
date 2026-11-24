@@ -131,6 +131,7 @@
       <div class="page-heading"><div><p class="eyebrow">ÁREA COMERCIAL</p><h1>Cadastro de entregas</h1><p>Registre os pedidos vendidos. Eles ficarão disponíveis para o entregador selecionar ao iniciar a jornada.</p></div></div>
       <article class="panel"><div class="panel-title"><div><h2>Nova entrega</h2><p>Confira o endereço para facilitar a localização pelo entregador.</p></div></div>
         <form id="salesDeliveryForm" class="form-grid">
+          <label class="wide">Ponto fixo de entrega (opcional)<select name="fixedPoint"><option value="">Entrega em endereço informado manualmente</option><option value="rodoviaria">Rodoviária — CEP 68030-000 · Nº 3360</option><option value="hidroviario">Hidroviário e D.E.R. — CEP 68005-200 · Nº 2</option><option value="frente_cidade">Entrega em frente da cidade — CEP 68005-000 · Nº 834</option><option value="transportadora">Transportadora — CEP 68005-360 · Nº 387</option></select></label>
           <label class="sales-cep-priority">CEP <span class="sales-priority-tag">PREENCHA PRIMEIRO</span><input name="postalCode" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" aria-label="CEP, primeiro campo recomendado"></label>
           <label>Nome do Cliente <small>Opcional</small><input name="customerName" maxlength="120" placeholder="Nome de quem receberá a entrega"></label>
           <label>Bairro<select name="neighborhood" required><option value="">Carregando bairros…</option></select></label>
