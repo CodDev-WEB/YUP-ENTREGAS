@@ -2593,3 +2593,15 @@ body.sv-dialog-open{overflow:hidden}
   .sv-spin,.sv-icon-button:disabled svg,.sv-row.is-new,.sv-dialog{animation:none!important}
   .sv-rows,.sv-submit{transition:none!important}
 }
+
+/* "Minhas entregas" em turquesa a 30% (#40e0d0 sobre branco = #c6f6f1).
+   Contraste sobre o fundo: título 12,7:1 · texto 8,8:1 · secundário 4,57:1
+   · Alterar 5,5:1 · Excluir 5,7:1 · destaque âmbar 5,7:1 */
+body.sales-mode{--sv-list-bg:#c6f6f1;--sv-list-line:#98d3cd;--sv-list-border:#8fccc6}
+body.sales-mode .sv-list-card{background:var(--sv-list-bg);border-color:var(--sv-list-border)}
+body.sales-mode .sv-list-card .sv-tabs,
+body.sales-mode .sv-list-card .sv-row{border-color:var(--sv-list-line)}
+body.sales-mode .sv-list-card .sv-count{background:rgba(255,255,255,.7)}
+body.sales-mode .sv-list-card .sv-text-btn:hover{background:rgba(255,255,255,.55)}
+body.sales-mode .sv-list-card .sv-status-pend{background:rgba(255,255,255,.75)}
+body.sales-mode .sv-list-card .sv-empty{border-color:var(--sv-list-border);background:rgba(255,255,255,.45)}
