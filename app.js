@@ -43,9 +43,30 @@ function isVehicleInUseError(error){
  return message.includes("vehicle")&&(/duplicate key|unique constraint|already in use|já está em uso|journey/.test(message));
 }
 function setBusy(form,busy){form.querySelectorAll("button").forEach(b=>b.disabled=busy)}
-function setView(view){document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");document.querySelectorAll(".nav").forEach(el=>el.classList.toggle("active",el.dataset.view===view));render()}
+function setView(view){
+ const changed=!$("view-"+view)||$("view-"+view).classList.contains("hidden");
+ document.querySelectorAll(".view").forEach(el=>el.classList.add("hidden"));$("view-"+view)?.classList.remove("hidden");
+ document.querySelectorAll(".nav").forEach(el=>{const on=el.dataset.view===view;el.classList.toggle("active",on);if(on){el.setAttribute("aria-current","page");if(matchMedia("(max-width:900px)").matches)el.scrollIntoView({inline:"nearest",block:"nearest"})}else el.removeAttribute("aria-current")});
+ render();
+ if(view==="fechamento"&&typeof renderDailyRatesPreview==="function")refreshClosingStatus().then(renderDailyRatesPreview);
+ if(changed){const h=$("view-"+view)?.querySelector("h1");if(h){h.setAttribute("tabindex","-1");h.focus({preventScroll:true});window.scrollTo({top:0})}}
+}
 document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
 if(!admin){document.querySelector('[data-view="importacao-historico"]')?.classList.add("hidden");}
+if(!admin)document.querySelector("[data-admin-group]")?.classList.add("hidden");
+(function decorateAdminHeader(){
+ if(!admin)return;
+ const context=document.querySelector(".topbar .brand-context small");if(context)context.textContent="Administração";
+ const actions=document.querySelector(".topbar .header-actions");
+ if(actions&&!document.getElementById("adminUser")){
+  const p=backend?.profile||{},user=document.createElement("div");
+  user.id="adminUser";user.className="sv-user";user.innerHTML="<strong></strong><span></span>";
+  const name=String(p.display_name||"").trim();
+  user.querySelector("strong").textContent=name&&!["admin","manager"].includes(name.toLowerCase())?name:"Equipe YUP";
+  user.querySelector("span").textContent=p.role==="manager"?"Gerente":"Administrador";
+  actions.prepend(user);
+ }
+})();
 function fillSelect(el,items,value,label,placeholder){if(!el){console.warn("YUP-ENTREGAS: seletor opcional ausente no HTML; preenchimento ignorado.");return}el.replaceChildren();const first=document.createElement("option");first.value="";first.textContent=placeholder;el.append(first);(items||[]).forEach(item=>{const o=document.createElement("option");o.value=item[value];o.textContent=label(item);el.append(o)})}
 function ensureSelect(id,placeholder){const old=$(id);if(!old){console.warn("YUP-ENTREGAS: campo obrigatório ausente no HTML:",id);return null}if(old.tagName==="SELECT")return old;const select=document.createElement("select");select.id=old.id;select.required=old.required;select.className=old.className;select.setAttribute("aria-label",old.getAttribute("aria-label")||old.parentElement?.textContent.trim()||id);old.replaceWith(select);return select}
 function currentDriver(){return drivers.find(d=>d.profile_id===backend?.profile?.id)}
@@ -663,10 +684,10 @@ function renderDriverAnalytics(){
 $("refreshDriverAnalytics")?.addEventListener("click",()=>refresh());
 function render(){
  renderRoutePlans();renderDeliveryCatalog();
+ const pendingCount=deliveries.filter(d=>!d.journey_id&&d.status==="pending").length,navPending=$("navPendingCount");
+ if(navPending){navPending.hidden=!pendingCount;navPending.textContent=pendingCount;navPending.setAttribute("aria-label",pendingCount+" pendentes")}
  renderDeliveries();renderDriverAnalytics();
  renderDriverExperience();
- $("fleetJourneys").textContent=journeys.length;$("fleetDeliveries").textContent=deliveries.length;
- $("fleetKm").textContent=journeys.filter(j=>j.odometer_end!=null).reduce((sum,j)=>sum+Number(j.odometer_end)-Number(j.odometer_start),0).toLocaleString("pt-BR",{maximumFractionDigits:1});
  renderFleetHistory();
  $("fuelTotalLiters").textContent=local.fuel.reduce((s,x)=>s+x.liters,0).toLocaleString("pt-BR",{maximumFractionDigits:2})+" L";const costs=local.fuel.reduce((s,x)=>s+x.cost,0),liters=local.fuel.reduce((s,x)=>s+x.liters,0);$("fuelTotalCost").textContent=money(costs);$("fuelAverage").textContent=liters?money(costs/liters)+"/L":"—";
  $("fuelHistory").innerHTML=table(local.fuel,[["date","Data"],["vehicle","Veículo"],["odo","Odômetro"],["liters","Litros"],["cost","Valor"]],x=>({...x,date:fmtDate(x.date),cost:money(x.cost)}));
@@ -687,8 +708,87 @@ function journeyIncidents(j){
  }));
  return [...new Set(notes)].join(" | ")||"—";
 }
+/* Painel: indicadores do período, tabela paginada e linha do tempo sob demanda. */
+const JOURNEYS_PER_PAGE=10;
+let journeyPage=1;
+const validJourneyKm=j=>j.odometer_end!=null&&j.odometer_start!=null&&j.odometer_start!==""&&Number(j.odometer_end)>=Number(j.odometer_start)?Number(j.odometer_end)-Number(j.odometer_start):0;
+const fmtShort=v=>{if(!v)return "—";const d=new Date(v);return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})};
+function fleetPeriodLabel(period,anchor){
+ const base=new Date((anchor||todayKeySP())+"T12:00:00");
+ if(period==="day")return base.toLocaleDateString("pt-BR");
+ if(period==="week"){const s=new Date(base);s.setDate(s.getDate()-((s.getDay()+6)%7));const e=new Date(s);e.setDate(e.getDate()+6);return "semana de "+s.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+e.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
+ if(period==="month")return base.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+ if(period==="year")return String(base.getFullYear());
+ return "todo o período";
+}
+function todayKeySP(){return new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"})}
+function previousRange(period,from,to){
+ if(!from)return null;
+ const pf=new Date(from),pt=new Date(from);
+ if(period==="day")pf.setDate(pf.getDate()-1);
+ else if(period==="week")pf.setDate(pf.getDate()-7);
+ else if(period==="month")pf.setMonth(pf.getMonth()-1);
+ else if(period==="year")pf.setFullYear(pf.getFullYear()-1);
+ else return null;
+ return {from:pf,to:pt};
+}
+function renderFleetKpis(filtered,period,from,to){
+ const box=$("fleetKpis");if(!box)return;
+ const ids=new Set(filtered.map(j=>j.id));
+ const ds=deliveries.filter(d=>ids.has(d.journey_id)),done=ds.filter(d=>d.status==="completed").length;
+ const km=filtered.reduce((s,j)=>s+validJourneyKm(j),0);
+ const withKm=filtered.filter(j=>validJourneyKm(j)>0).length;
+ let compare="";
+ const prev=previousRange(period,from,to);
+ if(prev){
+  const driver=$("fleetDriver")?.value||"all",vehicle=$("fleetVehicle")?.value||"all",status=$("fleetStatus")?.value||"all";
+  const prevCount=journeys.filter(j=>{const d=j.started_at_server?new Date(j.started_at_server):null;return d&&d>=prev.from&&d<prev.to&&(driver==="all"||j.driver_id===driver)&&(vehicle==="all"||j.vehicle_id===vehicle)&&(status==="all"||j.status===status)}).length;
+  const label=period==="month"?prev.from.toLocaleDateString("pt-BR",{month:"long"}):period==="year"?String(prev.from.getFullYear()):period==="week"?"semana anterior":"dia anterior";
+  if(prevCount){const pct=Math.round((filtered.length-prevCount)/prevCount*100);compare='<span class="'+(pct>=0?"ad-up":"ad-down")+'">'+(pct>0?"+":"")+pct+'%</span> vs. '+esc(label)}
+  else compare="Sem jornadas no período anterior";
+ }
+ const open=journeys.filter(j=>j.status==="open");
+ const openText=open.length?open.slice(0,2).map(j=>esc((j.drivers?.full_name||"Entregador").split(" ")[0]+" · "+(j.vehicles?.code||"—"))).join("<br>")+(open.length>2?"<br>e mais "+(open.length-2):""):"Nenhuma jornada aberta";
+ const n=v=>v.toLocaleString("pt-BR");
+ box.innerHTML='<div class="ad-kpi"><span>Jornadas</span><b>'+n(filtered.length)+'</b><small>'+(compare||"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Entregas concluídas</span><b>'+n(done)+' de '+n(ds.length)+'</b><small>'+(ds.length?Math.round(done/ds.length*100)+"% de conclusão":"Sem entregas no período")+'</small></div>'
+  +'<div class="ad-kpi"><span>Km rodados</span><b>'+km.toLocaleString("pt-BR",{maximumFractionDigits:1})+' km</b><small>'+(withKm?(km/withKm).toLocaleString("pt-BR",{maximumFractionDigits:1})+" km por jornada":"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Em andamento agora</span><b>'+open.length+'</b><small>'+openText+'</small></div>';
+}
+function renderJourneyTable(filtered){
+ const target=$("journeyHistory"),pager=$("journeyHistoryPager");if(!target)return;
+ if(!filtered.length){target.innerHTML='<p class="hint">Nenhuma jornada no período e nos filtros escolhidos.</p>';if(pager)pager.innerHTML="";return}
+ const pages=Math.max(1,Math.ceil(filtered.length/JOURNEYS_PER_PAGE));journeyPage=Math.min(Math.max(1,journeyPage),pages);
+ const slice=filtered.slice((journeyPage-1)*JOURNEYS_PER_PAGE,journeyPage*JOURNEYS_PER_PAGE);
+ const badge={open:"ad-b-open",finished:"ad-b-done",cancelled:"ad-b-muted"};
+ target.innerHTML='<table class="ad-table"><thead><tr><th scope="col">Jornada</th><th scope="col">Entregador</th><th scope="col">Veículo</th><th scope="col">Início</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col">Status</th></tr></thead><tbody>'+slice.map(j=>{
+  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
+  const km=j.odometer_end==null?"—":validJourneyKm(j).toLocaleString("pt-BR",{maximumFractionDigits:1});
+  const code=j.order_number==null?"—":"#"+j.order_number;
+  return '<tr><td><button type="button" class="ad-link" data-timeline="'+esc(j.id)+'" aria-label="Ver linha do tempo da jornada '+esc(code)+'">'+esc(code)+'</button></td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtShort(j.started_at_server)+'</td><td class="n">'+km+'</td><td class="n">'+done+'/'+ds.length+'</td><td><span class="ad-badge '+(badge[j.status]||"ad-b-muted")+'">'+esc(statusLabel[j.status]||j.status)+'</span>'+(j.journey_type==="store_use"?' <span class="ad-badge ad-b-muted">Uso da loja</span>':"")+'</td></tr>';
+ }).join("")+'</tbody></table>';
+ if(pager){
+  const start=(journeyPage-1)*JOURNEYS_PER_PAGE+1,end=Math.min(filtered.length,journeyPage*JOURNEYS_PER_PAGE);
+  pager.innerHTML=pages>1?'<span>Mostrando '+start+'–'+end+' de '+filtered.length+'</span><span class="ad-pages"><button type="button" data-page="'+(journeyPage-1)+'"'+(journeyPage===1?" disabled":"")+' aria-label="Página anterior">‹</button><span class="ad-page-now">Página '+journeyPage+' de '+pages+'</span><button type="button" data-page="'+(journeyPage+1)+'"'+(journeyPage===pages?" disabled":"")+' aria-label="Próxima página">›</button></span>':'';
+ }
+}
+$("journeyHistoryPager")?.addEventListener("click",e=>{const b=e.target.closest("[data-page]");if(!b||b.disabled)return;journeyPage=Number(b.dataset.page);renderFleetHistory();$("journeyHistoryTitle")?.scrollIntoView({block:"nearest"})});
+$("journeyHistory")?.addEventListener("click",e=>{const b=e.target.closest("[data-timeline]");if(!b)return;openJourneyTimeline(b.dataset.timeline)});
+function openJourneyTimeline(id){
+ const panel=$("journeyTimelinePanel"),select=$("timelineJourney");if(!panel||!select)return;
+ select.value=id;panel.hidden=false;loadJourneyTimeline();
+ panel.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+ $("journeyTimelineTitle")?.focus({preventScroll:true});
+}
+$("timelineJourney")?.addEventListener("change",loadJourneyTimeline);
+$("closeTimeline")?.addEventListener("click",()=>{const panel=$("journeyTimelinePanel");if(panel)panel.hidden=true;$("journeyHistoryTitle")?.scrollIntoView({block:"nearest"})});
+$("fleetPeriodButtons")?.addEventListener("click",e=>{const b=e.target.closest("[data-period]");if(!b)return;$("fleetPeriod").value=b.dataset.period;document.querySelectorAll("#fleetPeriodButtons [data-period]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));journeyPage=1;renderFleetHistory()});
+if($("fleetAnchorDate")&&!$("fleetAnchorDate").value)$("fleetAnchorDate").value=todayKeySP();
+document.querySelectorAll(".ad-menu-list button").forEach(b=>b.addEventListener("click",()=>b.closest("details")?.removeAttribute("open")));
+document.addEventListener("click",e=>{document.querySelectorAll("details.ad-menu[open]").forEach(d=>{if(!d.contains(e.target))d.removeAttribute("open")})});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll("details.ad-menu[open]").forEach(d=>{d.removeAttribute("open");d.querySelector("summary")?.focus()})});
 function getFleetFilter(){
- const period=$("fleetPeriod")?.value||"all", anchor=$("fleetAnchorDate")?.value||new Date().toISOString().slice(0,10);
+ const period=$("fleetPeriod")?.value||"all", anchor=$("fleetAnchorDate")?.value||todayKeySP();
  const base=new Date(anchor+"T12:00:00");let from=null,to=null;
  if(period==="day"){from=new Date(base);to=new Date(base);to.setDate(to.getDate()+1)}
  if(period==="week"){from=new Date(base);const day=(from.getDay()+6)%7;from.setDate(from.getDate()-day);to=new Date(from);to.setDate(to.getDate()+7)}
@@ -752,21 +852,23 @@ function renderUnassignedDeliveries(){
  const target=$("unassignedDeliveries");if(!target)return;
  const journeyIds=new Set(journeys.map(j=>j.id));
  const unassigned=deliveries.filter(d=>!d.journey_id||!journeyIds.has(d.journey_id)).sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+ const panel=$("unassignedPanel"),count=$("unassignedCount");
+ if(panel)panel.hidden=!unassigned.length;
+ if(count)count.textContent=unassigned.length?unassigned.length+(unassigned.length===1?" entrega":" entregas"):"";
  if(!unassigned.length){target.innerHTML='<p class="hint">Todas as entregas estão vinculadas a jornadas carregadas.</p>';return;}
  target.innerHTML='<table><thead><tr><th>Pedido</th><th>Endereço</th><th>Bairro</th><th>Status</th><th>Cadastro</th></tr></thead><tbody>'+unassigned.map(d=>'<tr><td><strong>'+esc(d.order_no||"—")+'</strong></td><td>'+esc(d.address||"—")+(d.reference?'<small style="display:block">'+esc(d.reference)+'</small>':"")+'</td><td>'+esc(d.neighborhoods?.name||"—")+'</td><td>'+esc(statusLabel[d.status]||d.status||"—")+'</td><td>'+fmtDate(d.created_at)+'</td></tr>').join("")+'</tbody></table>';
 }
  const {filtered,period,anchor,from,to}=getFleetFilter();
  refreshFleetGeoHeatmap(filtered);
- const rows=filtered.map(j=>{
-  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
-  const km=j.odometer_end==null?null:Number(j.odometer_end)-Number(j.odometer_start);
-  return '<tr><td>'+esc(j.order_number==null?"—":"JOR-"+String(j.order_number).padStart(6,"0"))+'</td><td>'+esc(j.drivers?.registration_no||"—")+' · '+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(journeyNeighborhoods(j))+'</td><td>'+esc([j.vehicles?.code,j.vehicles?.plate,j.vehicles?.make_model].filter(Boolean).join(" · ")||"—")+'</td><td>'+fmtDate(j.started_at_server)+'</td><td>'+fmtDate(j.finished_at_server)+'</td><td>'+(km==null?"—":km.toLocaleString("pt-BR",{maximumFractionDigits:1}))+'</td><td>'+esc(statusLabel[j.status]||j.status)+'</td><td>'+esc(journeyIncidents(j))+'</td><td>'+done+'/'+ds.length+'</td></tr>';
- });
- $("journeyHistory").innerHTML=filtered.length?'<table><thead><tr><th>Código</th><th>Entregador</th><th>Bairro(s)</th><th>Veículo</th><th>Início</th><th>Fim</th><th>KM rodados</th><th>Status</th><th>Ocorrências / observações</th><th>Entregas</th></tr></thead><tbody>'+rows.join("")+'</tbody></table>':'<p class="hint">Nenhuma jornada encontrada com os filtros selecionados.</p>';
- const filterCaption=period==="all"?"Todo o período":({day:"Dia",week:"Semana",month:"Mês",year:"Ano"}[period]||"Período")+" de referência: "+anchor;
- if($("fleetFilterSummary")){const countText=filtered.length+" jornada(s) exibida(s) · "+filterCaption;const sourceText=journeysTotalFromSupabase==null?"":(" · Jornadas no Supabase: "+journeys.length+"/"+journeysTotalFromSupabase);const linkedCount=deliveries.filter(d=>d.journey_id&&journeys.some(j=>j.id===d.journey_id)).length;const unassignedCount=deliveries.length-linkedCount;const deliveryText=" · Entregas: "+deliveries.length+" carregadas"+(deliveriesTotalFromSupabase==null?"":" de "+deliveriesTotalFromSupabase)+" ("+linkedCount+" vinculadas; "+unassignedCount+" fora de jornadas)";const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase||deliveriesTotalFromSupabase!=null&&deliveries.length!==deliveriesTotalFromSupabase;$("fleetFilterSummary").textContent=countText+sourceText+deliveryText+(mismatch?" · ATENÇÃO: a quantidade carregada não confere com o total informado pelo Supabase.":"");$("fleetFilterSummary").classList.toggle("warning",mismatch)}
- // A análise regional considera os pedidos cadastrados no Supabase, inclusive os
- // que ainda não foram vinculados a uma jornada. O período usa a data do pedido.
+ renderFleetKpis(filtered,period,from,to);
+ renderJourneyTable(filtered);
+ const periodLabel=fleetPeriodLabel(period,anchor);
+ if($("fleetFilterSummary")){
+  const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase||deliveriesTotalFromSupabase!=null&&deliveries.length!==deliveriesTotalFromSupabase;
+  $("fleetFilterSummary").textContent=filtered.length.toLocaleString("pt-BR")+(filtered.length===1?" jornada":" jornadas")+" · "+periodLabel+(filtered.length?" · clique no número para ver a linha do tempo":"")+(mismatch?" · Atenção: a quantidade carregada ("+journeys.length+" jornadas, "+deliveries.length+" entregas) não confere com o total do banco. Atualize a página.":"");
+  $("fleetFilterSummary").classList.toggle("warning",mismatch);
+ }
+ // Bairros: considera os pedidos do período, inclusive os ainda sem jornada (data do pedido).
  const journeyById=new Map(journeys.map(j=>[j.id,j]));
  const selectedDriver=$("fleetDriver")?.value||"all";
  const selectedVehicle=$("fleetVehicle")?.value||"all";
@@ -782,28 +884,26 @@ function renderUnassignedDeliveries(){
  });
  const regions=new Map();
  regionalDeliveries.forEach(d=>{
-  const region=String(d.neighborhoods?.name||"Bairro não informado").trim()||"Bairro não informado";
-  if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0,pending:0,journeys:new Set(),addresses:new Set()});
+  const region=String(d.neighborhoods?.name||"Sem bairro").trim()||"Sem bairro";
+  if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0});
   const item=regions.get(region);item.total++;
-  if(d.journey_id)item.journeys.add(d.journey_id);
-  if(d.status==="completed")item.completed++;
-  else if(d.status==="failed")item.failed++;
-  else item.pending++;
-  if(d.address)item.addresses.add(String(d.address).trim());
+  if(d.status==="completed")item.completed++;else if(d.status==="failed")item.failed++;
  });
  const rankedRegions=[...regions.values()].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name,"pt-BR"));
  const maxRegion=Math.max(1,...rankedRegions.map(r=>r.total));
  const completedCount=regionalDeliveries.filter(d=>d.status==="completed").length;
- const failedCount=regionalDeliveries.filter(d=>d.status==="failed").length;
+ const failedRegions=rankedRegions.filter(r=>r.failed).map(r=>r.name);
  const heatSummary=$("fleetHeatSummary"),heatmap=$("fleetHeatmap");
- if(heatSummary)heatSummary.innerHTML='<div class="fleet-heat-kpi"><strong>'+regionalDeliveries.length+'</strong><span>Entregas no filtro</span></div><div class="fleet-heat-kpi"><strong>'+rankedRegions.length+'</strong><span>Regiões atendidas</span></div><div class="fleet-heat-kpi"><strong>'+(regionalDeliveries.length?Math.round(completedCount/regionalDeliveries.length*100):0)+'%</strong><span>Taxa concluída</span></div><div class="fleet-heat-kpi"><strong>'+failedCount+'</strong><span>Não realizadas</span></div>';
+ const rate=regionalDeliveries.length?Math.round(completedCount/regionalDeliveries.length*100):0;
+ if(heatSummary)heatSummary.textContent=rankedRegions.length?rankedRegions.length+(rankedRegions.length===1?" bairro atendido":" bairros atendidos")+" · "+rate+"% de conclusão"+(failedRegions.length?" · não realizadas em "+failedRegions.slice(0,3).join(", ")+(failedRegions.length>3?" e outros":""):""):"";
  if(heatmap){
-  if(!rankedRegions.length)heatmap.innerHTML='<p class="hint">Não há entregas para analisar no período e nos filtros selecionados.</p>';
-  else heatmap.innerHTML=rankedRegions.map(region=>{
-   const level=Math.max(1,Math.ceil(region.total/maxRegion*5));
-   const rate=region.total?Math.round(region.completed/region.total*100):0;
-   return '<article class="fleet-heat-region heat-level-'+level+'"><div class="fleet-heat-region-head"><div><span class="fleet-heat-label">BAIRRO / REGIÃO</span><h3>'+esc(region.name)+'</h3></div><strong class="fleet-heat-count">'+region.total+' <small>'+(region.total===1?'solicitada':'solicitadas')+'</small></strong></div><div class="fleet-heat-comparison"><div class="fleet-heat-bar-row"><span>Solicitadas</span><div class="fleet-heat-bar fleet-heat-bar-requested" role="img" aria-label="'+region.total+' entregas solicitadas"><i style="width:'+100+'%"></i></div><strong>'+region.total+'</strong></div><div class="fleet-heat-bar-row"><span>Realizadas</span><div class="fleet-heat-bar fleet-heat-bar-completed" role="img" aria-label="'+region.completed+' entregas realizadas"><i style="width:'+Math.max(0,Math.min(100,rate))+'%"></i></div><strong>'+region.completed+'</strong></div></div><div class="fleet-heat-metrics"><span>'+region.failed+' não realizadas</span><span>'+region.pending+' pendentes</span><span>'+region.journeys.size+' jornada(s)</span></div><div class="fleet-heat-footer"><span>'+rate+'% de conclusão</span><span>'+region.addresses.size+' endereço(s)</span></div>'+'</article>';
-  }).join("");
+  if(!rankedRegions.length)heatmap.innerHTML='<p class="hint">Nenhuma entrega no período e nos filtros escolhidos.</p>';
+  else{
+   const top=rankedRegions[0];
+   heatmap.setAttribute("role","img");
+   heatmap.setAttribute("aria-label","Entregas por bairro, "+periodLabel+": "+rankedRegions.length+" bairros, "+regionalDeliveries.length+" entregas, "+rate+"% concluídas. Mais pedidos em "+top.name+" ("+top.completed+" de "+top.total+").");
+   heatmap.innerHTML=rankedRegions.map(r=>'<div class="ad-region"><span class="ad-region-name" title="'+esc(r.name)+'">'+esc(r.name)+'</span><span class="ad-region-bar" aria-hidden="true"><i class="ad-bar-req" style="width:'+(r.total/maxRegion*100).toFixed(1)+'%"></i><i class="ad-bar-done" style="width:'+(r.completed/maxRegion*100).toFixed(1)+'%"></i></span><span class="ad-region-n">'+r.completed+'/'+r.total+'</span></div>').join("");
+  }
  }
  const fuel=local.fuel.filter(x=>{const d=new Date(x.date);const f=getFleetFilter();return (!f.from||d>=f.from&&d<f.to)&&(($("fleetVehicle")?.value||"all")==="all"||String(x.vehicleId||x.vehicle)===(vehicles.find(v=>v.id===$("fleetVehicle").value)?.code||$("fleetVehicle").value));});
  const byVehicle={};fuel.forEach(x=>{const key=String(x.vehicleId||x.vehicle||"");(byVehicle[key]||(byVehicle[key]=[])).push(x)});
@@ -1122,77 +1222,106 @@ let historicalImportRows = [];
 const odoMoney = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const odoNum = v => Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
 function odoWeekStart(value){const d=new Date(value+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)}
-function odoWeekLabel(value){const start=new Date(odoWeekStart(value)+"T12:00:00"),end=new Date(start);end.setDate(end.getDate()+5);return start.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+end.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
+function odoWeekLabel(value){const start=new Date(odoWeekStart(value)+"T12:00:00"),end=new Date(start);end.setDate(end.getDate()+6);return start.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" a "+end.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}
 function odoWeek(value){return odoWeekLabel(value)}
 function odoIsStoreUse(r){return Boolean(String(r.historical_purpose||"").trim())}
 function odoTotals(rows){return rows.filter(r=>!odoIsStoreUse(r)).reduce((a,r)=>{a.km+=Number(r.odometer_end)-Number(r.odometer_start);a.deliveries+=Number(r.deliveries_count||0);a.revenue+=Number(r.revenue||0);a.fuel+=Number(r.fuel_cost||0);a.profit+=r.historical_profit!=null?Number(r.historical_profit):Number(r.revenue||0)-Number(r.fuel_cost||0);return a},{km:0,deliveries:0,revenue:0,fuel:0,profit:0})}
 function odoGroup(rows,keyFn){const m=new Map();rows.forEach(r=>{const k=keyFn(r);if(!m.has(k))m.set(k,[]);m.get(k).push(r)});return [...m.entries()].map(([key,list])=>({key,...odoTotals(list)}))}
+function odoRowProfit(r){return r.historical_profit!=null?Number(r.historical_profit):Number(r.revenue||0)-Number(r.fuel_cost||0)}
+const odoMonthLabel=key=>{const d=new Date(key+"-01T12:00:00");return d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","")+(key.slice(0,4)!==todayKeySP().slice(0,4)?"/"+key.slice(2,4):"")};
+const odoMonthLong=key=>new Date(key+"-01T12:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+let reportPeriod="6",entriesPage=1;
+const ENTRIES_PER_PAGE=15;
+// Gráfico de barras agrupadas: ganhos x combustível na mesma escala, lucro escrito acima.
+function odoBarChart(groups,title){
+ if(!groups.length)return '<p class="hint">Ainda não há lançamentos neste período.</p>';
+ const W=900,H=280,L=60,B=34,T=26,plot=H-B-T;
+ const rawMax=Math.max(1,...groups.flatMap(g=>[g.revenue,g.fuel]));
+ const step=Math.pow(10,Math.floor(Math.log10(rawMax)))*(rawMax/Math.pow(10,Math.floor(Math.log10(rawMax)))>5?2:rawMax/Math.pow(10,Math.floor(Math.log10(rawMax)))>2?1:.5);
+ const max=Math.ceil(rawMax/step)*step;
+ const gw=(W-L-8)/groups.length,bw=Math.max(6,Math.min(36,gw/3.2));
+ const short=v=>v>=1000?(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":Math.round(v).toLocaleString("pt-BR");
+ let s='<svg viewBox="0 0 '+W+' '+H+'" class="ad-svg" aria-hidden="true">';
+ for(let v=0;v<=max+1e-9;v+=step){const y=T+plot-(v/max)*plot;s+='<line x1="'+L+'" x2="'+W+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" class="ad-grid-line"/><text x="'+(L-8)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+short(v)+'</text>'}
+ groups.forEach((g,i)=>{const x=L+gw*i+gw/2,hr=Math.max(0,g.revenue)/max*plot,hf=Math.max(0,g.fuel)/max*plot;
+  s+='<rect x="'+(x-bw-2).toFixed(1)+'" y="'+(T+plot-hr).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hr.toFixed(1)+'" rx="3" class="ad-bar-rev"><title>'+esc(g.label)+': ganhos '+odoMoney(g.revenue)+'</title></rect>';
+  s+='<rect x="'+(x+2).toFixed(1)+'" y="'+(T+plot-hf).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hf.toFixed(1)+'" rx="3" class="ad-bar-fuel"><title>'+esc(g.label)+': combustível '+odoMoney(g.fuel)+'</title></rect>';
+  if(groups.length<=14)s+='<text x="'+x.toFixed(1)+'" y="'+(T+plot-Math.max(hr,hf)-8).toFixed(1)+'" text-anchor="middle" class="ad-chart-value">'+odoMoney(g.profit).replace(/,\d\d$/,"")+'</text>';
+  s+='<text x="'+x.toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle">'+esc(g.label)+'</text>'});
+ const best=groups.reduce((a,g)=>g.profit>a.profit?g:a,groups[0]);
+ const summary=title+": "+groups.length+" períodos, de "+groups[0].label+" a "+groups[groups.length-1].label+". Ganhos somam "+odoMoney(groups.reduce((a,g)=>a+g.revenue,0))+", combustível "+odoMoney(groups.reduce((a,g)=>a+g.fuel,0))+". Maior lucro em "+best.label+", "+odoMoney(best.profit)+".";
+ return '<div role="img" aria-label="'+esc(summary)+'">'+s+'</svg></div>';
+}
+function odoTable(rows,first){
+ return '<table class="ad-table"><thead><tr><th scope="col">'+first+'</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th><th scope="col" class="n">Km/entrega</th><th scope="col" class="n">Custo/entrega</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.label)+'</td><td class="n">'+odoNum(x.km)+'</td><td class="n">'+x.deliveries.toLocaleString("pt-BR")+'</td><td class="n">'+odoMoney(x.revenue)+'</td><td class="n">'+odoMoney(x.fuel)+'</td><td class="n">'+odoMoney(x.profit)+'</td><td class="n">'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td class="n">'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
+}
+function monthKeysBack(n){const keys=[],d=new Date(todayKeySP().slice(0,7)+"-01T12:00:00");for(let i=0;i<n;i++){keys.unshift(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));d.setMonth(d.getMonth()-1)}return keys}
 function renderOdoReports(){
- const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
- $("odometerHistory").innerHTML=rows.length?'<table><thead><tr><th>Data</th><th>Semana</th><th>Veículo</th><th>KM inicial</th><th>KM final</th><th>KM rodado</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeek(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+odoNum(r.odometer_start)+'</td><td>'+odoNum(r.odometer_end)+'</td><td>'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td>'+(odoIsStoreUse(r)?esc(r.historical_purpose):Number(r.deliveries_count||0))+'</td><td>'+odoMoney(r.revenue)+'</td><td>'+odoMoney(r.fuel_cost)+'</td><td>'+odoMoney(Number(r.revenue)-Number(r.fuel_cost))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento registrado ainda.</p>';
- const weeklyAll=odoGroup(rows.filter(r=>new Date(r.entry_date+"T12:00:00").getDay()!==0),r=>odoWeekStart(r.entry_date));
- const todayKey=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
- const currentWeekStart=odoWeekStart(todayKey);
- const range=$("weeklyRange")?.value||"current";
- const firstDataWeek=weeklyAll.map(x=>x.key).sort()[0]||currentWeekStart;
- const firstAllowed=range==="all"?new Date(firstDataWeek+"T12:00:00"):new Date(currentWeekStart+"T12:00:00");
+ const rows=odometerEntries.slice().sort((a,b)=>b.entry_date.localeCompare(a.entry_date)||String(b.created_at||"").localeCompare(String(a.created_at||"")));
+ const today=todayKeySP(),thisMonth=today.slice(0,7),thisYear=today.slice(0,4);
+ const monthlyAll=new Map(odoGroup(rows,r=>r.entry_date.slice(0,7)).map(x=>[x.key,x]));
+ const zero=key=>({key,km:0,deliveries:0,revenue:0,fuel:0,profit:0});
+ /* Resumo */
+ let keys,label;
+ if(reportPeriod==="month"){keys=[thisMonth];label=odoMonthLong(thisMonth)}
+ else if(reportPeriod==="year"){keys=Array.from({length:Number(today.slice(5,7))},(_,i)=>thisYear+"-"+String(i+1).padStart(2,"0"));label=thisYear}
+ else{keys=monthKeysBack(6);label="últimos 6 meses"}
+ const periodRows=rows.filter(r=>keys.includes(r.entry_date.slice(0,7))&&r.entry_date<=today);
+ const t=odoTotals(periodRows);
+ const kpis=$("reportKpis");
+ if(kpis)kpis.innerHTML='<div class="ad-kpi"><span>Ganhos</span><b>'+odoMoney(t.revenue)+'</b><small>'+(t.deliveries?odoMoney(t.revenue/t.deliveries)+" por entrega":"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Combustível</span><b>'+odoMoney(t.fuel)+'</b><small>'+(t.km?odoMoney(t.fuel/t.km)+" por km":"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Lucro</span><b>'+odoMoney(t.profit)+'</b><small>'+(t.revenue?Math.round(t.profit/t.revenue*100)+"% dos ganhos":"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Entregas</span><b>'+t.deliveries.toLocaleString("pt-BR")+'</b><small>'+odoNum(t.km)+' km'+(t.deliveries?" · "+odoNum(t.km/t.deliveries)+" km por entrega":"")+'</small></div>';
+ const chart=$("odometerAnnualChart");
+ if(chart){
+  let groups;
+  if(reportPeriod==="month"){const weeks=odoGroup(periodRows,r=>odoWeekStart(r.entry_date)).sort((a,b)=>a.key.localeCompare(b.key));groups=weeks.map(w=>({...w,label:"Sem. "+new Date(w.key+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}))}
+  else groups=keys.map(k=>({...(monthlyAll.get(k)||zero(k)),label:odoMonthLabel(k)}));
+  const title=$("reportChartTitle");if(title)title.textContent=reportPeriod==="month"?"Ganhos e combustível por semana · "+label:"Ganhos e combustível por mês · "+label;
+  chart.innerHTML=odoBarChart(groups,"Ganhos e combustível, "+label);
+ }
+ /* Lançamentos */
+ const monthSel=$("entriesMonth"),vehSel=$("entriesVehicle");
+ if(monthSel){const months=[...new Set(rows.map(r=>r.entry_date.slice(0,7)))].sort().reverse();const old=monthSel.value;monthSel.innerHTML=months.map(m=>'<option value="'+m+'">'+esc(odoMonthLong(m))+'</option>').join("")+'<option value="all">Todos os meses</option>';monthSel.value=months.includes(old)||old==="all"?old:(months[0]||"all")}
+ if(vehSel){const vs=[...new Set(rows.map(r=>r.vehicle_code).filter(Boolean))].sort();const old=vehSel.value;vehSel.innerHTML='<option value="all">Todos os veículos</option>'+vs.map(v=>'<option>'+esc(v)+'</option>').join("");vehSel.value=vs.includes(old)?old:"all"}
+ const fm=monthSel?.value||"all",fv=vehSel?.value||"all";
+ const listed=rows.filter(r=>(fm==="all"||r.entry_date.startsWith(fm))&&(fv==="all"||r.vehicle_code===fv));
+ const pages=Math.max(1,Math.ceil(listed.length/ENTRIES_PER_PAGE));entriesPage=Math.min(Math.max(1,entriesPage),pages);
+ const slice=listed.slice((entriesPage-1)*ENTRIES_PER_PAGE,entriesPage*ENTRIES_PER_PAGE);
+ if($("entriesCount"))$("entriesCount").textContent=listed.length.toLocaleString("pt-BR")+(listed.length===1?" lançamento":" lançamentos")+" · "+odometerEntries.length.toLocaleString("pt-BR")+" no total";
+ $("odometerHistory").innerHTML=listed.length?'<table class="ad-table"><thead><tr><th scope="col">Data</th><th scope="col">Veículo</th><th scope="col">Origem</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th></tr></thead><tbody>'+slice.map(r=>'<tr'+(odoIsStoreUse(r)?' class="ad-row-muted"':'')+'><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+(r.journey_id?"Fechamento":r.source_type==="historical"?"Histórico":"Manual")+'</td><td class="n">'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td class="n">'+(odoIsStoreUse(r)?'<span class="ad-badge ad-b-muted">'+esc(r.historical_purpose)+'</span>':Number(r.deliveries_count||0))+'</td><td class="n">'+odoMoney(r.revenue)+'</td><td class="n">'+odoMoney(r.fuel_cost)+'</td><td class="n">'+odoMoney(odoRowProfit(r))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento neste filtro.</p>';
+ const pager=$("odometerHistoryPager");
+ if(pager)pager.innerHTML=pages>1?'<span>Mostrando '+((entriesPage-1)*ENTRIES_PER_PAGE+1)+'–'+Math.min(listed.length,entriesPage*ENTRIES_PER_PAGE)+' de '+listed.length+'</span><span class="ad-pages"><button type="button" data-entries-page="'+(entriesPage-1)+'"'+(entriesPage===1?" disabled":"")+' aria-label="Página anterior">‹</button><span class="ad-page-now">Página '+entriesPage+' de '+pages+'</span><button type="button" data-entries-page="'+(entriesPage+1)+'"'+(entriesPage===pages?" disabled":"")+' aria-label="Próxima página">›</button></span>':"";
+ /* Por semana (segunda a domingo) */
+ const weeklyAll=new Map(odoGroup(rows,r=>odoWeekStart(r.entry_date)).map(x=>[x.key,x]));
+ const currentWeekStart=odoWeekStart(today),range=$("weeklyRange")?.value||"5";
+ const firstDataWeek=[...weeklyAll.keys()].sort()[0]||currentWeekStart;
+ const firstAllowed=new Date((range==="all"?firstDataWeek:currentWeekStart)+"T12:00:00");
  if(range!=="all"&&range!=="current")firstAllowed.setDate(firstAllowed.getDate()-7*(Math.max(1,Number(range)||5)-1));
- const weekStarts=[],cursor=new Date(firstAllowed),current=new Date(currentWeekStart+"T12:00:00");
- while(cursor<=current){weekStarts.push(cursor.toISOString().slice(0,10));cursor.setDate(cursor.getDate()+7);if(range==="current")break}
- const weekly=weekStarts.map(key=>{const found=weeklyAll.find(x=>x.key===key);return found?{...found,key:odoWeekLabel(key)}:{key:odoWeekLabel(key),km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
- renderWeeklyChart(weekly);
- function renderWeeklyChart(data){
-  const el=$("odometerWeeklyChart");if(!el)return;
-  if(!data.length){el.innerHTML='<p class="hint">Ainda não há semanas para exibir.</p>';return}
-  const fmt=v=>Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
-  const series=[{key:"km",label:"KM rodados",fmt:v=>fmt(v)+" km"},{key:"deliveries",label:"Entregas",fmt:v=>fmt(v)},{key:"revenue",label:"Ganhos",fmt:odoMoney},{key:"fuel",label:"Combustível",fmt:odoMoney},{key:"profit",label:"Lucro",fmt:odoMoney}];
-  const max=Math.max(1,...data.flatMap(g=>series.map(s=>Math.max(0,Number(g[s.key])||0))));
-  const colors={km:"#2563eb",deliveries:"#8b5cf6",revenue:"#16a34a",fuel:"#f59e0b",profit:"#0ea5e9"};
-  el.innerHTML='<div class="weekly-data-cards">'+data.map(g=>'<section class="weekly-data-card"><h4>'+esc(g.key)+'</h4><div class="weekly-bars">'+series.map(s=>{const v=Math.max(0,Number(g[s.key])||0),pct=Math.max(v>0?3:0,v/max*100);return '<div class="weekly-bar-row"><div class="weekly-bar-heading"><span>'+s.label+'</span><strong>'+s.fmt(v)+'</strong></div><div class="weekly-bar-track"><span style="width:'+pct+'%;background:'+colors[s.key]+'"></span></div></div>'}).join("")+'</div></section>').join("")+'</div>';
- }
- $("odometerWeeklyReport").innerHTML='<table><thead><tr><th>Semana</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM médio/entrega</th><th>Custo médio/entrega</th></tr></thead><tbody>'+weekly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
- const monthlyAll=odoGroup(rows,r=>r.entry_date.slice(0,7));
- const todayMonth=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"}).slice(0,7);
- const monthRange=$("monthlyRange")?.value||"current";
- const firstMonth=monthlyAll.map(x=>x.key).sort()[0]||todayMonth;
- const startMonth=new Date((monthRange==="all"?firstMonth:todayMonth)+"-01T12:00:00");
- if(monthRange!=="all"&&monthRange!=="current")startMonth.setMonth(startMonth.getMonth()-(Math.max(1,Number(monthRange)||5)-1));
- const monthKeys=[],monthCursor=new Date(startMonth),currentMonthDate=new Date(todayMonth+"-01T12:00:00");
- while(monthCursor<=currentMonthDate){monthKeys.push(monthCursor.getFullYear()+"-"+String(monthCursor.getMonth()+1).padStart(2,"0"));monthCursor.setMonth(monthCursor.getMonth()+1);if(monthRange==="current")break}
- const monthly=monthKeys.map(key=>{const found=monthlyAll.find(x=>x.key===key);return found?{...found,key}: {key,km:0,deliveries:0,revenue:0,fuel:0,profit:0}});
- renderMonthlyChart(monthly);
- $("odometerMonthlyReport").innerHTML='<table><thead><tr><th>Mês</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Custos</th><th>Lucro</th><th>KM médio/entrega</th><th>Custo médio/entrega</th></tr></thead><tbody>'+monthly.map(x=>'<tr><td>'+x.key+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
- function renderMonthlyChart(data){
-  const el=$("odometerMonthlyChart");if(!el)return;
-  if(!data.length){el.innerHTML='<p class="hint">Ainda não há meses para exibir.</p>';return}
-  const fmt=v=>Number(v||0).toLocaleString("pt-BR",{maximumFractionDigits:1});
-  const series=[{key:"km",label:"KM rodados",fmt:v=>fmt(v)+" km"},{key:"deliveries",label:"Entregas",fmt:v=>fmt(v)},{key:"revenue",label:"Ganhos",fmt:odoMoney},{key:"fuel",label:"Combustível",fmt:odoMoney},{key:"profit",label:"Lucro",fmt:odoMoney}];
-  const max=Math.max(1,...data.flatMap(g=>series.map(s=>Math.max(0,Number(g[s.key])||0))));
-  const colors={km:"#2563eb",deliveries:"#8b5cf6",revenue:"#16a34a",fuel:"#f59e0b",profit:"#0ea5e9"};
-  el.innerHTML='<div class="weekly-data-cards">'+data.map(g=>'<section class="weekly-data-card"><h4>'+esc(g.key)+'</h4><div class="weekly-bars">'+series.map(s=>{const v=Math.max(0,Number(g[s.key])||0),pct=Math.max(v>0?3:0,v/max*100);return '<div class="weekly-bar-row"><div class="weekly-bar-heading"><span>'+s.label+'</span><strong>'+s.fmt(v)+'</strong></div><div class="weekly-bar-track"><span style="width:'+pct+'%;background:'+colors[s.key]+'"></span></div></div>'}).join("")+'</div></section>').join("")+'</div>';
- }
- const vehicles=odoGroup(rows,r=>r.vehicle_code);
- $("odometerVehicleReport").innerHTML='<table><thead><tr><th>Veículo</th><th>KM</th><th>Entregas</th><th>Ganhos</th><th>Combustível</th><th>Lucro</th><th>KM/entrega</th><th>Custo/KM</th></tr></thead><tbody>'+vehicles.map(x=>'<tr><td>'+esc(x.key)+'</td><td>'+odoNum(x.km)+'</td><td>'+x.deliveries+'</td><td>'+odoMoney(x.revenue)+'</td><td>'+odoMoney(x.fuel)+'</td><td>'+odoMoney(x.profit)+'</td><td>'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td>'+odoMoney(x.km?x.fuel/x.km:0)+'</td></tr>').join("")+'</tbody></table>';
- const currentYear=new Date().getFullYear();
- const yearStart=currentYear+"-01-01";
- const todayLocal=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
- const annualRows=rows.filter(r=>r.entry_date>=yearStart&&r.entry_date<=todayLocal);
- const t=odoTotals(annualRows);
- $("odoKpiKm").textContent=odoNum(t.km)+" km";$("odoKpiDeliveries").textContent=t.deliveries.toLocaleString("pt-BR");$("odoKpiRevenue").textContent=odoMoney(t.revenue);$("odoKpiFuel").textContent=odoMoney(t.fuel);$("odoKpiProfit").textContent=odoMoney(t.profit);
- const annualYearLabel=$("odometerAnnualYear");if(annualYearLabel)annualYearLabel.textContent=String(currentYear);
- const annualChart=$("odometerAnnualChart");
- if(annualChart){
-  const metrics=[{key:"km",label:"KM rodados",value:t.km,display:odoNum(t.km)+" km",color:"#2563eb"},{key:"deliveries",label:"Entregas",value:t.deliveries,display:t.deliveries.toLocaleString("pt-BR"),color:"#8b5cf6"},{key:"revenue",label:"Ganhos",value:t.revenue,display:odoMoney(t.revenue),color:"#16a34a"},{key:"fuel",label:"Combustível",value:t.fuel,display:odoMoney(t.fuel),color:"#f59e0b"},{key:"profit",label:"Lucro líquido",value:t.profit,display:odoMoney(t.profit),color:"#0ea5e9"}];
-  annualChart.innerHTML='<div class="annual-chart-grid">'+metrics.map(m=>'<article class="annual-chart-item"><div class="annual-chart-label"><span>'+m.label+'</span><strong>'+m.display+'</strong></div><div class="annual-chart-track" role="img" aria-label="'+m.label+': '+m.display+' acumulados no ano"><span style="width:'+(m.value>0?100:0)+'%;background:'+m.color+'"></span></div></article>').join("")+'</div><p class="hint annual-chart-note">Acumulado de 1º de janeiro até '+new Date(todayLocal+"T12:00:00").toLocaleDateString("pt-BR")+'. Valores calculados com os lançamentos já registrados no sistema; atividades de uso interno não entram nos indicadores comerciais.</p>';
- }
- $("odometerEfficiency").innerHTML='<p><strong>Custo médio/KM</strong><br>'+odoMoney(t.km?t.fuel/t.km:0)+'</p><p><strong>Custo por entrega</strong><br>'+odoMoney(t.deliveries?t.fuel/t.deliveries:0)+'</p><p><strong>Ganho por entrega</strong><br>'+odoMoney(t.deliveries?t.revenue/t.deliveries:0)+'</p><p><strong>Ganho por KM</strong><br>'+odoMoney(t.km?t.revenue/t.km:0)+'</p>';
+ const weeks=[];for(const c=new Date(firstAllowed);c<=new Date(currentWeekStart+"T12:00:00");c.setDate(c.getDate()+7)){const k=c.toISOString().slice(0,10);weeks.push({...(weeklyAll.get(k)||zero(k)),label:odoWeekLabel(k)})}
+ if($("odometerWeeklyChart"))$("odometerWeeklyChart").innerHTML=odoBarChart(weeks.length>16?weeks.slice(-16):weeks,"Ganhos e combustível por semana");
+ $("odometerWeeklyReport").innerHTML=odoTable(weeks.slice().reverse(),"Semana");
+ /* Por mês */
+ const mRange=$("monthlyRange")?.value||"12";
+ const allMonths=[...monthlyAll.keys()].sort();
+ let mKeys=mRange==="current"?[thisMonth]:mRange==="all"?(()=>{const out=[],d=new Date((allMonths[0]||thisMonth)+"-01T12:00:00");while(d<=new Date(thisMonth+"-01T12:00:00")){out.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));d.setMonth(d.getMonth()+1)}return out})():monthKeysBack(Math.max(1,Number(mRange)||12));
+ const months=mKeys.map(k=>({...(monthlyAll.get(k)||zero(k)),label:odoMonthLabel(k),longLabel:odoMonthLong(k)}));
+ if($("odometerMonthlyChart"))$("odometerMonthlyChart").innerHTML=odoBarChart(months,"Ganhos e combustível por mês");
+ $("odometerMonthlyReport").innerHTML=odoTable(months.slice().reverse().map(m=>({...m,label:m.longLabel})),"Mês");
+ /* Por veículo */
+ $("odometerVehicleReport").innerHTML=odoTable(odoGroup(rows,r=>r.vehicle_code).sort((a,b)=>b.km-a.km).map(x=>({...x,label:x.key})),"Veículo")+'<p class="hint">Custo por km: '+odoGroup(rows,r=>r.vehicle_code).map(x=>esc(x.key)+" "+odoMoney(x.km?x.fuel/x.km:0)).join(" · ")+'</p>';
 }
 $("weeklyRange")?.addEventListener("change",renderOdoReports);
 $("monthlyRange")?.addEventListener("change",renderOdoReports);
+$("entriesMonth")?.addEventListener("change",()=>{entriesPage=1;renderOdoReports()});
+$("entriesVehicle")?.addEventListener("change",()=>{entriesPage=1;renderOdoReports()});
+$("odometerHistoryPager")?.addEventListener("click",e=>{const b=e.target.closest("[data-entries-page]");if(!b||b.disabled)return;entriesPage=Number(b.dataset.entriesPage);renderOdoReports()});
+$("reportPeriodButtons")?.addEventListener("click",e=>{const b=e.target.closest("[data-report-period]");if(!b)return;reportPeriod=b.dataset.reportPeriod;document.querySelectorAll("#reportPeriodButtons [data-report-period]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));renderOdoReports()});
 async function loadOdoEntries(){
  const client=backend?.client;
  if(!client){$("odometerHistory").innerHTML='<p class="hint">Entre novamente para conectar ao banco.</p>';return}
- $("odometerHistory").innerHTML='<p class="hint">Carregando todos os lançamentos do Supabase…</p>';
+ $("odometerHistory").innerHTML='<p class="hint">Carregando lançamentos…</p>';
  try{
   const pageSize=1000,maxRows=100000;
   const allRows=[];
@@ -1209,16 +1338,12 @@ async function loadOdoEntries(){
   }
   odometerEntries=allRows;
   renderOdoReports();
-  const countNote=document.createElement("p");
-  countNote.className="hint";
-  countNote.textContent=odometerEntries.length.toLocaleString("pt-BR")+" lançamento(s) carregado(s) do Supabase.";
-  $("odometerHistory").prepend(countNote);
  }catch(error){
   console.error("Falha ao carregar histórico completo de odômetros:",error);
   $("odometerHistory").innerHTML='<p class="hint">Não foi possível carregar todo o histórico de odômetros. Verifique sua conexão, as permissões de leitura no Supabase e tente atualizar. Detalhe: '+esc(error.message||String(error))+'</p>';
  }
 }
-document.querySelectorAll("[data-fuel-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-fuel-tab]").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll("[data-fuel-panel]").forEach(p=>p.classList.toggle("hidden",p.dataset.fuelPanel!==b.dataset.fuelTab))}));
+document.querySelectorAll("[data-fuel-tab]").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("[data-fuel-tab]").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-selected",String(x===b))});document.querySelectorAll("[data-fuel-panel]").forEach(p=>p.classList.toggle("hidden",p.dataset.fuelPanel!==b.dataset.fuelTab))}));
 $("odometerForm")?.addEventListener("input",()=>{const start=Number($("odoStart").value),end=Number($("odoEnd").value);$("odoLiveSummary").textContent=end>=start?"KM rodado: "+odoNum(end-start)+" km · Lucro líquido: "+odoMoney(Number($("odoRevenue").value)-Number($("odoFuel").value)):"O odômetro final não pode ser menor que o inicial."});
 $("odometerForm")?.addEventListener("submit",async e=>{e.preventDefault();const form=e.currentTarget;setBusy(form,true);try{const start=Number($("odoStart").value),end=Number($("odoEnd").value);if(end<start)throw new Error("O odômetro final não pode ser menor que o inicial.");const client=backend?.client;if(!client)throw new Error("Sessão do Supabase não está pronta. Entre novamente.");const {error}=await client.from("odometer_entries").insert({entry_date:$("odoDate").value,vehicle_code:$("odoVehicle").value,odometer_start:start,odometer_end:end,deliveries_count:Number($("odoDeliveries").value),revenue:Number($("odoRevenue").value),fuel_cost:Number($("odoFuel").value),created_by:backend.profile?.id});if(error)throw error;form.reset();$("odoDate").value=new Date().toISOString().slice(0,10);$("odoDeliveries").value="0";notify("Lançamento salvo.");await loadOdoEntries()}catch(err){notify("Não foi possível salvar: "+(err.message||err))}finally{setBusy(form,false)}});
 $("refreshOdometer")?.addEventListener("click",loadOdoEntries);
@@ -1230,59 +1355,116 @@ const localDateKey = value => {const d=new Date(value);if(Number.isNaN(d.getTime
 function completedJourneysForDay(day){return (journeys||[]).filter(j=>j.status==="finished"&&j.finished_at_server&&localDateKey(j.finished_at_server)===day)}
 function journeyEfficiency(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel/.test(type)?Number($("dailyRatesCarEfficiency")?.value||10):Number($("dailyRatesMotoEfficiency")?.value||30)}
 function journeyVehicleType(j){const type=String(j.vehicles?.vehicle_type||"").toLowerCase();return /car|carro|autom[oó]vel/.test(type)?"Carro":"Moto"}
-function renderDailyRatesPreview(){
- const day=$("dailyRatesDate")?.value,fees=Number($("dailyRatesFees")?.value||0),price=Number($("dailyRatesFuelPrice")?.value||0),motoEff=Number($("dailyRatesMotoEfficiency")?.value||30),carEff=Number($("dailyRatesCarEfficiency")?.value||10);
- const list=completedJourneysForDay(day||"").filter(j=>j.journey_type!=="store_use");
- const rate=list.length?fees/list.length:0;
- const motoCount=list.filter(j=>journeyVehicleType(j)==="Moto").length,carCount=list.filter(j=>journeyVehicleType(j)==="Carro").length;
- $("dailyRatesPreview").textContent=list.length?list.length+" jornada(s) concluída(s) em "+new Date(day+"T12:00:00").toLocaleDateString("pt-BR")+". Ganho por jornada: "+money(rate)+". Consumo automático: "+motoCount+" moto(s) a "+motoEff+" km/L e "+carCount+" carro(s) a "+carEff+" km/L.":"Nenhuma jornada concluída encontrada para esse dia.";
- $("dailyRatesJourneys").innerHTML=list.length?'<table><thead><tr><th>Jornada</th><th>Entregador</th><th>Veículo</th><th>Tipo</th><th>KM rodados</th><th>Consumo (km/L)</th><th>Ganhos estimados</th><th>Combustível estimado</th><th>Lucro estimado</th></tr></thead><tbody>'+list.map(j=>{const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),eff=journeyEfficiency(j),fuel=price/eff*km;return '<tr><td>#'+esc(j.order_number||j.id.slice(0,8))+'</td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+journeyVehicleType(j)+'</td><td>'+km.toLocaleString("pt-BR",{maximumFractionDigits:1})+'</td><td>'+eff+'</td><td>'+money(rate)+'</td><td>'+money(fuel)+'</td><td>'+money(rate-fuel)+'</td></tr>'}).join("")+'</tbody></table>':'<p class="hint">As jornadas concluídas aparecerão aqui após selecionar a data e consultar os dados.</p>';
+/* Fechamento do dia: a prévia e o salvamento usam o mesmo cálculo (computeClosing).
+   Jornadas de uso da loja ficam de fora; jornadas sem odômetro bloqueiam o fechamento;
+   ao refazer um dia com jornadas novas, o total de taxas é redistribuído entre todas. */
+let closedEntriesByJourney=new Map(),closuresByDay=new Map(),closingPendingDays=[],closingStatusLoaded=false;
+const fmtDayBR=day=>new Date(day+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+const hasValidOdometer=j=>j.odometer_start!=null&&j.odometer_start!==""&&j.odometer_end!=null&&j.odometer_end!==""&&Number(j.odometer_end)>=Number(j.odometer_start);
+function splitCents(total,count){const cents=Math.round(total*100),base=Math.floor(cents/count),extra=cents-base*count;return Array.from({length:count},(_,i)=>(base+(i<extra?1:0))/100)}
+async function refreshClosingStatus(){
+ const client=backend?.client;if(!client||!admin)return;
+ const today=todayKeySP(),sinceDate=new Date(today+"T12:00:00");sinceDate.setDate(sinceDate.getDate()-60);
+ const since=sinceDate.toISOString().slice(0,10);
+ try{
+  const [entriesRes,closuresRes]=await Promise.all([
+   client.from("odometer_entries").select("id,journey_id,entry_date,revenue,fuel_cost,average_km_per_liter").not("journey_id","is",null).gte("entry_date",since),
+   client.from("daily_journey_rates").select("*").gte("entry_date",since)
+  ]);
+  if(entriesRes.error)throw entriesRes.error;if(closuresRes.error)throw closuresRes.error;
+  closedEntriesByJourney=new Map((entriesRes.data||[]).map(r=>[r.journey_id,r]));
+  closuresByDay=new Map((closuresRes.data||[]).map(c=>[c.entry_date,c]));
+  closingStatusLoaded=true;
+ }catch(err){console.warn("YUP-ENTREGAS: não foi possível consultar os fechamentos",err);return}
+ const byDay=new Map();
+ journeys.filter(j=>j.status==="finished"&&j.finished_at_server&&j.journey_type!=="store_use"&&!closedEntriesByJourney.has(j.id)).forEach(j=>{const d=localDateKey(j.finished_at_server);if(d>=since&&d<today)byDay.set(d,(byDay.get(d)||0)+1)});
+ closingPendingDays=[...byDay.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+ const nav=$("navClosingCount");
+ if(nav){nav.hidden=!closingPendingDays.length;nav.textContent=closingPendingDays.length;nav.setAttribute("aria-label",closingPendingDays.length+" dias sem fechamento")}
+ const alert=$("closingPending");
+ if(alert){
+  alert.hidden=!closingPendingDays.length;
+  alert.innerHTML=closingPendingDays.length?'<svg class="ad-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg><span><b>'+(closingPendingDays.length===1?"1 dia sem fechamento":closingPendingDays.length+" dias sem fechamento")+':</b> '+closingPendingDays.slice(-5).reverse().map(([d,n])=>'<button type="button" class="ad-link" data-closing-day="'+d+'">'+fmtDayBR(d)+'</button> ('+n+(n===1?" jornada":" jornadas")+')').join(", ")+(closingPendingDays.length>5?" e mais "+(closingPendingDays.length-5)+" dias anteriores":"")+'</span>':"";
+ }
 }
-$("dailyRatesDate")?.addEventListener("change",renderDailyRatesPreview);
+$("closingPending")?.addEventListener("click",e=>{const b=e.target.closest("[data-closing-day]");if(!b)return;$("dailyRatesDate").value=b.dataset.closingDay;renderDailyRatesPreview();$("dailyRatesFees")?.focus()});
+function closingInputs(){return {day:$("dailyRatesDate")?.value||"",fees:Number($("dailyRatesFees")?.value),feesFilled:String($("dailyRatesFees")?.value||"").trim()!=="",price:Number($("dailyRatesFuelPrice")?.value||0),motoEff:Number($("dailyRatesMotoEfficiency")?.value||30),carEff:Number($("dailyRatesCarEfficiency")?.value||10)}}
+function computeClosing(input){
+ const all=completedJourneysForDay(input.day);
+ const store=all.filter(j=>j.journey_type==="store_use"),list=all.filter(j=>j.journey_type!=="store_use");
+ const invalid=list.filter(j=>!hasValidOdometer(j));
+ const closure=closuresByDay.get(input.day)||null;
+ const fresh=list.filter(j=>!closedEntriesByJourney.has(j.id)),already=list.filter(j=>closedEntriesByJourney.has(j.id));
+ const effFor=j=>journeyVehicleType(j)==="Carro"?input.carEff:input.motoEff;
+ const revenues=list.length&&input.fees>=0?splitCents(input.fees,list.length):[];
+ const rows=list.map((j,i)=>{
+  const km=hasValidOdometer(j)?Number(j.odometer_end)-Number(j.odometer_start):null;
+  const stored=closedEntriesByJourney.get(j.id);
+  const fuel=stored?Number(stored.fuel_cost||0):(km==null||!(effFor(j)>0)?null:Number((input.price/effFor(j)*km).toFixed(2)));
+  const revenue=stored&&!fresh.length?Number(stored.revenue||0):(revenues[i]??0);
+  return {j,km,eff:stored?Number(stored.average_km_per_liter)||effFor(j):effFor(j),fuel,revenue,status:km==null?"invalid":stored?"saved":"new"};
+ });
+ const mode=!list.length?"empty":invalid.length?"invalid":closure&&!fresh.length?"done":closure?"redo":"new";
+ const totals=rows.reduce((a,r)=>({km:a.km+(r.km||0),fuel:a.fuel+(r.fuel||0),revenue:a.revenue+r.revenue}),{km:0,fuel:0,revenue:0});
+ return {all,store,list,invalid,closure,fresh,already,rows,mode,totals};
+}
+function renderDailyRatesPreview(){
+ const input=closingInputs(),info=$("dailyRatesDayInfo"),box=$("dailyRatesPreview"),tableBox=$("dailyRatesJourneys"),submit=$("dailyRatesSubmit");
+ if(!box)return;
+ if(!input.day){if(info)info.textContent="Selecione um dia.";box.innerHTML='<p class="hint">Selecione um dia com jornadas finalizadas.</p>';if(tableBox)tableBox.innerHTML="";if(submit)submit.disabled=true;return}
+ const c=computeClosing(input);
+ if(c.closure&&!input.feesFilled&&$("dailyRatesFees")){$("dailyRatesFees").value=Number(c.closure.total_delivery_fees||0).toFixed(2);return renderDailyRatesPreview()}
+ if(info)info.textContent=c.all.length?c.list.length+(c.list.length===1?" jornada de entrega finalizada":" jornadas de entrega finalizadas")+(c.store.length?" · "+c.store.length+" de uso da loja (fica de fora)":""):"Nenhuma jornada finalizada neste dia.";
+ const label=fmtDayBR(input.day);
+ let note="";
+ if(c.mode==="invalid")note='<p class="ad-note ad-note-bad">'+c.invalid.length+(c.invalid.length===1?" jornada está":" jornadas estão")+' sem odômetro válido ('+c.invalid.map(j=>"#"+(j.order_number||j.id.slice(0,6))).join(", ")+'). Corrija o odômetro antes de fechar o dia, senão o combustível sai errado.</p>';
+ else if(c.mode==="done")note='<p class="ad-note ad-note-ok">Dia já fechado com '+c.list.length+' jornadas e '+money(c.closure.total_delivery_fees)+' em taxas. Nada novo para salvar.</p>';
+ else if(c.mode==="redo")note='<p class="ad-note">Este dia já foi fechado com '+c.already.length+' jornada(s). Há '+c.fresh.length+' nova(s). Ao salvar, o total de taxas é dividido de novo entre as '+c.list.length+' jornadas e os ganhos já lançados são atualizados.</p>';
+ const showValues=c.list.length&&c.mode!=="invalid";
+ box.innerHTML=(showValues?'<dl class="ad-sum"><div><dt>Jornadas de entrega</dt><dd>'+c.list.length+'</dd></div><div><dt>Ganho por jornada</dt><dd>'+(input.feesFilled?money(input.fees/c.list.length):"—")+'</dd></div><div><dt>Km rodados</dt><dd>'+c.totals.km.toLocaleString("pt-BR",{maximumFractionDigits:1})+' km</dd></div><div><dt>Combustível estimado</dt><dd>'+money(c.totals.fuel)+'</dd></div><div class="ad-sum-total"><dt>Lucro do dia</dt><dd>'+(input.feesFilled||c.mode==="done"?money(c.totals.revenue-c.totals.fuel):"—")+'</dd></div></dl>':(c.list.length?"":'<p class="hint">Nenhuma jornada de entrega finalizada em '+label+'.</p>'))+note;
+ if(submit){submit.disabled=!(c.mode==="new"||c.mode==="redo")||!input.feesFilled;submit.textContent=c.mode==="redo"?"Refazer fechamento de "+label:"Salvar fechamento de "+label}
+ const sit={new:'<span class="ad-badge ad-b-open">Nova</span>',saved:'<span class="ad-badge ad-b-done">Já lançada</span>',invalid:'<span class="ad-badge ad-b-bad">Sem odômetro</span>'};
+ if(tableBox)tableBox.innerHTML=c.all.length?'<table class="ad-table"><thead><tr><th scope="col">Jornada</th><th scope="col">Entregador</th><th scope="col">Veículo</th><th scope="col" class="n">Km</th><th scope="col" class="n">Consumo</th><th scope="col" class="n">Ganho</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th><th scope="col">Situação</th></tr></thead><tbody>'+c.rows.map(r=>'<tr><td>#'+esc(r.j.order_number||r.j.id.slice(0,6))+'</td><td>'+esc(r.j.drivers?.full_name||"—")+'</td><td>'+esc(r.j.vehicles?.code||r.j.vehicles?.plate||"—")+' <small class="hint">'+journeyVehicleType(r.j)+'</small></td><td class="n">'+(r.km==null?"—":r.km.toLocaleString("pt-BR",{maximumFractionDigits:1}))+'</td><td class="n">'+r.eff+' km/L</td><td class="n">'+(input.feesFilled||r.status==="saved"?money(r.revenue):"—")+'</td><td class="n">'+(r.fuel==null?"—":money(r.fuel))+'</td><td class="n">'+(r.fuel==null||!(input.feesFilled||r.status==="saved")?"—":money(r.revenue-r.fuel))+'</td><td>'+sit[r.status]+'</td></tr>').join("")+c.store.map(j=>'<tr class="ad-row-muted"><td>#'+esc(j.order_number||j.id.slice(0,6))+'</td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||"—")+'</td><td class="n">'+(hasValidOdometer(j)?(Number(j.odometer_end)-Number(j.odometer_start)).toLocaleString("pt-BR"):"—")+'</td><td colspan="4" class="hint">Uso da loja: não entra no rateio</td><td><span class="ad-badge ad-b-muted">Fora</span></td></tr>').join("")+'</tbody></table>':'<p class="hint">As jornadas finalizadas do dia aparecem aqui.</p>';
+}
+$("dailyRatesDate")?.addEventListener("change",()=>{if($("dailyRatesFees"))$("dailyRatesFees").value="";renderDailyRatesPreview()});
 ["dailyRatesFees","dailyRatesFuelPrice","dailyRatesMotoEfficiency","dailyRatesCarEfficiency"].forEach(id=>$(id)?.addEventListener("input",renderDailyRatesPreview));
-$("previewDailyRates")?.addEventListener("click",async()=>{try{await refresh();renderDailyRatesPreview()}catch(e){notify("Não foi possível atualizar as jornadas: "+(e.message||e))}});
+$("previewDailyRates")?.addEventListener("click",async()=>{try{await refresh();await refreshClosingStatus();renderDailyRatesPreview()}catch(e){notify("Não foi possível atualizar as jornadas: "+(e.message||e))}});
 $("dailyJourneyRatesForm")?.addEventListener("submit",async e=>{
  e.preventDefault();const form=e.currentTarget;setBusy(form,true);
  try{
   const client=backend?.client;if(!client)throw new Error("Sessão do Supabase não está pronta. Entre novamente.");
-  const day=$("dailyRatesDate").value,fees=Number($("dailyRatesFees").value),price=Number($("dailyRatesFuelPrice").value),motoEff=Number($("dailyRatesMotoEfficiency").value),carEff=Number($("dailyRatesCarEfficiency").value);
-  if(!day||fees<0||price<0||motoEff<=0||carEff<=0)throw new Error("Confira a data, o total das taxas, o preço do litro e os consumos médios da moto e do carro.");
-  await refresh();
-  const {data:existingClosure,error:closureLookupError}=await client.from("daily_journey_rates").select("*").eq("entry_date",day).maybeSingle();
-  if(closureLookupError)throw closureLookupError;
-  const list=completedJourneysForDay(day);if(!list.length)throw new Error("Não há jornadas concluídas nessa data. Confira a data e atualize a lista.");
-  const {data:alreadyRows,error:alreadyError}=await client.from("odometer_entries").select("journey_id,average_km_per_liter,fuel_price_per_liter,revenue").eq("entry_date",day);
-  if(alreadyError)throw alreadyError;
-  const alreadyIds=new Set((alreadyRows||[]).map(r=>r.journey_id).filter(Boolean));
-  const pending=list.filter(j=>!alreadyIds.has(j.id));
-  const skipped=list.length-pending.length;
-  if(!pending.length)throw new Error("Nenhuma jornada nova foi registrada: todas as "+list.length+" jornada(s) deste dia já constam no sistema. Nenhum dado foi alterado.");
-  let closure=existingClosure;
-  if(!closure){
-   const {data:createdClosure,error:dailyError}=await client.from("daily_journey_rates").insert({entry_date:day,total_delivery_fees:fees,fuel_price_per_liter:price,average_km_per_liter:Number((list.reduce((sum,j)=>sum+journeyEfficiency(j),0)/list.length).toFixed(2)),journey_count:list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()}).select("*").single();
-   if(dailyError)throw dailyError;
-   closure=createdClosure;
+  const input=closingInputs();
+  if(!input.day||!input.feesFilled||input.fees<0||input.price<0||input.motoEff<=0||input.carEff<=0)throw new Error("Confira o dia, o total das taxas, o preço do litro e os consumos da moto e do carro.");
+  await refresh();await refreshClosingStatus();
+  if(!closingStatusLoaded)throw new Error("Não foi possível consultar os fechamentos já salvos. Tente de novo.");
+  const c=computeClosing(input);
+  if(c.mode==="empty")throw new Error("Não há jornadas de entrega finalizadas nesse dia.");
+  if(c.mode==="invalid")throw new Error("Há jornadas sem odômetro válido. Corrija antes de fechar o dia.");
+  if(c.mode==="done")throw new Error("Este dia já está fechado e não há jornadas novas.");
+  const avgEff=Number((c.rows.reduce((s,r)=>s+r.eff,0)/c.rows.length).toFixed(2));
+  if(!c.closure){
+   const {error}=await client.from("daily_journey_rates").insert({entry_date:input.day,total_delivery_fees:input.fees,fuel_price_per_liter:input.price,average_km_per_liter:avgEff,journey_count:c.list.length,created_by:backend.profile?.id,updated_at:new Date().toISOString()});
+   if(error)throw error;
+  }else{
+   const {error}=await client.from("daily_journey_rates").update({total_delivery_fees:input.fees,journey_count:c.list.length,updated_at:new Date().toISOString()}).eq("entry_date",input.day);
+   if(error)throw error;
   }
-  const closureFeeTotal=Number(closure.total_delivery_fees??fees);
-  const originalJourneyCount=Math.max(1,Number(closure.journey_count||list.length));
-  const rate=closureFeeTotal/originalJourneyCount;
-  const storedPrice=Number(closure.fuel_price_per_liter??price);
-  const storedEffByType={};
-  (alreadyRows||[]).forEach(row=>{const j=list.find(item=>item.id===row.journey_id);if(j&&Number(row.average_km_per_liter)>0)storedEffByType[journeyVehicleType(j)]=Number(row.average_km_per_liter)});
-  let usedCurrentEfficiencyForUnseenType=false;
-  for(const j of pending){
-   const km=Math.max(0,Number(j.odometer_end)-Number(j.odometer_start)),type=journeyVehicleType(j);
-   const eff=storedEffByType[type]||journeyEfficiency(j);
-   if(!storedEffByType[type])usedCurrentEfficiencyForUnseenType=true;
-   const payload={journey_id:j.id,entry_date:day,vehicle_code:j.vehicles?.code||j.vehicles?.plate||"N/D",odometer_start:Number(j.odometer_start),odometer_end:Number(j.odometer_end),deliveries_count:(deliveries||[]).filter(d=>d.journey_id===j.id&&d.status==="completed").length,revenue:Number(rate.toFixed(2)),fuel_cost:Number(((storedPrice/eff)*km).toFixed(2)),daily_fees_total:closureFeeTotal,fuel_price_per_liter:storedPrice,average_km_per_liter:eff,created_by:backend.profile?.id};
-   const {error}=await client.from("odometer_entries").insert(payload);if(error)throw error;
+  for(const r of c.rows){
+   const stored=closedEntriesByJourney.get(r.j.id);
+   if(stored){
+    const {error}=await client.from("odometer_entries").update({revenue:r.revenue,daily_fees_total:input.fees}).eq("id",stored.id);if(error)throw error;
+   }else{
+    const payload={journey_id:r.j.id,entry_date:input.day,vehicle_code:r.j.vehicles?.code||r.j.vehicles?.plate||"N/D",odometer_start:Number(r.j.odometer_start),odometer_end:Number(r.j.odometer_end),deliveries_count:(deliveries||[]).filter(d=>d.journey_id===r.j.id&&d.status==="completed").length,revenue:r.revenue,fuel_cost:r.fuel,daily_fees_total:input.fees,fuel_price_per_liter:input.price,average_km_per_liter:r.eff,created_by:backend.profile?.id};
+    const {error}=await client.from("odometer_entries").insert(payload);if(error)throw error;
+   }
   }
-  notify("Fechamento processado: "+pending.length+" jornada(s) nova(s) registrada(s)"+(skipped?", "+skipped+" já existente(s) ignorada(s)":"")+". Valor preservado do fechamento: "+money(closureFeeTotal)+" em taxas e "+money(rate)+" por jornada."+(usedCurrentEfficiencyForUnseenType?" Para um tipo de veículo sem histórico neste fechamento, foi usado o consumo informado agora.":""));
-  await loadOdoEntries();renderDailyRatesPreview();
- }catch(err){notify("Não foi possível fechar o dia: "+(err.message||err))}finally{setBusy(form,false)}
+  notify((c.mode==="redo"?"Fechamento refeito: ":"Fechamento salvo: ")+c.list.length+" jornadas, "+money(input.fees)+" em taxas ("+money(input.fees/c.list.length)+" por jornada).");
+  await refreshClosingStatus();await loadOdoEntries();renderDailyRatesPreview();
+ }catch(err){notify("Não foi possível fechar o dia: "+(err.message||err))}finally{setBusy(form,false);renderDailyRatesPreview()}
 });
-if($("dailyRatesDate"))$("dailyRatesDate").value=new Date().toLocaleDateString("en-CA",{timeZone:"America/Sao_Paulo"});
+if($("dailyRatesDate")&&!$("dailyRatesDate").value){const y=new Date(todayKeySP()+"T12:00:00");y.setDate(y.getDate()-1);$("dailyRatesDate").value=y.toISOString().slice(0,10)}
 renderDailyRatesPreview();
+if(admin)refreshClosingStatus().then(()=>{if(closingPendingDays.length&&$("dailyRatesDate"))$("dailyRatesDate").value=closingPendingDays[0][0];renderDailyRatesPreview()});
 
 
 function parseHistoricalCsv(text){
