@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=99">
+<link rel="stylesheet" href="styles.css?v=100">
 <title>YUP Entregas</title>
 </head>
 <body>
@@ -27,21 +27,22 @@
 </header>
 <section id="authGate" class="auth-gate"><article class="auth-card"><div class="auth-brand"><img class="auth-brand-logo" src="/yup-brand.svg" alt="YUP Pet Store"><span class="auth-brand-divider" aria-hidden="true"></span><div class="auth-brand-copy"><strong>YUP PETSTORE</strong></div></div><p class="eyebrow">ACESSO SEGURO</p><h1>Bem-vindo de volta</h1><p class="auth-description">Entre com sua conta individual.</p><form id="loginForm" class="auth-form"><label>E-mail<input id="loginEmail" type="email" autocomplete="username" required placeholder="voce@empresa.com"></label><label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Sua senha"></label><button id="loginButton" class="button primary" type="submit">Entrar <span aria-hidden="true">→</span></button></form><p id="authMessage" class="auth-message" role="status">Verificando configuração de acesso…</p><p class="hint">Acesso restrito. As contas são criadas e liberadas pela administração.</p></article></section>
 <main class="layout hidden" id="appLayout">
-  <aside class="sidebar">
-    <p class="eyebrow">OPERAÇÃO</p>
-    <button class="nav active" data-view="painel">▦ <span>Painel de frota</span></button>
-    <button class="nav" data-view="entregador">▣ <span>Entregador</span></button>
-    <button class="nav" data-view="rotas">↗ <span>Rotas de entrega</span></button>
-    <button class="nav" data-view="combustivel">◉ <span>Combustível</span></button>
-    <button class="nav" data-view="manutencao">⚙ <span>Manutenção</span></button>
-    <button class="nav" data-view="planilha-combustivel">▤ <span>Relatórios</span></button>
-    <button class="nav" data-view="importacao-historico">⇧ <span>Importação</span></button>
-    <div class="side-note"><strong>YUP Store</strong><p>Santarém — Pará</p><small>Jornadas e entregas sincronizadas pelo banco de dados.</small></div>
+  <aside class="sidebar" aria-label="Menu principal">
+    <p class="nav-group">Operação</p>
+    <button class="nav active" type="button" data-view="painel"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Painel</span></button>
+    <button class="nav" type="button" data-view="rotas"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg><span>Pedidos pendentes</span><b class="nav-count" id="navPendingCount" hidden></b></button>
+    <button class="nav" type="button" data-view="entregador"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/></svg><span>Entregadores</span></button>
+    <p class="nav-group">Financeiro</p>
+    <button class="nav" type="button" data-view="fechamento"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M9 15l2 2 4-4"/></svg><span>Fechamento do dia</span><b class="nav-count" id="navClosingCount" hidden></b></button>
+    <button class="nav" type="button" data-view="planilha-combustivel"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15v3M12 10v8M17 6v12"/></svg><span>Relatórios</span></button>
+    <button class="nav" type="button" data-view="combustivel"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 22V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v17M3 22h12M15 10h2a2 2 0 0 1 2 2v5a1 1 0 0 0 2 0V9l-3-3"/><path d="M7 7h4"/></svg><span>Custos da frota</span></button>
+    <p class="nav-group" data-admin-group>Administração</p>
+    <button class="nav" type="button" data-view="importacao-historico"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Importação</span></button>
   </aside>
   <section class="content">
 <div id="supabaseDataStatus" class="supabase-data-status hidden" role="status" aria-live="polite"></div>
 <div id="view-entregador" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">CENTRAL DO ENTREGADOR</p><h1>Jornada e entregas</h1><p>Registre cada etapa para manter a linha do tempo da operação.</p></div><span id="journeyBadge" class="badge">Jornada não iniciada</span></div>
+      <div class="page-heading"><div><p class="eyebrow">CENTRAL DO ENTREGADOR</p><h1><span class="only-admin">Entregadores</span><span class="only-non-admin">Jornada e entregas</span></h1><p class="only-admin">Desempenho de cada entregador, calculado a partir das jornadas e entregas registradas.</p><p class="only-non-admin">Registre cada etapa para manter a linha do tempo da operação.</p></div><span id="journeyBadge" class="badge">Jornada não iniciada</span></div>
 
       <article class="panel driver-performance-panel">
         <div class="panel-title"><div><h2>Desempenho dos entregadores</h2><p>Indicadores calculados a partir das jornadas, entregas e eventos registrados no sistema.</p></div><button class="button secondary" id="refreshDriverAnalytics" type="button">Atualizar dados</button></div>
@@ -83,32 +84,48 @@
 
     </div>
     <div id="view-painel" class="view">
-      <div class="page-heading"><div><p class="eyebrow">VISÃO GERENCIAL</p><h1>Painel da frota</h1><p>Visão consolidada das jornadas e entregas registradas no Supabase.</p></div></div>
-      <div class="metrics"><article class="metric"><span>Jornadas registradas</span><strong id="fleetJourneys">0</strong></article><article class="metric"><span>Entregas registradas</span><strong id="fleetDeliveries">0</strong></article><article class="metric"><span>KM acumulados</span><strong id="fleetKm">0</strong></article></div>
-      <article class="panel fleet-heat-panel">
-        <div class="panel-title"><div><h2>Mapa de calor por região</h2><p>Compare os pedidos solicitados com as entregas efetivamente realizadas em cada bairro, conforme os filtros e o período selecionado.</p></div></div>
-        <div id="fleetHeatSummary" class="fleet-heat-summary" aria-live="polite"></div>
-        <div id="fleetHeatmap" class="fleet-heatmap"><p class="hint">Carregando análise regional…</p></div>
-        <p class="hint fleet-heat-note">A intensidade é calculada pelo volume de entregas solicitadas em cada bairro; as barras comparam o total solicitado com as entregas concluídas.</p>
-      </article>
-      <article class="panel">
-        <div class="panel-title"><div><h2>Histórico completo de jornadas</h2><p>Consulte o histórico operacional sincronizado com o banco de dados e filtre os registros.</p></div></div>
-        <div class="fleet-filters">
-          <label>Período<select id="fleetPeriod"><option value="all">Todo o período</option><option value="day">Dia</option><option value="week">Semana</option><option value="month">Mês</option><option value="year">Ano</option></select></label>
-          <label>Data de referência<input id="fleetAnchorDate" type="date" value="2026-10-21"></label>
-          <label>Entregador<select id="fleetDriver"><option value="all">Todos os entregadores</option></select></label>
-          <label>Veículo<select id="fleetVehicle"><option value="all">Todos os veículos</option></select></label>
-          <label>Status<select id="fleetStatus"><option value="all">Todos os status</option><option value="open">Em andamento</option><option value="finished">Finalizada</option><option value="cancelled">Cancelada</option></select></label>
+      <div class="page-heading ad-heading"><div><h1>Painel</h1><p>Jornadas e entregas do período selecionado.</p></div>
+        <details class="ad-menu"><summary class="button secondary"><svg class="ad-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar</summary>
+          <div class="ad-menu-list" role="group" aria-label="Formatos de exportação"><button type="button" id="exportJourneyReport">Planilha CSV</button><button type="button" id="exportJourneyXls">Excel (.xls)</button><button type="button" id="exportJourneyPdf">PDF para imprimir</button></div>
+        </details>
+      </div>
+      <div class="ad-filters" role="group" aria-label="Filtros do painel">
+        <div class="ad-seg" role="group" aria-label="Período" id="fleetPeriodButtons">
+          <button type="button" data-period="day" aria-pressed="false">Dia</button><button type="button" data-period="week" aria-pressed="false">Semana</button><button type="button" data-period="month" aria-pressed="true">Mês</button><button type="button" data-period="year" aria-pressed="false">Ano</button><button type="button" data-period="all" aria-pressed="false">Tudo</button>
         </div>
-        <div class="fleet-export-actions"><button class="button secondary" id="exportJourneyReport" type="button">Exportar CSV</button><button class="button secondary" id="exportJourneyXls" type="button">Exportar Excel (.xls)</button><button class="button secondary" id="exportJourneyPdf" type="button">Exportar / salvar PDF</button></div>
-        <p id="fleetFilterSummary" class="hint" aria-live="polite">Carregando histórico…</p>
-        <div id="journeyHistory" class="table-wrap"></div>
-        <section class="unassigned-deliveries"><div class="panel-title"><div><h3>Entregas fora de jornadas</h3><p>Entregas cadastradas que ainda não estão vinculadas a uma jornada ou cuja jornada não foi encontrada.</p></div></div><div id="unassignedDeliveries" class="table-wrap"><p class="hint">Carregando entregas...</p></div></section>
-      </article>
-      <div class="metrics"><article class="metric"><span>Média estimada de consumo</span><strong id="fleetConsumption">—</strong><small id="fleetConsumptionNote" class="hint">O cálculo depende de abastecimentos consecutivos registrados neste dispositivo.</small></article></div>
-      <article class="panel"><div class="panel-title"><div><h2>Linha do tempo da jornada</h2><p>Horários, pontos GPS e deslocamentos registrados pelo PWA.</p></div><label>Jornada<select id="timelineJourney"><option value="">Selecione uma jornada</option></select></label><button class="button secondary" id="loadTimeline" type="button">Atualizar linha do tempo</button></div><div id="journeyTimeline" class="table-wrap"><p class="hint">Selecione uma jornada para consultar os pontos registrados.</p></div></article></div>
+        <input type="hidden" id="fleetPeriod" value="month">
+        <label class="ad-inline"><span class="sv-visually-hidden">Data de referência</span><input id="fleetAnchorDate" type="date"></label>
+        <label class="ad-inline"><span class="sv-visually-hidden">Entregador</span><select id="fleetDriver"><option value="all">Todos os entregadores</option></select></label>
+        <label class="ad-inline"><span class="sv-visually-hidden">Veículo</span><select id="fleetVehicle"><option value="all">Todos os veículos</option></select></label>
+        <label class="ad-inline"><span class="sv-visually-hidden">Status</span><select id="fleetStatus"><option value="all">Todos os status</option><option value="open">Em andamento</option><option value="finished">Finalizada</option><option value="cancelled">Cancelada</option></select></label>
+      </div>
+      <div class="ad-kpis" id="fleetKpis" aria-live="polite"></div>
+      <div class="ad-grid">
+        <section class="panel ad-card" aria-labelledby="journeyHistoryTitle">
+          <div class="panel-title"><div><h2 id="journeyHistoryTitle">Jornadas</h2><p id="fleetFilterSummary" aria-live="polite">Carregando jornadas…</p></div></div>
+          <div id="journeyHistory" class="table-wrap"></div>
+          <div id="journeyHistoryPager" class="ad-pager"></div>
+        </section>
+        <section class="panel ad-card fleet-heat-panel" aria-labelledby="fleetHeatTitle">
+          <div class="panel-title"><div><h2 id="fleetHeatTitle">Entregas por bairro</h2><p>Solicitadas e concluídas no período</p></div></div>
+          <div class="ad-legend"><span><i class="ad-swatch ad-swatch-req"></i>Solicitadas</span><span><i class="ad-swatch ad-swatch-done"></i>Concluídas</span></div>
+          <div id="fleetHeatmap" class="ad-regions"><p class="hint">Carregando bairros…</p></div>
+          <p id="fleetHeatSummary" class="hint ad-regions-note" aria-live="polite"></p>
+        </section>
+      </div>
+      <section class="panel ad-card" id="journeyTimelinePanel" aria-labelledby="journeyTimelineTitle" hidden>
+        <div class="panel-title"><div><h2 id="journeyTimelineTitle" tabindex="-1">Linha do tempo da jornada</h2><p>Horários, pontos de GPS e deslocamentos registrados pelo app.</p></div>
+          <div class="ad-timeline-controls"><label class="ad-inline"><span class="sv-visually-hidden">Jornada</span><select id="timelineJourney"><option value="">Selecione uma jornada</option></select></label><button class="button secondary" id="loadTimeline" type="button">Atualizar</button><button class="button secondary" id="closeTimeline" type="button">Fechar</button></div></div>
+        <div id="journeyTimeline" class="table-wrap"></div>
+      </section>
+      <details class="panel ad-card ad-collapsible" id="unassignedPanel">
+        <summary><span><b>Entregas fora de jornadas</b><small id="unassignedCount"></small></span><svg class="ad-icon ad-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <p class="hint">Entregas que ainda não estão vinculadas a uma jornada, ou cuja jornada não foi encontrada.</p>
+        <div id="unassignedDeliveries" class="table-wrap"><p class="hint">Carregando entregas…</p></div>
+      </details>
+    </div>
     <div id="view-rotas" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">PEDIDOS E OPERAÇÃO</p><h1>Entregas</h1><p>Cadastre pedidos pendentes. O entregador seleciona quais levará depois de iniciar a jornada.</p></div></div>
+      <div class="page-heading"><div><p class="eyebrow">PEDIDOS E OPERAÇÃO</p><h1>Pedidos pendentes</h1><p>Pedidos cadastrados e ainda não levados por um entregador. O entregador escolhe quais leva ao iniciar a jornada.</p></div></div>
       <article class="panel">
         <div class="panel-title"><div><h2>Cadastrar entrega de pedido</h2><p>O pedido ficará disponível para os entregadores até ser adicionado a uma jornada.</p></div></div>
         <form id="deliveryCatalogForm" class="form-grid">
@@ -186,61 +203,89 @@
       </div>
     </div>
     <div id="view-combustivel" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">CUSTOS DA FROTA</p><h1>Controle de combustível</h1><p>Registre abastecimentos e acompanhe custo por quilômetro quando houver odômetros válidos.</p></div></div>
-      <article class="panel"><form id="fuelForm" class="form-grid">
-        <label>Veículo<input id="fuelVehicle" required placeholder="Moto 01 / placa"></label><label>Data e hora<input id="fuelDate" type="datetime-local" required></label>
-        <label>Odômetro (km)<input id="fuelOdo" type="number" min="0" step="0.1" required></label><label>Litros abastecidos<input id="fuelLiters" type="number" min="0.01" step="0.01" required></label>
-        <label>Valor total (R$)<input id="fuelCost" type="number" min="0" step="0.01" required></label><label>Posto / observação<input id="fuelNote" placeholder="Opcional"></label>
-        <div class="form-action wide"><button class="button primary" type="submit">Salvar abastecimento</button></div>
-      </form></article>
-      <div class="metrics"><article class="metric"><span>Total abastecido</span><strong id="fuelTotalLiters">0 L</strong></article><article class="metric"><span>Gasto registrado</span><strong id="fuelTotalCost">R$ 0,00</strong></article><article class="metric"><span>Preço médio/L</span><strong id="fuelAverage">—</strong></article></div>
-      <article class="panel"><h2>Histórico de abastecimentos</h2><div id="fuelHistory" class="table-wrap"></div></article>
+      <div class="page-heading ad-heading"><div><h1>Custos da frota</h1><p>Abastecimentos e manutenções dos veículos.</p></div></div>
+      <div class="ad-alert" role="note"><svg class="ad-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg><span>Estes registros ainda ficam salvos só neste navegador. Outro computador não vê o que foi lançado aqui.</span></div>
+      <div class="ad-kpis"><div class="ad-kpi"><span>Total abastecido</span><b id="fuelTotalLiters">0 L</b></div><div class="ad-kpi"><span>Gasto com abastecimentos</span><b id="fuelTotalCost">R$ 0,00</b></div><div class="ad-kpi"><span>Preço médio por litro</span><b id="fuelAverage">—</b></div><div class="ad-kpi"><span>Consumo médio estimado</span><b id="fleetConsumption">—</b><small id="fleetConsumptionNote"></small></div></div>
+      <section class="panel ad-card" aria-labelledby="fuelFormTitle"><div class="panel-title"><div><h2 id="fuelFormTitle">Novo abastecimento</h2></div></div>
+        <form id="fuelForm" class="form-grid">
+          <label>Veículo<input id="fuelVehicle" required placeholder="Ex.: MT-01-PRETA"></label><label>Data e hora<input id="fuelDate" type="datetime-local" required></label>
+          <label>Odômetro (km)<input id="fuelOdo" type="number" min="0" step="0.1" required></label><label>Litros abastecidos<input id="fuelLiters" type="number" min="0.01" step="0.01" required></label>
+          <label>Valor total (R$)<input id="fuelCost" type="number" min="0" step="0.01" required></label><label>Posto / observação <small>Opcional</small><input id="fuelNote"></label>
+          <div class="form-action wide"><button class="button primary" type="submit">Salvar abastecimento</button></div>
+        </form></section>
+      <section class="panel ad-card" aria-labelledby="fuelHistoryTitle"><div class="panel-title"><div><h2 id="fuelHistoryTitle">Abastecimentos</h2></div></div><div id="fuelHistory" class="table-wrap"></div></section>
+      <div id="view-manutencao">
+        <section class="panel ad-card" aria-labelledby="maintFormTitle"><div class="panel-title"><div><h2 id="maintFormTitle">Nova manutenção</h2><p>Pneus, alinhamento, balanceamento, cabos, óleo e outros serviços.</p></div></div>
+          <form id="maintenanceForm" class="form-grid">
+            <label>Veículo<input id="maintVehicle" required placeholder="Ex.: MT-01-PRETA"></label><label>Data<input id="maintDate" type="date" required></label>
+            <label>Tipo de serviço<select id="maintType"><option>Pneu</option><option>Alinhamento</option><option>Balanceamento</option><option>Óleo e filtros</option><option>Cabos</option><option>Freios</option><option>Revisão geral</option><option>Outro</option></select></label>
+            <label>Odômetro (km) <small>Opcional</small><input id="maintOdo" type="number" min="0" step="0.1"></label>
+            <label>Valor (R$)<input id="maintCost" type="number" min="0" step="0.01" required></label><label>Descrição / oficina <small>Opcional</small><input id="maintDescription"></label>
+            <div class="form-action wide"><button class="button primary" type="submit">Registrar manutenção</button></div>
+          </form></section>
+        <section class="panel ad-card" aria-labelledby="maintHistoryTitle"><div class="panel-title"><div><h2 id="maintHistoryTitle">Manutenções</h2></div></div><div id="maintenanceHistory" class="table-wrap"></div></section>
+      </div>
+    </div>
+    <div id="view-fechamento" class="view hidden">
+      <div class="page-heading ad-heading"><div><h1>Fechamento do dia</h1><p>Divide as taxas do dia entre as jornadas de entrega e calcula o combustível.</p></div></div>
+      <div id="closingPending" class="ad-alert" role="status" hidden></div>
+      <section class="panel ad-card" aria-label="Fechamento">
+        <form id="dailyJourneyRatesForm" class="ad-steps" novalidate>
+          <fieldset class="ad-step"><legend><em aria-hidden="true">1</em>Dia</legend>
+            <label class="ad-field"><span>Dia das jornadas</span><input id="dailyRatesDate" type="date" required></label>
+            <p id="dailyRatesDayInfo" class="hint">Selecione um dia.</p>
+            <button class="button secondary" type="button" id="previewDailyRates">Atualizar jornadas do dia</button>
+          </fieldset>
+          <fieldset class="ad-step"><legend><em aria-hidden="true">2</em>Valores</legend>
+            <label class="ad-field"><span>Total de taxas do dia (R$)</span><input id="dailyRatesFees" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Ex.: 68,40" required></label>
+            <label class="ad-field"><span>Preço do litro (R$)</span><input id="dailyRatesFuelPrice" type="number" min="0" step="0.01" inputmode="decimal" value="6.60" required></label>
+            <div class="ad-row2"><label class="ad-field"><span>Moto (km/L)</span><input id="dailyRatesMotoEfficiency" type="number" min="1" step="0.1" inputmode="decimal" value="30" required></label><label class="ad-field"><span>Carro (km/L)</span><input id="dailyRatesCarEfficiency" type="number" min="1" step="0.1" inputmode="decimal" value="10" required></label></div>
+          </fieldset>
+          <fieldset class="ad-step"><legend><em aria-hidden="true">3</em>Conferir e salvar</legend>
+            <div id="dailyRatesPreview" class="ad-summary" aria-live="polite"><p class="hint">Selecione um dia com jornadas finalizadas.</p></div>
+            <button class="button primary" type="submit" id="dailyRatesSubmit">Salvar fechamento</button>
+          </fieldset>
+        </form>
+      </section>
+      <section class="panel ad-card" aria-labelledby="dailyRatesJourneysTitle">
+        <div class="panel-title"><div><h2 id="dailyRatesJourneysTitle">Jornadas do dia</h2><p>Prévia exata do que será salvo.</p></div></div>
+        <div id="dailyRatesJourneys" class="table-wrap"></div>
+      </section>
     </div>
     <div id="view-planilha-combustivel" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">CUSTOS DA FROTA</p><h1>Relatórios</h1><p>Consulte os lançamentos e acompanhe os relatórios de combustível da frota.</p></div></div>
+      <div class="page-heading ad-heading"><div><h1>Relatórios</h1><p>Ganhos, combustível e lucro a partir dos fechamentos diários.</p></div><button class="button secondary" type="button" id="refreshOdometer"><svg class="ad-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Atualizar</button></div>
       <div class="fuel-workspace">
-      <div class="fuel-tabs" role="tablist">
-        <button class="fuel-tab active" type="button" data-fuel-tab="lancamentos">Lançamentos</button>
-        <button class="fuel-tab" type="button" data-fuel-tab="semanal">Relatório semanal</button>
-        <button class="fuel-tab" type="button" data-fuel-tab="mensal">Relatório mensal</button>
-        <button class="fuel-tab" type="button" data-fuel-tab="veiculos">Resumo por veículo</button>
-        <button class="fuel-tab" type="button" data-fuel-tab="dashboard">Dashboard</button>
+      <div class="fuel-tabs ad-tabs" role="tablist" aria-label="Relatórios">
+        <button class="fuel-tab active" type="button" role="tab" aria-selected="true" data-fuel-tab="dashboard">Resumo</button>
+        <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="lancamentos">Lançamentos</button>
+        <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="semanal">Por semana</button>
+        <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="mensal">Por mês</button>
+        <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="veiculos">Por veículo</button>
       </div>
-      <section data-fuel-panel="lancamentos" class="fuel-tab-panel">
-        <article class="panel">
-          <h2>Fechamento diário das taxas</h2>
-          <p class="hint">Informe o total recebido em taxas e o preço por litro. O sistema divide as taxas igualmente entre as jornadas concluídas no dia. O combustível é calculado automaticamente: motos a 30 km/L e carros a 10 km/L, com possibilidade de ajustar as duas médias no fechamento, conforme o tipo cadastrado no veículo.</p>
-          <form id="dailyJourneyRatesForm" class="form-grid">
-            <label>Dia das jornadas<input id="dailyRatesDate" type="date" required></label>
-            <label>Total de taxas de entrega do dia (R$)<input id="dailyRatesFees" type="number" min="0" step="0.01" placeholder="Ex.: 300,00" required></label>
-            <label>Preço do combustível por litro (R$)<input id="dailyRatesFuelPrice" type="number" min="0" step="0.01" value="6.60" placeholder="Ex.: 6,60" required></label>
-            <div class="wide daily-efficiency-fields"><label>Consumo médio da moto (km/L)<input id="dailyRatesMotoEfficiency" type="number" min="1" step="0.1" value="30" required></label><label>Consumo médio do carro (km/L)<input id="dailyRatesCarEfficiency" type="number" min="1" step="0.1" value="10" required></label></div>
-            <div class="wide fuel-live-summary" id="dailyRatesPreview">Selecione um dia para consultar as jornadas concluídas.</div>
-            <div class="form-action wide"><button class="button secondary" type="button" id="previewDailyRates">Consultar jornadas do dia</button><button class="button primary" type="submit">Calcular e salvar ganhos</button></div>
-          </form>
-          <div id="dailyRatesJourneys" class="table-wrap"></div>
-        </article>
-        <article class="panel"><div class="panel-title"><div><h2>Lançamentos registrados</h2></div><button class="button secondary" type="button" id="refreshOdometer">Atualizar</button></div><div id="odometerHistory" class="table-wrap"><p class="hint">Aguardando conexão com o banco de dados.</p></div></article>
+      <section data-fuel-panel="dashboard" class="fuel-tab-panel" role="tabpanel">
+        <div class="ad-filters"><span class="ad-filter-label" id="reportPeriodLabel">Período</span><div class="ad-seg" role="group" aria-labelledby="reportPeriodLabel" id="reportPeriodButtons"><button type="button" data-report-period="month" aria-pressed="false">Mês atual</button><button type="button" data-report-period="6" aria-pressed="true">Últimos 6 meses</button><button type="button" data-report-period="year" aria-pressed="false">Ano</button></div></div>
+        <div class="ad-kpis" id="reportKpis"></div>
+        <section class="panel ad-card" aria-labelledby="reportChartTitle">
+          <div class="panel-title"><div><h2 id="reportChartTitle">Ganhos e combustível por mês</h2><p>O número acima de cada mês é o lucro.</p></div><div class="ad-legend"><span><i class="ad-swatch ad-swatch-rev"></i>Ganhos</span><span><i class="ad-swatch ad-swatch-fuel"></i>Combustível</span></div></div>
+          <div id="odometerAnnualChart" class="ad-chart"></div>
+        </section>
       </section>
-      <section data-fuel-panel="semanal" class="fuel-tab-panel hidden"><article class="panel"><h2>Relatório semanal</h2><div class="weekly-chart-panel"><h3>Resumo visual por semana</h3><p class="hint">Cada semana vai de segunda-feira a sábado. Cada semana aparece a partir do início do período no calendário. Os valores vêm dos lançamentos existentes e a semana atual é mostrada até sábado.</p><label class="weekly-range-control">Período do gráfico<select id="weeklyRange"><option value="current" selected>Somente semana atual</option><option value="5">Últimas 5 semanas</option><option value="8">Últimas 8 semanas</option><option value="12">Últimas 12 semanas</option><option value="all">Todas as semanas</option></select></label><div id="odometerWeeklyChart" class="weekly-chart"></div></div><div id="odometerWeeklyReport" class="table-wrap"></div></article></section>
-      <section data-fuel-panel="mensal" class="fuel-tab-panel hidden"><article class="panel"><h2>Relatório mensal</h2><div class="weekly-chart-panel"><h3>Resumo visual por mês</h3><p class="hint">O gráfico não depende do fechamento do mês: mostra os dados já registrados e é atualizado conforme novos fechamentos diários forem lançados.</p><label class="weekly-range-control">Período do gráfico<select id="monthlyRange"><option value="current" selected>Mês atual (em andamento)</option><option value="5">Últimos 5 meses</option><option value="8">Últimos 8 meses</option><option value="12">Últimos 12 meses</option><option value="all">Todos os meses</option></select></label><div id="odometerMonthlyChart" class="weekly-chart"></div></div><div id="odometerMonthlyReport" class="table-wrap"></div></article></section>
-      <section data-fuel-panel="veiculos" class="fuel-tab-panel hidden"><article class="panel"><h2>Resumo por veículo</h2><div id="odometerVehicleReport" class="table-wrap"></div></article></section>
-      <section data-fuel-panel="dashboard" class="fuel-tab-panel hidden">
-        <div class="metrics"><article class="metric"><span>KM rodados</span><strong id="odoKpiKm">0 km</strong></article><article class="metric"><span>Entregas</span><strong id="odoKpiDeliveries">0</strong></article><article class="metric"><span>Ganhos</span><strong id="odoKpiRevenue">R$ 0,00</strong></article><article class="metric"><span>Combustível</span><strong id="odoKpiFuel">R$ 0,00</strong></article><article class="metric"><span>Lucro líquido</span><strong id="odoKpiProfit">R$ 0,00</strong></article></div>
-        <article class="panel annual-chart-panel"><div class="annual-chart-heading"><div><h2>Desempenho anual acumulado</h2><p class="hint">Indicadores consolidados do ano corrente até hoje.</p></div><span class="annual-year-label" id="odometerAnnualYear"></span></div><div id="odometerAnnualChart" class="annual-chart"></div></article><article class="panel"><h2>Indicadores de eficiência</h2><div id="odometerEfficiency" class="fuel-efficiency"></div></article>
+      <section data-fuel-panel="lancamentos" class="fuel-tab-panel hidden" role="tabpanel">
+        <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Mês</span><select id="entriesMonth"></select></label><label class="ad-inline"><span class="sv-visually-hidden">Veículo</span><select id="entriesVehicle"><option value="all">Todos os veículos</option></select></label><span id="entriesCount" class="hint ad-push"></span></div>
+        <section class="panel ad-card"><div id="odometerHistory" class="table-wrap"><p class="hint">Carregando lançamentos…</p></div><div id="odometerHistoryPager" class="ad-pager"></div></section>
       </section>
-    </div>
-    </div>
-    <div id="view-manutencao" class="view hidden">
-      <div class="page-heading"><div><p class="eyebrow">DISPONIBILIDADE DOS VEÍCULOS</p><h1>Manutenção e despesas</h1><p>Controle pneus, alinhamento, balanceamento, cabos, óleo e outros serviços.</p></div></div>
-      <article class="panel"><form id="maintenanceForm" class="form-grid">
-        <label>Veículo<input id="maintVehicle" required placeholder="Moto 01 / placa"></label><label>Data<input id="maintDate" type="date" required></label>
-        <label>Tipo de serviço<select id="maintType"><option>Pneu</option><option>Alinhamento</option><option>Balanceamento</option><option>Óleo e filtros</option><option>Cabos</option><option>Freios</option><option>Revisão geral</option><option>Outro</option></select></label>
-        <label>Odômetro (km)<input id="maintOdo" type="number" min="0" step="0.1" placeholder="Opcional"></label>
-        <label>Valor (R$)<input id="maintCost" type="number" min="0" step="0.01" required></label><label>Descrição / oficina<input id="maintDescription" placeholder="Peças, oficina ou detalhes"></label>
-        <div class="form-action wide"><button class="button primary" type="submit">Registrar manutenção</button></div>
-      </form></article>
-      <article class="panel"><h2>Histórico de manutenção</h2><div id="maintenanceHistory" class="table-wrap"></div></article>
+      <section data-fuel-panel="semanal" class="fuel-tab-panel hidden" role="tabpanel">
+        <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Período</span><select id="weeklyRange"><option value="current">Semana atual</option><option value="5" selected>Últimas 5 semanas</option><option value="8">Últimas 8 semanas</option><option value="12">Últimas 12 semanas</option><option value="all">Todas as semanas</option></select></label><span class="hint ad-push">Semanas de segunda a domingo.</span></div>
+        <section class="panel ad-card"><div id="odometerWeeklyChart" class="ad-chart"></div><div id="odometerWeeklyReport" class="table-wrap"></div></section>
+      </section>
+      <section data-fuel-panel="mensal" class="fuel-tab-panel hidden" role="tabpanel">
+        <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Período</span><select id="monthlyRange"><option value="current">Mês atual</option><option value="5">Últimos 5 meses</option><option value="8">Últimos 8 meses</option><option value="12" selected>Últimos 12 meses</option><option value="all">Todos os meses</option></select></label></div>
+        <section class="panel ad-card"><div id="odometerMonthlyChart" class="ad-chart"></div><div id="odometerMonthlyReport" class="table-wrap"></div></section>
+      </section>
+      <section data-fuel-panel="veiculos" class="fuel-tab-panel hidden" role="tabpanel">
+        <section class="panel ad-card"><div class="panel-title"><div><h2>Por veículo</h2><p>Todo o histórico registrado.</p></div></div><div id="odometerVehicleReport" class="table-wrap"></div></section>
+      </section>
+      </div>
     </div>
     <div id="view-importacao-historico" class="view hidden">
       <div class="page-heading"><div><p class="eyebrow">ADMINISTRAÇÃO</p><h1>Importação histórica</h1><p>Importe registros antigos de odômetro, entregas, ganhos e combustível para os relatórios, sem criar jornadas fictícias.</p></div></div>
@@ -253,7 +298,7 @@
         <div class="form-action"><button id="historicalImportButton" class="button primary" type="button" disabled>Importar histórico validado</button></div>
       </article>
     </div>
-    <footer>YUP-ENTREGAS · MVP inicial · Não utilize dados reais de clientes antes da implantação segura.</footer>
+    
   </section>
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
