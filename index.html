@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,100..1000&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=100">
+<link rel="stylesheet" href="styles.css?v=102">
 <title>YUP Entregas</title>
 </head>
 <body>
@@ -102,15 +102,21 @@
       <div class="ad-kpis" id="fleetKpis" aria-live="polite"></div>
       <div class="ad-grid">
         <section class="panel ad-card" aria-labelledby="journeyHistoryTitle">
-          <div class="panel-title"><div><h2 id="journeyHistoryTitle">Jornadas</h2><p id="fleetFilterSummary" aria-live="polite">Carregando jornadas…</p></div></div>
+          <div class="panel-title"><div><h2 id="journeyHistoryTitle">Jornadas</h2><p id="fleetFilterSummary" aria-live="polite">Carregando jornadas…</p><p id="fleetBankSummary" class="ad-bank"></p></div></div>
           <div id="journeyHistory" class="table-wrap"></div>
           <div id="journeyHistoryPager" class="ad-pager"></div>
         </section>
         <section class="panel ad-card fleet-heat-panel" aria-labelledby="fleetHeatTitle">
-          <div class="panel-title"><div><h2 id="fleetHeatTitle">Entregas por bairro</h2><p>Solicitadas e concluídas no período</p></div></div>
-          <div class="ad-legend"><span><i class="ad-swatch ad-swatch-req"></i>Solicitadas</span><span><i class="ad-swatch ad-swatch-done"></i>Concluídas</span></div>
-          <div id="fleetHeatmap" class="ad-regions"><p class="hint">Carregando bairros…</p></div>
-          <p id="fleetHeatSummary" class="hint ad-regions-note" aria-live="polite"></p>
+          <div class="panel-title"><div><h2 id="fleetHeatTitle">Mapa de calor por bairro</h2><p>Pedidos solicitados e entregas realizadas em cada bairro, no período e nos filtros escolhidos.</p></div></div>
+          <dl id="fleetHeatStats" class="ad-stats ad-stats-4" aria-live="polite"></dl>
+          <div class="ad-heat-layout">
+            <div>
+              <div class="ad-legend"><span><i class="ad-swatch ad-swatch-req"></i>Solicitadas</span><span><i class="ad-swatch ad-swatch-done"></i>Realizadas</span><span><i class="ad-heat-key" aria-hidden="true"></i>Fundo mais forte = mais pedidos</span></div>
+              <div id="fleetHeatmap" class="ad-regions"><p class="hint">Carregando bairros…</p></div>
+              <p id="fleetHeatSummary" class="hint ad-regions-note" aria-live="polite"></p>
+            </div>
+            <div id="fleetHeatTable" class="table-wrap"></div>
+          </div>
         </section>
       </div>
       <section class="panel ad-card" id="journeyTimelinePanel" aria-labelledby="journeyTimelineTitle" hidden>
@@ -256,7 +262,7 @@
       <div class="page-heading ad-heading"><div><h1>Relatórios</h1><p>Ganhos, combustível e lucro a partir dos fechamentos diários.</p></div><button class="button secondary" type="button" id="refreshOdometer"><svg class="ad-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>Atualizar</button></div>
       <div class="fuel-workspace">
       <div class="fuel-tabs ad-tabs" role="tablist" aria-label="Relatórios">
-        <button class="fuel-tab active" type="button" role="tab" aria-selected="true" data-fuel-tab="dashboard">Resumo</button>
+        <button class="fuel-tab active" type="button" role="tab" aria-selected="true" data-fuel-tab="dashboard">Dashboard</button>
         <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="lancamentos">Lançamentos</button>
         <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="semanal">Por semana</button>
         <button class="fuel-tab" type="button" role="tab" aria-selected="false" data-fuel-tab="mensal">Por mês</button>
@@ -269,6 +275,20 @@
           <div class="panel-title"><div><h2 id="reportChartTitle">Ganhos e combustível por mês</h2><p>O número acima de cada mês é o lucro.</p></div><div class="ad-legend"><span><i class="ad-swatch ad-swatch-rev"></i>Ganhos</span><span><i class="ad-swatch ad-swatch-fuel"></i>Combustível</span></div></div>
           <div id="odometerAnnualChart" class="ad-chart"></div>
         </section>
+        <section class="panel ad-card" aria-labelledby="reportKmTitle">
+          <div class="panel-title"><div><h2 id="reportKmTitle">Km rodados e entregas</h2><p>Mesmo período do gráfico acima.</p></div></div>
+          <div class="ad-chart-pair"><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-km"></i>Km rodados</h3><div id="reportKmChart" class="ad-chart"></div></div><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-del"></i>Entregas</h3><div id="reportDeliveriesChart" class="ad-chart"></div></div></div>
+        </section>
+        <div class="ad-grid2">
+          <section class="panel ad-card" aria-labelledby="annualTitle">
+            <div class="panel-title"><div><h2 id="annualTitle">Desempenho anual acumulado</h2><p>De 1º de janeiro até hoje. Uso interno da loja não entra.</p></div><span class="ad-year" id="odometerAnnualYear"></span></div>
+            <dl id="odometerAnnualSummary" class="ad-stats"></dl>
+          </section>
+          <section class="panel ad-card" aria-labelledby="efficiencyTitle">
+            <div class="panel-title"><div><h2 id="efficiencyTitle">Indicadores de eficiência</h2><p id="efficiencyPeriod">Período selecionado acima.</p></div></div>
+            <dl id="odometerEfficiency" class="ad-stats ad-stats-2"></dl>
+          </section>
+        </div>
       </section>
       <section data-fuel-panel="lancamentos" class="fuel-tab-panel hidden" role="tabpanel">
         <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Mês</span><select id="entriesMonth"></select></label><label class="ad-inline"><span class="sv-visually-hidden">Veículo</span><select id="entriesVehicle"><option value="all">Todos os veículos</option></select></label><span id="entriesCount" class="hint ad-push"></span></div>
@@ -276,11 +296,11 @@
       </section>
       <section data-fuel-panel="semanal" class="fuel-tab-panel hidden" role="tabpanel">
         <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Período</span><select id="weeklyRange"><option value="current">Semana atual</option><option value="5" selected>Últimas 5 semanas</option><option value="8">Últimas 8 semanas</option><option value="12">Últimas 12 semanas</option><option value="all">Todas as semanas</option></select></label><span class="hint ad-push">Semanas de segunda a domingo.</span></div>
-        <section class="panel ad-card"><div id="odometerWeeklyChart" class="ad-chart"></div><div id="odometerWeeklyReport" class="table-wrap"></div></section>
+        <section class="panel ad-card"><div class="panel-title"><div><h2>Ganhos e combustível por semana</h2><p>O número acima de cada semana é o lucro.</p></div><div class="ad-legend"><span><i class="ad-swatch ad-swatch-rev"></i>Ganhos</span><span><i class="ad-swatch ad-swatch-fuel"></i>Combustível</span></div></div><div id="odometerWeeklyChart" class="ad-chart"></div><div class="ad-chart-pair"><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-km"></i>Km rodados</h3><div id="odometerWeeklyKmChart" class="ad-chart"></div></div><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-del"></i>Entregas</h3><div id="odometerWeeklyDeliveriesChart" class="ad-chart"></div></div></div><div id="odometerWeeklyReport" class="table-wrap"></div></section>
       </section>
       <section data-fuel-panel="mensal" class="fuel-tab-panel hidden" role="tabpanel">
         <div class="ad-filters"><label class="ad-inline"><span class="ad-filter-label">Período</span><select id="monthlyRange"><option value="current">Mês atual</option><option value="5">Últimos 5 meses</option><option value="8">Últimos 8 meses</option><option value="12" selected>Últimos 12 meses</option><option value="all">Todos os meses</option></select></label></div>
-        <section class="panel ad-card"><div id="odometerMonthlyChart" class="ad-chart"></div><div id="odometerMonthlyReport" class="table-wrap"></div></section>
+        <section class="panel ad-card"><div class="panel-title"><div><h2>Ganhos e combustível por mês</h2><p>O número acima de cada mês é o lucro.</p></div><div class="ad-legend"><span><i class="ad-swatch ad-swatch-rev"></i>Ganhos</span><span><i class="ad-swatch ad-swatch-fuel"></i>Combustível</span></div></div><div id="odometerMonthlyChart" class="ad-chart"></div><div class="ad-chart-pair"><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-km"></i>Km rodados</h3><div id="odometerMonthlyKmChart" class="ad-chart"></div></div><div><h3 class="ad-chart-label"><i class="ad-swatch ad-swatch-del"></i>Entregas</h3><div id="odometerMonthlyDeliveriesChart" class="ad-chart"></div></div></div><div id="odometerMonthlyReport" class="table-wrap"></div></section>
       </section>
       <section data-fuel-panel="veiculos" class="fuel-tab-panel hidden" role="tabpanel">
         <section class="panel ad-card"><div class="panel-title"><div><h2>Por veículo</h2><p>Todo o histórico registrado.</p></div></div><div id="odometerVehicleReport" class="table-wrap"></div></section>
