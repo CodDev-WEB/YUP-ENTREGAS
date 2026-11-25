@@ -755,17 +755,26 @@ function renderFleetKpis(filtered,period,from,to){
   +'<div class="ad-kpi"><span>Km rodados</span><b>'+km.toLocaleString("pt-BR",{maximumFractionDigits:1})+' km</b><small>'+(withKm?(km/withKm).toLocaleString("pt-BR",{maximumFractionDigits:1})+" km por jornada":"&nbsp;")+'</small></div>'
   +'<div class="ad-kpi"><span>Em andamento agora</span><b>'+open.length+'</b><small>'+openText+'</small></div>';
 }
+function journeySpan(j){
+ if(!j.started_at_server)return "—";
+ const s=new Date(j.started_at_server),day=s.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}),t=d=>d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+ if(!j.finished_at_server)return day+' · '+t(s)+'<small class="ad-sub">sem horário de fim</small>';
+ const e=new Date(j.finished_at_server),eDay=e.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+ return day+' · '+t(s)+'–'+(eDay!==day?eDay+' ':'')+t(e);
+}
 function renderJourneyTable(filtered){
  const target=$("journeyHistory"),pager=$("journeyHistoryPager");if(!target)return;
  if(!filtered.length){target.innerHTML='<p class="hint">Nenhuma jornada no período e nos filtros escolhidos.</p>';if(pager)pager.innerHTML="";return}
  const pages=Math.max(1,Math.ceil(filtered.length/JOURNEYS_PER_PAGE));journeyPage=Math.min(Math.max(1,journeyPage),pages);
  const slice=filtered.slice((journeyPage-1)*JOURNEYS_PER_PAGE,journeyPage*JOURNEYS_PER_PAGE);
  const badge={open:"ad-b-open",finished:"ad-b-done",cancelled:"ad-b-muted"};
- target.innerHTML='<table class="ad-table"><thead><tr><th scope="col">Jornada</th><th scope="col">Entregador</th><th scope="col">Veículo</th><th scope="col">Início</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col">Status</th></tr></thead><tbody>'+slice.map(j=>{
-  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length;
+ target.innerHTML='<table class="ad-table ad-journeys"><thead><tr><th scope="col">Jornada</th><th scope="col">Entregador</th><th scope="col">Bairro(s)</th><th scope="col">Veículo</th><th scope="col">Horário</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col">Status</th><th scope="col">Ocorrências / observações</th></tr></thead><tbody>'+slice.map(j=>{
+  const ds=deliveries.filter(d=>d.journey_id===j.id),done=ds.filter(d=>d.status==="completed").length,failed=ds.filter(d=>d.status==="failed").length;
   const km=j.odometer_end==null?"—":validJourneyKm(j).toLocaleString("pt-BR",{maximumFractionDigits:1});
   const code=j.order_number==null?"—":"#"+j.order_number;
-  return '<tr><td><button type="button" class="ad-link" data-timeline="'+esc(j.id)+'" aria-label="Ver linha do tempo da jornada '+esc(code)+'">'+esc(code)+'</button></td><td>'+esc(j.drivers?.full_name||"—")+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+'</td><td>'+fmtShort(j.started_at_server)+'</td><td class="n">'+km+'</td><td class="n">'+done+'/'+ds.length+'</td><td><span class="ad-badge '+(badge[j.status]||"ad-b-muted")+'">'+esc(statusLabel[j.status]||j.status)+'</span>'+(j.journey_type==="store_use"?' <span class="ad-badge ad-b-muted">Uso da loja</span>':"")+'</td></tr>';
+  const vehicleExtra=[j.vehicles?.plate,j.vehicles?.make_model].filter(Boolean).join(" · ");
+  const incidents=journeyIncidents(j);
+  return '<tr><td><button type="button" class="ad-link" data-timeline="'+esc(j.id)+'" aria-label="Ver linha do tempo da jornada '+esc(code)+'">'+esc(code)+'</button></td><td>'+esc(j.drivers?.full_name||"—")+'<small class="ad-sub">'+esc(j.drivers?.registration_no||"Sem matrícula")+'</small></td><td class="ad-wrap">'+esc(journeyNeighborhoods(j))+'</td><td>'+esc(j.vehicles?.code||j.vehicles?.plate||"—")+(vehicleExtra?'<small class="ad-sub">'+esc(vehicleExtra)+'</small>':"")+'</td><td>'+journeySpan(j)+'</td><td class="n">'+km+'</td><td class="n">'+done+'/'+ds.length+(failed?'<small class="ad-sub ad-bad">'+failed+(failed===1?" não realizada":" não realizadas")+'</small>':"")+'</td><td><span class="ad-badge '+(badge[j.status]||"ad-b-muted")+'">'+esc(statusLabel[j.status]||j.status)+'</span>'+(j.journey_type==="store_use"?' <span class="ad-badge ad-b-muted">Uso da loja</span>':"")+'</td><td class="ad-wrap ad-notes">'+esc(incidents)+'</td></tr>';
  }).join("")+'</tbody></table>';
  if(pager){
   const start=(journeyPage-1)*JOURNEYS_PER_PAGE+1,end=Math.min(filtered.length,journeyPage*JOURNEYS_PER_PAGE);
@@ -866,6 +875,9 @@ function renderUnassignedDeliveries(){
  if($("fleetFilterSummary")){
   const mismatch=journeysTotalFromSupabase!=null&&journeys.length!==journeysTotalFromSupabase||deliveriesTotalFromSupabase!=null&&deliveries.length!==deliveriesTotalFromSupabase;
   $("fleetFilterSummary").textContent=filtered.length.toLocaleString("pt-BR")+(filtered.length===1?" jornada":" jornadas")+" · "+periodLabel+(filtered.length?" · clique no número para ver a linha do tempo":"")+(mismatch?" · Atenção: a quantidade carregada ("+journeys.length+" jornadas, "+deliveries.length+" entregas) não confere com o total do banco. Atualize a página.":"");
+  const linked=deliveries.filter(d=>d.journey_id&&journeys.some(j=>j.id===d.journey_id)).length;
+  $("fleetFilterSummary").title="No banco: "+(journeysTotalFromSupabase??journeys.length)+" jornadas e "+(deliveriesTotalFromSupabase??deliveries.length)+" entregas ("+linked+" vinculadas a jornadas; "+(deliveries.length-linked)+" fora de jornadas).";
+  const bank=$("fleetBankSummary");if(bank)bank.textContent=$("fleetFilterSummary").title;
   $("fleetFilterSummary").classList.toggle("warning",mismatch);
  }
  // Bairros: considera os pedidos do período, inclusive os ainda sem jornada (data do pedido).
@@ -885,9 +897,11 @@ function renderUnassignedDeliveries(){
  const regions=new Map();
  regionalDeliveries.forEach(d=>{
   const region=String(d.neighborhoods?.name||"Sem bairro").trim()||"Sem bairro";
-  if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0});
+  if(!regions.has(region))regions.set(region,{name:region,total:0,completed:0,failed:0,pending:0,journeys:new Set(),addresses:new Set()});
   const item=regions.get(region);item.total++;
-  if(d.status==="completed")item.completed++;else if(d.status==="failed")item.failed++;
+  if(d.status==="completed")item.completed++;else if(d.status==="failed")item.failed++;else item.pending++;
+  if(d.journey_id)item.journeys.add(d.journey_id);
+  if(d.address)item.addresses.add(String(d.address).trim());
  });
  const rankedRegions=[...regions.values()].sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name,"pt-BR"));
  const maxRegion=Math.max(1,...rankedRegions.map(r=>r.total));
@@ -896,13 +910,18 @@ function renderUnassignedDeliveries(){
  const heatSummary=$("fleetHeatSummary"),heatmap=$("fleetHeatmap");
  const rate=regionalDeliveries.length?Math.round(completedCount/regionalDeliveries.length*100):0;
  if(heatSummary)heatSummary.textContent=rankedRegions.length?rankedRegions.length+(rankedRegions.length===1?" bairro atendido":" bairros atendidos")+" · "+rate+"% de conclusão"+(failedRegions.length?" · não realizadas em "+failedRegions.slice(0,3).join(", ")+(failedRegions.length>3?" e outros":""):""):"";
+ const failedCount=regionalDeliveries.filter(d=>d.status==="failed").length;
+ const heatStats=$("fleetHeatStats");
+ if(heatStats)heatStats.innerHTML='<div><dt>Entregas no filtro</dt><dd>'+regionalDeliveries.length.toLocaleString("pt-BR")+'</dd></div><div><dt>Regiões atendidas</dt><dd>'+rankedRegions.length+'</dd></div><div><dt>Taxa concluída</dt><dd>'+rate+'%</dd></div><div><dt>Não realizadas</dt><dd>'+failedCount+'</dd></div>';
+ const heatTable=$("fleetHeatTable");
+ if(heatTable)heatTable.innerHTML=rankedRegions.length?'<table class="ad-table"><caption class="sv-visually-hidden">Detalhe por bairro</caption><thead><tr><th scope="col">Bairro</th><th scope="col" class="n">Solicitadas</th><th scope="col" class="n">Realizadas</th><th scope="col" class="n">Não realizadas</th><th scope="col" class="n">Pendentes</th><th scope="col" class="n">Jornadas</th><th scope="col" class="n">Endereços</th><th scope="col" class="n">Conclusão</th></tr></thead><tbody>'+rankedRegions.map(r=>'<tr><td>'+esc(r.name)+'</td><td class="n">'+r.total+'</td><td class="n">'+r.completed+'</td><td class="n">'+(r.failed?'<span class="ad-bad">'+r.failed+'</span>':0)+'</td><td class="n">'+r.pending+'</td><td class="n">'+r.journeys.size+'</td><td class="n">'+r.addresses.size+'</td><td class="n">'+(r.total?Math.round(r.completed/r.total*100):0)+'%</td></tr>').join("")+'</tbody></table>':"";
  if(heatmap){
   if(!rankedRegions.length)heatmap.innerHTML='<p class="hint">Nenhuma entrega no período e nos filtros escolhidos.</p>';
   else{
    const top=rankedRegions[0];
    heatmap.setAttribute("role","img");
    heatmap.setAttribute("aria-label","Entregas por bairro, "+periodLabel+": "+rankedRegions.length+" bairros, "+regionalDeliveries.length+" entregas, "+rate+"% concluídas. Mais pedidos em "+top.name+" ("+top.completed+" de "+top.total+").");
-   heatmap.innerHTML=rankedRegions.map(r=>'<div class="ad-region"><span class="ad-region-name" title="'+esc(r.name)+'">'+esc(r.name)+'</span><span class="ad-region-bar" aria-hidden="true"><i class="ad-bar-req" style="width:'+(r.total/maxRegion*100).toFixed(1)+'%"></i><i class="ad-bar-done" style="width:'+(r.completed/maxRegion*100).toFixed(1)+'%"></i></span><span class="ad-region-n">'+r.completed+'/'+r.total+'</span></div>').join("");
+   heatmap.innerHTML=rankedRegions.map(r=>'<div class="ad-region ad-heat-'+Math.max(1,Math.ceil(r.total/maxRegion*5))+'"><span class="ad-region-name" title="'+esc(r.name)+'">'+esc(r.name)+'</span><span class="ad-region-bar" aria-hidden="true"><i class="ad-bar-req" style="width:'+(r.total/maxRegion*100).toFixed(1)+'%"></i><i class="ad-bar-done" style="width:'+(r.completed/maxRegion*100).toFixed(1)+'%"></i></span><span class="ad-region-n">'+r.completed+'/'+r.total+'</span></div>').join("");
   }
  }
  const fuel=local.fuel.filter(x=>{const d=new Date(x.date);const f=getFleetFilter();return (!f.from||d>=f.from&&d<f.to)&&(($("fleetVehicle")?.value||"all")==="all"||String(x.vehicleId||x.vehicle)===(vehicles.find(v=>v.id===$("fleetVehicle").value)?.code||$("fleetVehicle").value));});
@@ -1252,8 +1271,24 @@ function odoBarChart(groups,title){
  const summary=title+": "+groups.length+" períodos, de "+groups[0].label+" a "+groups[groups.length-1].label+". Ganhos somam "+odoMoney(groups.reduce((a,g)=>a+g.revenue,0))+", combustível "+odoMoney(groups.reduce((a,g)=>a+g.fuel,0))+". Maior lucro em "+best.label+", "+odoMoney(best.profit)+".";
  return '<div role="img" aria-label="'+esc(summary)+'">'+s+'</svg></div>';
 }
+function odoSingleChart(groups,key,unit,cls,title){
+ if(!groups.length)return '<p class="hint">Sem dados no período.</p>';
+ const W=440,H=200,L=44,B=28,T=18,plot=H-B-T,max=Math.max(1,...groups.map(g=>Number(g[key])||0));
+ const nice=(()=>{const p=Math.pow(10,Math.floor(Math.log10(max))),r=max/p;return (r>5?10:r>2?5:r>1?2:1)*p})();
+ const gw=(W-L-6)/groups.length,bw=Math.max(4,Math.min(28,gw*.55));
+ const fmt=v=>v>=1000?(v/1000).toLocaleString("pt-BR",{maximumFractionDigits:1})+" mil":Math.round(v).toLocaleString("pt-BR");
+ let svg='<svg viewBox="0 0 '+W+' '+H+'" class="ad-svg" aria-hidden="true">';
+ [0,.5,1].forEach(f=>{const v=nice*f,y=T+plot-f*plot;svg+='<line x1="'+L+'" x2="'+W+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'" class="ad-grid-line"/><text x="'+(L-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+fmt(v)+'</text>'});
+ groups.forEach((g,i)=>{const v=Number(g[key])||0,h=v/nice*plot,x=L+gw*i+gw/2;svg+='<rect x="'+(x-bw/2).toFixed(1)+'" y="'+(T+plot-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="3" class="'+cls+'"><title>'+esc(g.label)+': '+fmt(v)+" "+unit+'</title></rect>';if(groups.length<=8)svg+='<text x="'+x.toFixed(1)+'" y="'+(T+plot-h-5).toFixed(1)+'" text-anchor="middle" class="ad-chart-value">'+fmt(v)+'</text>';if(groups.length<=12||i%2===0)svg+='<text x="'+x.toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+esc(g.label)+'</text>'});
+ const top=groups.reduce((a,g)=>(Number(g[key])||0)>(Number(a[key])||0)?g:a,groups[0]);
+ return '<div role="img" aria-label="'+esc(title+": total "+fmt(groups.reduce((a,g)=>a+(Number(g[key])||0),0))+" "+unit+"; maior valor em "+top.label+", "+fmt(Number(top[key])||0)+" "+unit+".")+'">'+svg+'</svg></div>';
+}
+function odoSecondaryCharts(groups,kmId,delId,what){
+ if($(kmId))$(kmId).innerHTML=odoSingleChart(groups,"km","km","ad-bar-km","Km rodados por "+what);
+ if($(delId))$(delId).innerHTML=odoSingleChart(groups,"deliveries","entregas","ad-bar-del","Entregas por "+what);
+}
 function odoTable(rows,first){
- return '<table class="ad-table"><thead><tr><th scope="col">'+first+'</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th><th scope="col" class="n">Km/entrega</th><th scope="col" class="n">Custo/entrega</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.label)+'</td><td class="n">'+odoNum(x.km)+'</td><td class="n">'+x.deliveries.toLocaleString("pt-BR")+'</td><td class="n">'+odoMoney(x.revenue)+'</td><td class="n">'+odoMoney(x.fuel)+'</td><td class="n">'+odoMoney(x.profit)+'</td><td class="n">'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td class="n">'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td></tr>').join("")+'</tbody></table>';
+ return '<table class="ad-table"><thead><tr><th scope="col">'+first+'</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th><th scope="col" class="n">Km/entrega</th><th scope="col" class="n">Custo/entrega</th><th scope="col" class="n">Custo/km</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.label)+'</td><td class="n">'+odoNum(x.km)+'</td><td class="n">'+x.deliveries.toLocaleString("pt-BR")+'</td><td class="n">'+odoMoney(x.revenue)+'</td><td class="n">'+odoMoney(x.fuel)+'</td><td class="n">'+odoMoney(x.profit)+'</td><td class="n">'+odoNum(x.deliveries?x.km/x.deliveries:0)+'</td><td class="n">'+odoMoney(x.deliveries?x.fuel/x.deliveries:0)+'</td><td class="n">'+odoMoney(x.km?x.fuel/x.km:0)+'</td></tr>').join("")+'</tbody></table>';
 }
 function monthKeysBack(n){const keys=[],d=new Date(todayKeySP().slice(0,7)+"-01T12:00:00");for(let i=0;i<n;i++){keys.unshift(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));d.setMonth(d.getMonth()-1)}return keys}
 function renderOdoReports(){
@@ -1269,10 +1304,11 @@ function renderOdoReports(){
  const periodRows=rows.filter(r=>keys.includes(r.entry_date.slice(0,7))&&r.entry_date<=today);
  const t=odoTotals(periodRows);
  const kpis=$("reportKpis");
- if(kpis)kpis.innerHTML='<div class="ad-kpi"><span>Ganhos</span><b>'+odoMoney(t.revenue)+'</b><small>'+(t.deliveries?odoMoney(t.revenue/t.deliveries)+" por entrega":"&nbsp;")+'</small></div>'
+ if(kpis)kpis.innerHTML='<div class="ad-kpi"><span>Km rodados</span><b>'+odoNum(t.km)+' km</b><small>'+(t.deliveries?odoNum(t.km/t.deliveries)+" km por entrega":"&nbsp;")+'</small></div>'
+  +'<div class="ad-kpi"><span>Entregas</span><b>'+t.deliveries.toLocaleString("pt-BR")+'</b><small>'+esc(label)+'</small></div>'
+  +'<div class="ad-kpi"><span>Ganhos</span><b>'+odoMoney(t.revenue)+'</b><small>'+(t.deliveries?odoMoney(t.revenue/t.deliveries)+" por entrega":"&nbsp;")+'</small></div>'
   +'<div class="ad-kpi"><span>Combustível</span><b>'+odoMoney(t.fuel)+'</b><small>'+(t.km?odoMoney(t.fuel/t.km)+" por km":"&nbsp;")+'</small></div>'
-  +'<div class="ad-kpi"><span>Lucro</span><b>'+odoMoney(t.profit)+'</b><small>'+(t.revenue?Math.round(t.profit/t.revenue*100)+"% dos ganhos":"&nbsp;")+'</small></div>'
-  +'<div class="ad-kpi"><span>Entregas</span><b>'+t.deliveries.toLocaleString("pt-BR")+'</b><small>'+odoNum(t.km)+' km'+(t.deliveries?" · "+odoNum(t.km/t.deliveries)+" km por entrega":"")+'</small></div>';
+  +'<div class="ad-kpi"><span>Lucro líquido</span><b>'+odoMoney(t.profit)+'</b><small>'+(t.revenue?Math.round(t.profit/t.revenue*100)+"% dos ganhos":"&nbsp;")+'</small></div>';
  const chart=$("odometerAnnualChart");
  if(chart){
   let groups;
@@ -1280,7 +1316,14 @@ function renderOdoReports(){
   else groups=keys.map(k=>({...(monthlyAll.get(k)||zero(k)),label:odoMonthLabel(k)}));
   const title=$("reportChartTitle");if(title)title.textContent=reportPeriod==="month"?"Ganhos e combustível por semana · "+label:"Ganhos e combustível por mês · "+label;
   chart.innerHTML=odoBarChart(groups,"Ganhos e combustível, "+label);
+  odoSecondaryCharts(groups,"reportKmChart","reportDeliveriesChart",reportPeriod==="month"?"semana":"mês");
  }
+ const yearRows=rows.filter(r=>r.entry_date.startsWith(thisYear)&&r.entry_date<=today),y=odoTotals(yearRows);
+ if($("odometerAnnualYear"))$("odometerAnnualYear").textContent=thisYear;
+ const stat=(k,v,extra)=>'<div><dt>'+k+'</dt><dd>'+v+(extra?'<small>'+extra+'</small>':'')+'</dd></div>';
+ if($("odometerAnnualSummary"))$("odometerAnnualSummary").innerHTML=stat("Km rodados",odoNum(y.km)+" km")+stat("Entregas",y.deliveries.toLocaleString("pt-BR"))+stat("Ganhos",odoMoney(y.revenue))+stat("Combustível",odoMoney(y.fuel))+stat("Lucro líquido",odoMoney(y.profit),y.revenue?Math.round(y.profit/y.revenue*100)+"% dos ganhos":"");
+ if($("efficiencyPeriod"))$("efficiencyPeriod").textContent="Período: "+label+".";
+ if($("odometerEfficiency"))$("odometerEfficiency").innerHTML=stat("Custo médio por km",odoMoney(t.km?t.fuel/t.km:0))+stat("Custo por entrega",odoMoney(t.deliveries?t.fuel/t.deliveries:0))+stat("Ganho por entrega",odoMoney(t.deliveries?t.revenue/t.deliveries:0))+stat("Ganho por km",odoMoney(t.km?t.revenue/t.km:0));
  /* Lançamentos */
  const monthSel=$("entriesMonth"),vehSel=$("entriesVehicle");
  if(monthSel){const months=[...new Set(rows.map(r=>r.entry_date.slice(0,7)))].sort().reverse();const old=monthSel.value;monthSel.innerHTML=months.map(m=>'<option value="'+m+'">'+esc(odoMonthLong(m))+'</option>').join("")+'<option value="all">Todos os meses</option>';monthSel.value=months.includes(old)||old==="all"?old:(months[0]||"all")}
@@ -1290,7 +1333,7 @@ function renderOdoReports(){
  const pages=Math.max(1,Math.ceil(listed.length/ENTRIES_PER_PAGE));entriesPage=Math.min(Math.max(1,entriesPage),pages);
  const slice=listed.slice((entriesPage-1)*ENTRIES_PER_PAGE,entriesPage*ENTRIES_PER_PAGE);
  if($("entriesCount"))$("entriesCount").textContent=listed.length.toLocaleString("pt-BR")+(listed.length===1?" lançamento":" lançamentos")+" · "+odometerEntries.length.toLocaleString("pt-BR")+" no total";
- $("odometerHistory").innerHTML=listed.length?'<table class="ad-table"><thead><tr><th scope="col">Data</th><th scope="col">Veículo</th><th scope="col">Origem</th><th scope="col" class="n">Km</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th></tr></thead><tbody>'+slice.map(r=>'<tr'+(odoIsStoreUse(r)?' class="ad-row-muted"':'')+'><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+(r.journey_id?"Fechamento":r.source_type==="historical"?"Histórico":"Manual")+'</td><td class="n">'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td class="n">'+(odoIsStoreUse(r)?'<span class="ad-badge ad-b-muted">'+esc(r.historical_purpose)+'</span>':Number(r.deliveries_count||0))+'</td><td class="n">'+odoMoney(r.revenue)+'</td><td class="n">'+odoMoney(r.fuel_cost)+'</td><td class="n">'+odoMoney(odoRowProfit(r))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento neste filtro.</p>';
+ $("odometerHistory").innerHTML=listed.length?'<table class="ad-table"><thead><tr><th scope="col">Data</th><th scope="col">Semana</th><th scope="col">Veículo</th><th scope="col">Origem</th><th scope="col" class="n">KM inicial</th><th scope="col" class="n">KM final</th><th scope="col" class="n">KM rodado</th><th scope="col" class="n">Entregas</th><th scope="col" class="n">Ganhos</th><th scope="col" class="n">Combustível</th><th scope="col" class="n">Lucro</th></tr></thead><tbody>'+slice.map(r=>'<tr'+(odoIsStoreUse(r)?' class="ad-row-muted"':'')+'><td>'+new Date(r.entry_date+"T12:00:00").toLocaleDateString("pt-BR")+'</td><td>'+odoWeekLabel(r.entry_date)+'</td><td>'+esc(r.vehicle_code)+'</td><td>'+(r.journey_id?"Fechamento":r.source_type==="historical"?"Histórico":"Manual")+'</td><td class="n">'+odoNum(r.odometer_start)+'</td><td class="n">'+odoNum(r.odometer_end)+'</td><td class="n">'+odoNum(Number(r.odometer_end)-Number(r.odometer_start))+'</td><td class="n">'+(odoIsStoreUse(r)?'<span class="ad-badge ad-b-muted">'+esc(r.historical_purpose)+'</span>':Number(r.deliveries_count||0))+'</td><td class="n">'+odoMoney(r.revenue)+'</td><td class="n">'+odoMoney(r.fuel_cost)+'</td><td class="n">'+odoMoney(odoRowProfit(r))+'</td></tr>').join("")+'</tbody></table>':'<p class="hint">Nenhum lançamento neste filtro.</p>';
  const pager=$("odometerHistoryPager");
  if(pager)pager.innerHTML=pages>1?'<span>Mostrando '+((entriesPage-1)*ENTRIES_PER_PAGE+1)+'–'+Math.min(listed.length,entriesPage*ENTRIES_PER_PAGE)+' de '+listed.length+'</span><span class="ad-pages"><button type="button" data-entries-page="'+(entriesPage-1)+'"'+(entriesPage===1?" disabled":"")+' aria-label="Página anterior">‹</button><span class="ad-page-now">Página '+entriesPage+' de '+pages+'</span><button type="button" data-entries-page="'+(entriesPage+1)+'"'+(entriesPage===pages?" disabled":"")+' aria-label="Próxima página">›</button></span>':"";
  /* Por semana (segunda a domingo) */
@@ -1301,6 +1344,7 @@ function renderOdoReports(){
  if(range!=="all"&&range!=="current")firstAllowed.setDate(firstAllowed.getDate()-7*(Math.max(1,Number(range)||5)-1));
  const weeks=[];for(const c=new Date(firstAllowed);c<=new Date(currentWeekStart+"T12:00:00");c.setDate(c.getDate()+7)){const k=c.toISOString().slice(0,10);weeks.push({...(weeklyAll.get(k)||zero(k)),label:odoWeekLabel(k)})}
  if($("odometerWeeklyChart"))$("odometerWeeklyChart").innerHTML=odoBarChart(weeks.length>16?weeks.slice(-16):weeks,"Ganhos e combustível por semana");
+ odoSecondaryCharts((weeks.length>16?weeks.slice(-16):weeks).map(w=>({...w,label:w.label.split(" a ")[0]})),"odometerWeeklyKmChart","odometerWeeklyDeliveriesChart","semana");
  $("odometerWeeklyReport").innerHTML=odoTable(weeks.slice().reverse(),"Semana");
  /* Por mês */
  const mRange=$("monthlyRange")?.value||"12";
@@ -1308,9 +1352,10 @@ function renderOdoReports(){
  let mKeys=mRange==="current"?[thisMonth]:mRange==="all"?(()=>{const out=[],d=new Date((allMonths[0]||thisMonth)+"-01T12:00:00");while(d<=new Date(thisMonth+"-01T12:00:00")){out.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));d.setMonth(d.getMonth()+1)}return out})():monthKeysBack(Math.max(1,Number(mRange)||12));
  const months=mKeys.map(k=>({...(monthlyAll.get(k)||zero(k)),label:odoMonthLabel(k),longLabel:odoMonthLong(k)}));
  if($("odometerMonthlyChart"))$("odometerMonthlyChart").innerHTML=odoBarChart(months,"Ganhos e combustível por mês");
+ odoSecondaryCharts(months,"odometerMonthlyKmChart","odometerMonthlyDeliveriesChart","mês");
  $("odometerMonthlyReport").innerHTML=odoTable(months.slice().reverse().map(m=>({...m,label:m.longLabel})),"Mês");
  /* Por veículo */
- $("odometerVehicleReport").innerHTML=odoTable(odoGroup(rows,r=>r.vehicle_code).sort((a,b)=>b.km-a.km).map(x=>({...x,label:x.key})),"Veículo")+'<p class="hint">Custo por km: '+odoGroup(rows,r=>r.vehicle_code).map(x=>esc(x.key)+" "+odoMoney(x.km?x.fuel/x.km:0)).join(" · ")+'</p>';
+ $("odometerVehicleReport").innerHTML=odoTable(odoGroup(rows,r=>r.vehicle_code).sort((a,b)=>b.km-a.km).map(x=>({...x,label:x.key})),"Veículo");
 }
 $("weeklyRange")?.addEventListener("change",renderOdoReports);
 $("monthlyRange")?.addEventListener("change",renderOdoReports);
